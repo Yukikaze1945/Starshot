@@ -618,6 +618,15 @@ public static partial class AppConfig
     }
 
     /// <summary>
+    /// 信息浮窗完成态停留时长（毫秒），默认 3000
+    /// </summary>
+    public static int InfoWindowDuration
+    {
+        get => GetValue(3000);
+        set => SetValue(value);
+    }
+
+    /// <summary>
     /// 截图文件名模板。占位符：{process} {processPath} {title} {timestamp} {time} {date} {width} {height} {year} {month} {day} {hour} {minute} {second}
     /// </summary>
     public static string ScreenshotFileNamePattern

@@ -1027,4 +1027,10 @@
   <data name="ScreenshotSetting_SdrWhiteLevelCurrent" xml:space="preserve">
     <value>当前显示器的 SDR 白：</value>
   </data>
+  <data name="AppearanceSetting_InfoWindowDuration" xml:space="preserve">
+    <value>信息浮窗显示时长</value>
+  </data>
+  <data name="AppearanceSetting_InfoWindowDurationDesc" xml:space="preserve">
+    <value>截图完成或复制后信息浮窗的停留时长（毫秒）</value>
+  </data>
 </root>

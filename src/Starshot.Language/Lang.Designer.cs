@@ -2764,5 +2764,23 @@
                 return ResourceManager.GetString("ScreenshotSetting_SdrWhiteLevelCurrent", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   查找类似 Info window duration 的本地化字符串。
+        /// </summary>
+        public static string AppearanceSetting_InfoWindowDuration {
+            get {
+                return ResourceManager.GetString("AppearanceSetting_InfoWindowDuration", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 How long the info window stays after a capture is saved or copied 的本地化字符串。
+        /// </summary>
+        public static string AppearanceSetting_InfoWindowDurationDesc {
+            get {
+                return ResourceManager.GetString("AppearanceSetting_InfoWindowDurationDesc", resourceCulture);
+            }
+        }
     }
 }

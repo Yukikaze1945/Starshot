@@ -520,7 +520,7 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
             {
                 return;
             }
-            await Task.Delay(2000, cancellationToken);
+            await Task.Delay(AppConfig.InfoWindowDuration, cancellationToken);
             if (!cancellationToken.IsCancellationRequested)
             {
                 await HideWindowAsync(cancellationToken);
@@ -573,7 +573,7 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
             {
                 return;
             }
-            await Task.Delay(2000, cancellationToken);
+            await Task.Delay(AppConfig.InfoWindowDuration, cancellationToken);
             if (!cancellationToken.IsCancellationRequested)
             {
                 await HideWindowAsync(cancellationToken);

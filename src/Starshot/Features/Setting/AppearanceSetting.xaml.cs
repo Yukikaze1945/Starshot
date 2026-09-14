@@ -106,6 +106,23 @@ public sealed partial class AppearanceSetting : PageBase
         }
     } = AppConfig.EnableAccentFromWallpaper;
 
+    /// <summary>信息浮窗完成态停留时长（毫秒）</summary>
+    public double InfoWindowDuration
+    {
+        get;
+        set
+        {
+            if (!double.IsFinite(value))
+            {
+                return;
+            }
+            if (SetProperty(ref field, value))
+            {
+                AppConfig.InfoWindowDuration = (int)Math.Round(value);
+            }
+        }
+    } = AppConfig.InfoWindowDuration;
+
     public Visibility WallpaperRowVisibility =>
         AppConfig.WallpaperMode == 0 ? Visibility.Collapsed : Visibility.Visible;
 

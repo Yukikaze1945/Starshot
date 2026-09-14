@@ -1027,4 +1027,10 @@
   <data name="ScreenshotSetting_SdrWhiteLevelCurrent" xml:space="preserve">
     <value>Current display's SDR white: </value>
   </data>
+  <data name="AppearanceSetting_InfoWindowDuration" xml:space="preserve">
+    <value>Info window duration</value>
+  </data>
+  <data name="AppearanceSetting_InfoWindowDurationDesc" xml:space="preserve">
+    <value>How long the info window stays after a capture is saved or copied (milliseconds)</value>
+  </data>
 </root>

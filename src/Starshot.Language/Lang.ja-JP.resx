@@ -1027,4 +1027,10 @@
   <data name="ScreenshotSetting_SdrWhiteLevelCurrent" xml:space="preserve">
     <value>現在のディスプレイの SDR 白：</value>
   </data>
+  <data name="AppearanceSetting_InfoWindowDuration" xml:space="preserve">
+    <value>情報ウィンドウ表示時間</value>
+  </data>
+  <data name="AppearanceSetting_InfoWindowDurationDesc" xml:space="preserve">
+    <value>キャプチャの保存・コピー後に情報ウィンドウが表示される時間（ミリ秒）</value>
+  </data>
 </root>
