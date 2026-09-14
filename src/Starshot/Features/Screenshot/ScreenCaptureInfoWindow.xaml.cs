@@ -241,6 +241,11 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
             _isCopy = true;
             _captureImageCount++;
             _finishedImageCount++;
+            _logger.LogInformation(
+                "InfoWindow CaptureCopySuccess: total={Total}, finished={Finished}",
+                _captureImageCount,
+                _finishedImageCount
+            );
             CropImage(bitmap, GetDpiForMonitor(displayId), maxCLL);
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource = new CancellationTokenSource();
@@ -308,8 +313,20 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
                 TextBlock_CopyStatusDetail.Text = Lang.Starshot_InfoCopied;
             }
             ProgressRing_Process.Visibility = Visibility.Collapsed;
-            FontIcon_Complete.Visibility = Visibility.Collapsed;
-            TextBlock_Repeat.Visibility = Visibility.Collapsed;
+            // 与保存态同构：第二列显示完成勾；中性态（未识别到文字）非成功，不显示
+            FontIcon_Complete.Visibility = _noCopyStatus
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+            if (_captureImageCount > 1)
+            {
+                // 复制态也要显示任务进度（n/total），否则多任务时浮窗看不出又进了一个任务
+                TextBlock_Repeat.Visibility = Visibility.Visible;
+                TextBlock_Repeat.Text = $"{_finishedImageCount}/{_captureImageCount}";
+            }
+            else
+            {
+                TextBlock_Repeat.Visibility = Visibility.Collapsed;
+            }
             Button_OpenImage.Visibility = Visibility.Collapsed;
             StackPanel_CopyStatus.Visibility = Visibility.Visible;
             return;
@@ -324,6 +341,10 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
         {
             TextBlock_Repeat.Visibility = Visibility.Visible;
             TextBlock_Repeat.Text = $"{_finishedImageCount}/{_captureImageCount}";
+        }
+        else
+        {
+            TextBlock_Repeat.Visibility = Visibility.Collapsed;
         }
         Button_OpenImage.Visibility =
             IsSuccess && _finishedImageCount > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -583,6 +604,11 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
         StartHideAnimation();
         await Task.Delay(600, cancellationToken);
         AppWindow?.Hide();
+        _logger.LogInformation(
+            "InfoWindow counters reset (was total={Total}, finished={Finished})",
+            _captureImageCount,
+            _finishedImageCount
+        );
         _captureImageCount = 0;
         _finishedImageCount = 0;
         _lastFile = null;
