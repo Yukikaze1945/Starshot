@@ -77,11 +77,14 @@ public sealed partial class RegionCaptureWindow : WindowEx
     private bool _pendingMoveIn;
     private int _moveInTick;
 
-    // ProtectedCursor 要等指针输入才应用。显示后到第一次移动前直接设置系统光标，
-    // 不通过 WM_SETCURSOR、不注入鼠标输入，也不改动 WinUI 后续的光标管理。
-    private bool _cursorBootstrapPending;
-    private bool _cursorBootstrapApplied;
-    private POINT? _cursorBootstrapOrigin; // 独立于每帧更新的预览坐标，使用屏幕物理坐标
+    // 原生兜底覆盖进程内首次完成光标交接前的截图会话；真实物理移动后不再启用。
+    // 如果首次会话未发生物理移动就结束，后续会话仍可继续尝试。
+    // 所有入口共用此窗口类型；即使窗口销毁重建也不重复兜底（仅 UI 线程访问）。
+    // 后续会话完全由原有 ProtectedCursor 管理，不注入任何输入。
+    private static bool _firstCaptureCursorHandoffCompleted;
+    private bool _captureCursorActive;
+    private bool _captureCursorApplied;
+    private POINT? _captureCursorOrigin;
 
     // 单例：选区完成信号（替代 Closed），ScreenCaptureService await 它；窗口不 Close 只 Hide
     public TaskCompletionSource<bool> Completion { get; private set; }
@@ -205,9 +208,9 @@ public sealed partial class RegionCaptureWindow : WindowEx
         _positionOnClick = default;
         _isMouseDown = false;
         _pressedOnHover = false;
-        _cursorBootstrapPending = false;
-        _cursorBootstrapApplied = false;
-        _cursorBootstrapOrigin = null;
+        _captureCursorActive = false;
+        _captureCursorApplied = false;
+        _captureCursorOrigin = null;
         if (User32.GetCursorPos(out var initCursor))
         {
             _currentMousePos = new Point(
@@ -457,8 +460,9 @@ public sealed partial class RegionCaptureWindow : WindowEx
         if (_isClosed || _swapChain is null || _displayBitmap is null)
             return;
 
-        // 冷启动时可能一直没有 PointerMoved；首帧光标不能等该事件来启动。
-        ApplyBootstrapCursor();
+        // 首次会话真实移动前由原生光标兜底；移动后立即交回 ProtectedCursor。
+        if (_captureCursorActive)
+            ApplyCaptureCursor();
         _dashOffset = (float)_timer.Elapsed.TotalSeconds * -15;
 
         // 首帧锁定画布尺寸（_scale 构造时已按覆盖层窗口 DPI 设定）
@@ -779,19 +783,20 @@ public sealed partial class RegionCaptureWindow : WindowEx
     private void Canvas_PointerMoved(object sender, PointerRoutedEventArgs e)
     {
         var pos = e.GetCurrentPoint(Canvas).Position;
-        if (_cursorBootstrapPending && User32.GetCursorPos(out var cursorPosition))
+        if (_captureCursorActive && User32.GetCursorPos(out var cursorPosition))
         {
-            // 预览每帧同步坐标，不能再拿它当“上一次输入位置”。
-            // 对比本会话显示时的物理坐标，也避免激活时的旧事件坐标提前结束桥接。
-            if (
-                _cursorBootstrapOrigin is POINT origin
-                && (cursorPosition.x != origin.x || cursorPosition.y != origin.y)
+            if (_captureCursorOrigin is null)
+            {
+                _captureCursorOrigin = cursorPosition;
+            }
+            else if (
+                (cursorPosition.x != _captureCursorOrigin.Value.x)
+                || (cursorPosition.y != _captureCursorOrigin.Value.y)
             )
             {
-                _cursorBootstrapPending = false;
-                Serilog.Log.Debug("Region cursor bootstrap handed off after pointer movement");
+                _captureCursorActive = false;
+                _firstCaptureCursorHandoffCompleted = true;
             }
-            _cursorBootstrapOrigin ??= cursorPosition;
         }
         _currentMousePos = pos;
 
@@ -885,7 +890,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
             }
             catch { }
         }
-        ReleaseBootstrapCursor();
+        ReleaseCaptureCursor();
         _isClosed = true;
         _pendingMoveIn = false;
         // 不 Hide：移到屏外保持 IsWindowVisible，合成管线不停摆，
@@ -943,11 +948,13 @@ public sealed partial class RegionCaptureWindow : WindowEx
             User32.SetWindowPosFlags.SWP_NOZORDER
         );
         Activate();
-        _cursorBootstrapOrigin = User32.GetCursorPos(out var cursorPosition)
+        // 首次完成交接前持续兜底；只有本次会话真正发生物理移动后，后续会话才永久停用。
+        _captureCursorActive = !_firstCaptureCursorHandoffCompleted;
+        _captureCursorOrigin = User32.GetCursorPos(out var cursorPosition)
             ? cursorPosition
             : null;
-        _cursorBootstrapPending = true;
-        ApplyBootstrapCursor();
+        if (_captureCursorActive)
+            ApplyCaptureCursor();
     }
 
     private bool IsPointerOverCaptureWindow()
@@ -960,45 +967,42 @@ public sealed partial class RegionCaptureWindow : WindowEx
         return target == WindowHandle || User32.IsChild(WindowHandle, target);
     }
 
-    private void ApplyBootstrapCursor()
+    private void ApplyCaptureCursor()
     {
         if (
-            !_cursorBootstrapPending
+            !_captureCursorActive
             || _isClosed
             || IsDestroyed
             || _pendingMoveIn
-            || User32.GetForegroundWindow() != WindowHandle
             || !IsPointerOverCaptureWindow()
         )
             return;
 
-        // 直接改变当前 Win32 光标状态，不依赖 WinUI 的首次输入初始化。
-        // 用已有渲染节拍覆盖激活期间的默认光标回写；第一次移动后不再介入。
-        // LoadCursor 加载的是共享系统资源，不创建/销毁自定义 HCURSOR。
+        // 只有首次会话仍未完成真实移动交接时才进入这里；交接后及后续会话由 ProtectedCursor 管理。
+        // LoadCursor 是共享系统资源，不创建/销毁自定义 HCURSOR。
         var cursor = User32.LoadCursor(IntPtr.Zero, User32.IDC_CROSS);
         if (cursor.IsNull)
             return;
         var previous = User32.SetCursor(cursor);
-        if (!_cursorBootstrapApplied)
+        if (!_captureCursorApplied)
         {
-            _cursorBootstrapApplied = true;
+            _captureCursorApplied = true;
             Serilog.Log.Debug(
-                "Region cursor bootstrap applied before pointer movement: previous={Previous}, cross={Cross}",
+                "Region cursor guard started: previous={Previous}, cross={Cross}",
                 previous,
                 cursor
             );
         }
     }
 
-    private void ReleaseBootstrapCursor()
+    private void ReleaseCaptureCursor()
     {
-        _cursorBootstrapPending = false;
-        // 仅收回本会话设置的光标，不清 ProtectedCursor，避免重设不生效的已知问题。
-        // 失焦或指针已在其他窗口时不改它们的光标；这是桥接的清理，并非全面修复泄漏。
+        _captureCursorActive = false;
+        // 先停维持，再清理本会话的原生光标；不清/重设 ProtectedCursor。
+        // 使用同样的鼠标命中边界，即使焦点变化也配对清理；不改其他窗口下的光标。
         if (
-            _cursorBootstrapApplied
+            _captureCursorApplied
             && !IsDestroyed
-            && User32.GetForegroundWindow() == WindowHandle
             && IsPointerOverCaptureWindow()
         )
         {
@@ -1006,7 +1010,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
             if (!arrow.IsNull)
                 User32.SetCursor(arrow);
         }
-        _cursorBootstrapApplied = false;
+        _captureCursorApplied = false;
     }
 
     // 从 _displayBitmap 裁出选区为 B8G8R8A8 SDR（CF_DIB 要 BGRA）
@@ -1055,7 +1059,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         if (_cleanedUp)
             return;
         _cleanedUp = true;
-        ReleaseBootstrapCursor();
+        ReleaseCaptureCursor();
         _pendingMoveIn = false;
         _isClosed = true;
         try
