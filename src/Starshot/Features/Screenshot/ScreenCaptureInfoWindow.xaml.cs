@@ -381,18 +381,19 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
         ICanvasImage output = scaleEffect;
         if (bitmap.Format is DirectXPixelFormat.R16G16B16A16Float)
         {
+            float sdrWhite = AppConfig.SdrWhiteLevel;
             HdrToneMapEffect toneMapEffect = new()
             {
                 Source = scaleEffect,
                 InputMaxLuminance = maxCLL,
-                OutputMaxLuminance = 300,
+                OutputMaxLuminance = sdrWhite,
                 DisplayMode = HdrToneMapEffectDisplayMode.Hdr,
             };
             WhiteLevelAdjustmentEffect whiteLevelEffect = new()
             {
                 Source = toneMapEffect,
                 InputWhiteLevel = 80,
-                OutputWhiteLevel = 300,
+                OutputWhiteLevel = sdrWhite,
             };
             GammaTransferEffect gammaEffect = new()
             {

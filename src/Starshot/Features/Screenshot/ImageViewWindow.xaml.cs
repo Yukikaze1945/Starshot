@@ -1261,7 +1261,7 @@ public sealed partial class ImageViewWindow : Window
                 DrawImage();
             }
         }
-    } = 300;
+    } = AppConfig.SdrWhiteLevel;
 
     public ICanvasImage GetDrawOutput(out int displayMode)
     {

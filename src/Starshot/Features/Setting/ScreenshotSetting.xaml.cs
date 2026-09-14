@@ -1,7 +1,9 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using Starshot.Features.Screenshot;
 using Starshot.Frameworks;
 using Starshot.Helpers;
@@ -134,9 +136,60 @@ public sealed partial class ScreenshotSetting : PageBase
         }
     } = AppConfig.ScreenshotCaptureMonitorSource;
 
+    /// <summary>
+    /// 自定义 SDR 白基准：开 = 用输入框值覆写全应用色调映射目标白；关（默认）= 跟随显示器。
+    /// </summary>
+    public bool SdrWhiteLevelCustomize
+    {
+        get;
+        set
+        {
+            if (SetProperty(ref field, value))
+            {
+                AppConfig.SdrWhiteLevelOverride = value ? (int)Math.Round(SdrWhiteLevelValue) : 0;
+            }
+        }
+    } = AppConfig.SdrWhiteLevelOverride > 0;
+
+    /// <summary>SDR 白基准输入框值（nit）。仅自定义开启时写入配置；未覆写时默认 250。</summary>
+    public double SdrWhiteLevelValue
+    {
+        get;
+        set
+        {
+            if (!double.IsFinite(value))
+            {
+                return;
+            }
+            if (SetProperty(ref field, value))
+            {
+                if (SdrWhiteLevelCustomize)
+                {
+                    AppConfig.SdrWhiteLevelOverride = (int)Math.Round(value);
+                }
+            }
+        }
+    } = AppConfig.SdrWhiteLevelOverride > 0
+        ? AppConfig.SdrWhiteLevelOverride
+        : 250;
+
     public ScreenshotSetting()
     {
         InitializeComponent();
+        // Run 不在可视化树，x:Bind 不可靠，代码组 Inline；数字绿色区分正文
+        TextBlock_DisplaySdrWhite.Inlines.Add(
+            new Run { Text = Lang.ScreenshotSetting_SdrWhiteLevelCurrent }
+        );
+        TextBlock_DisplaySdrWhite.Inlines.Add(
+            new Run
+            {
+                // 当前显示器的 SDR 白（不受覆写影响），无 HDR 屏时为 fallback 250
+                Text =
+                    $"{AppConfig.GetSdrWhiteLevelFromDisplays(DisplayArea.FindAll())} nit",
+                Foreground = (Microsoft.UI.Xaml.Media.Brush)
+                    Application.Current.Resources["SystemFillColorSuccessBrush"],
+            }
+        );
     }
 
     private async void Button_OcrEngineConfig_Click(object sender, RoutedEventArgs e)

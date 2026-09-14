@@ -2728,5 +2728,41 @@
                 return ResourceManager.GetString("Starshot_WelcomeWallpaperTitle", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   查找类似 SDR White Level 的本地化字符串。
+        /// </summary>
+        public static string ScreenshotSetting_SdrWhiteLevel {
+            get {
+                return ResourceManager.GetString("ScreenshotSetting_SdrWhiteLevel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Customize 的本地化字符串。
+        /// </summary>
+        public static string ScreenshotSetting_SdrWhiteLevelCustomize {
+            get {
+                return ResourceManager.GetString("ScreenshotSetting_SdrWhiteLevelCustomize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Target white (nits) for tone mapping. 的本地化字符串。
+        /// </summary>
+        public static string ScreenshotSetting_SdrWhiteLevelDesc {
+            get {
+                return ResourceManager.GetString("ScreenshotSetting_SdrWhiteLevelDesc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Current display's SDR white: 的本地化字符串。
+        /// </summary>
+        public static string ScreenshotSetting_SdrWhiteLevelCurrent {
+            get {
+                return ResourceManager.GetString("ScreenshotSetting_SdrWhiteLevelCurrent", resourceCulture);
+            }
+        }
     }
 }

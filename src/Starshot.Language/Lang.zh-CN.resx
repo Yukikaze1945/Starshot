@@ -1015,4 +1015,16 @@
   <data name="Starshot_TurnOffPriorityFirst" xml:space="preserve">
     <value>← 如要调节此选项，请关闭高优先级启动</value>
   </data>
+  <data name="ScreenshotSetting_SdrWhiteLevel" xml:space="preserve">
+    <value>SDR 白基准</value>
+  </data>
+  <data name="ScreenshotSetting_SdrWhiteLevelCustomize" xml:space="preserve">
+    <value>自定义</value>
+  </data>
+  <data name="ScreenshotSetting_SdrWhiteLevelDesc" xml:space="preserve">
+    <value>色调映射的目标白（nit）。默认跟随显示器的 SDR 白设置（无 HDR 显示器时为 250），影响浮窗缩略图、Ultra HDR 基图与查看器 SDR 亮度默认值。</value>
+  </data>
+  <data name="ScreenshotSetting_SdrWhiteLevelCurrent" xml:space="preserve">
+    <value>当前显示器的 SDR 白：</value>
+  </data>
 </root>

@@ -319,7 +319,7 @@ internal class ScreenCaptureService
                 : DirectXPixelFormat.R8G8B8A8UIntNormalized;
 
             // SDR 白电平（HDR 屏的 SdrWhiteLevelInNits）：SDR 屏帧提亮 + 下游覆盖层/保存 tonemap 共用
-            float sdrWhiteLevel = anyHDR ? GetSdrWhiteLevelFromDisplays(displays) : 80;
+            float sdrWhiteLevel = anyHDR ? AppConfig.GetSdrWhiteLevelFromDisplays(displays) : 80;
 
             // 并行捕获所有显示器（同时启动所有 GraphicsCaptureSession，等全部帧到达）
             var device = CanvasDevice.GetSharedDevice();
@@ -948,28 +948,6 @@ internal class ScreenCaptureService
             ds.DrawImage(src);
         }
         return rt;
-    }
-
-    private static float GetSdrWhiteLevelFromDisplays(IReadOnlyList<DisplayArea> displays)
-    {
-        for (int i = 0; i < displays.Count; i++)
-        {
-            using var di = DisplayInformation.CreateForDisplayId(displays[i].DisplayId);
-            var info = di.GetAdvancedColorInfo();
-            if (info.CurrentAdvancedColorKind is DisplayAdvancedColorKind.HighDynamicRange)
-            {
-                return (float)info.SdrWhiteLevelInNits;
-            }
-        }
-        return 80;
-    }
-
-    /// <summary>
-    /// 当前环境的 SDR 白电平（HDR 屏的 SdrWhiteLevelInNits，无 HDR 屏则 80）。批量转换 tonemap 用，与截图线同源。
-    /// </summary>
-    public static float GetSdrWhiteLevel()
-    {
-        return GetSdrWhiteLevelFromDisplays(DisplayArea.FindAll());
     }
 
     private static string GetProcessNameFromWindowHandle(nint hwnd)

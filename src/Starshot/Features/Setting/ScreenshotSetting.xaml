@@ -94,6 +94,40 @@
         OnContent="{x:Bind lang:Lang.ScreenshotSetting_AutoCopyScreenshotFile}"
       />
 
+      <!--  SDR 白基准  -->
+      <StackPanel Spacing="6">
+        <TextBlock FontSize="20" Text="{x:Bind lang:Lang.ScreenshotSetting_SdrWhiteLevel}" />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.ScreenshotSetting_SdrWhiteLevelDesc}"
+          TextWrapping="Wrap"
+        />
+        <TextBlock
+          x:Name="TextBlock_DisplaySdrWhite"
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          TextWrapping="Wrap"
+        />
+        <StackPanel Orientation="Horizontal">
+          <ToggleSwitch
+            IsOn="{x:Bind SdrWhiteLevelCustomize, Mode=TwoWay}"
+            OffContent="{x:Bind lang:Lang.ScreenshotSetting_SdrWhiteLevelCustomize}"
+            OnContent="{x:Bind lang:Lang.ScreenshotSetting_SdrWhiteLevelCustomize}"
+          />
+          <NumberBox
+            Width="150"
+            VerticalAlignment="Center"
+            IsEnabled="{x:Bind SdrWhiteLevelCustomize}"
+            Maximum="1000"
+            Minimum="80"
+            SmallChange="10"
+            SpinButtonPlacementMode="Compact"
+            Value="{x:Bind SdrWhiteLevelValue, Mode=TwoWay}"
+          />
+        </StackPanel>
+      </StackPanel>
+
       <!--  捕获显示器  -->
       <StackPanel Spacing="12">
         <TextBlock FontSize="20" Text="{x:Bind lang:Lang.Starshot_MonitorSource}" />

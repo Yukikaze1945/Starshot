@@ -608,6 +608,16 @@ public static partial class AppConfig
     }
 
     /// <summary>
+    /// SDR 白基准覆写（nit）：>0 = 全应用色调映射目标白用此固定值；
+    /// 0（默认）= 跟随环境 HDR 显示器（SdrWhiteLevelInNits，无 HDR 屏回退 250）。
+    /// </summary>
+    public static int SdrWhiteLevelOverride
+    {
+        get => GetValue(0);
+        set => SetValue(value);
+    }
+
+    /// <summary>
     /// 截图文件名模板。占位符：{process} {processPath} {title} {timestamp} {time} {date} {width} {height} {year} {month} {day} {hour} {minute} {second}
     /// </summary>
     public static string ScreenshotFileNamePattern

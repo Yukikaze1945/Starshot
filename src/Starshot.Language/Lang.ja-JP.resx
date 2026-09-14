@@ -1015,4 +1015,16 @@
   <data name="Starshot_TurnOffPriorityFirst" xml:space="preserve">
     <value>← このオプションを変更するには、先に高優先起動をオフにしてください</value>
   </data>
+  <data name="ScreenshotSetting_SdrWhiteLevel" xml:space="preserve">
+    <value>SDR 基準白</value>
+  </data>
+  <data name="ScreenshotSetting_SdrWhiteLevelCustomize" xml:space="preserve">
+    <value>カスタマイズ</value>
+  </data>
+  <data name="ScreenshotSetting_SdrWhiteLevelDesc" xml:space="preserve">
+    <value>トーンマッピングの基準白（nit）。既定ではディスプレイの SDR 白設定に追従（HDR ディスプレイがない場合は 250）。情報ウィンドウのサムネイル、Ultra HDR ベース画像、ビューアーの SDR 輝度既定値に適用されます。</value>
+  </data>
+  <data name="ScreenshotSetting_SdrWhiteLevelCurrent" xml:space="preserve">
+    <value>現在のディスプレイの SDR 白：</value>
+  </data>
 </root>

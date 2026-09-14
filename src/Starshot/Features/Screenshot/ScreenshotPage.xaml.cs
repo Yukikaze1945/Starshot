@@ -554,7 +554,7 @@ public sealed partial class ScreenshotPage : PageBase
                     {
                         tonemapped = ScreenCaptureService.TonemapToSdr(
                             bitmap,
-                            ScreenCaptureService.GetSdrWhiteLevel()
+                            AppConfig.SdrWhiteLevel
                         );
                         source = tonemapped;
                     }

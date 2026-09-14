@@ -676,7 +676,7 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         {
             rt8 = ScreenCaptureService.TonemapToSdr(
                 imageInfo.CanvasBitmap,
-                ScreenCaptureService.GetSdrWhiteLevel()
+                AppConfig.SdrWhiteLevel
             );
         }
         else
@@ -826,8 +826,8 @@ public sealed partial class ImageBatchConvertWindow : PageBase
             .GetContentLightLevels(imageInfo.CanvasBitmap)
             .MaxCLL;
         using var ms = new MemoryStream();
-        // SDR 白 300 nits：与查看器导出 Ultra HDR 的默认显示亮度一致（SDRLuminance 默认值）
-        await ImageSaver.SaveAsUhdrAsync(imageInfo.CanvasBitmap, ms, maxCLL, 300);
+        // SDR 白用 AppConfig 统一定义（与截图回退、查看器默认值同源）
+        await ImageSaver.SaveAsUhdrAsync(imageInfo.CanvasBitmap, ms, maxCLL, AppConfig.SdrWhiteLevel);
         using var fs = File.Create(outputPath);
         ms.Position = 0;
         await ms.CopyToAsync(fs, CancellationToken.None);

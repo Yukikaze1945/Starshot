@@ -1015,4 +1015,16 @@
   <data name="Starshot_TurnOffPriorityFirst" xml:space="preserve">
     <value>← To change this option, turn off high priority start first</value>
   </data>
+  <data name="ScreenshotSetting_SdrWhiteLevel" xml:space="preserve">
+    <value>SDR White Level</value>
+  </data>
+  <data name="ScreenshotSetting_SdrWhiteLevelCustomize" xml:space="preserve">
+    <value>Customize</value>
+  </data>
+  <data name="ScreenshotSetting_SdrWhiteLevelDesc" xml:space="preserve">
+    <value>Target white (nits) for tone mapping. Defaults to the display's SDR white setting (250 if no HDR display); applies to the info window thumbnail, Ultra HDR base image, and viewer SDR luminance default.</value>
+  </data>
+  <data name="ScreenshotSetting_SdrWhiteLevelCurrent" xml:space="preserve">
+    <value>Current display's SDR white: </value>
+  </data>
 </root>

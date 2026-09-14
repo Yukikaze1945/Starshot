@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Graphics.Display;
+using Microsoft.UI.Windowing;
 using Starshot.Features.ViewHost;
 using Starshot.Helpers;
 
@@ -18,6 +21,31 @@ public static partial class AppConfig
     public static string UserDataFolder { get; private set; }
 
     public static string LogFile { get; internal set; }
+
+    /// <summary>
+    /// 全应用统一的 SDR 白基准（nit）：色调映射的目标白。
+    /// SdrWhiteLevelOverride >0 时用覆写值；否则跟随环境 HDR 显示器的 SdrWhiteLevelInNits
+    /// （无 HDR 屏回退 250）。浮窗缩略图、Ultra HDR 基图、查看器 SDR 亮度默认值共用。
+    /// </summary>
+    public static float SdrWhiteLevel =>
+        SdrWhiteLevelOverride > 0
+            ? SdrWhiteLevelOverride
+            : GetSdrWhiteLevelFromDisplays(DisplayArea.FindAll());
+
+    internal static float GetSdrWhiteLevelFromDisplays(IReadOnlyList<DisplayArea> displays)
+    {
+        // 索引访问而非 foreach：DisplayArea.FindAll() 的投影列表走 GetEnumerator 枚举会 QI 失败抛 InvalidCastException
+        for (int i = 0; i < displays.Count; i++)
+        {
+            using var di = DisplayInformation.CreateForDisplayId(displays[i].DisplayId);
+            var info = di.GetAdvancedColorInfo();
+            if (info.CurrentAdvancedColorKind is DisplayAdvancedColorKind.HighDynamicRange)
+            {
+                return (float)info.SdrWhiteLevelInNits;
+            }
+        }
+        return 250f;
+    }
 
     /// <summary>日志文件名：Starshot_{版本}_{yyMMdd}.log。AppVersion 已设用缓存，否则读 assembly 兜底（启动早期崩溃时 AppVersion 还没赋值）。</summary>
     internal static string BuildLogFileName()
