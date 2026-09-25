@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -41,10 +42,23 @@ internal static class ImageSaver
         }
     }
 
+    // WICJpegYCrCbSubsamplingOption（Windows SDK wincodec.h）
+    private const byte JpegSubsampling420 = 1;
+    private const byte JpegSubsampling444 = 3;
+
+    /// <summary>libultrahdr 自带编码器的默认质量：kBaseCompressQualityDefault / kMapCompressQualityDefault。</summary>
+    private const int UhdrJpegQuality = 95;
+
     /// <summary>
     /// 8bit 位图存普通 JPEG（WIC，quality 0-100）。输入需已 SDR（HDR 先过 tonemap）。
+    /// subsampling 取 WICJpegYCrCbSubsamplingOption：1=4:2:0、2=4:2:2、3=4:4:4。
     /// </summary>
-    public static async Task SaveAsJpegAsync(CanvasBitmap bitmap, Stream stream, int quality)
+    public static async Task SaveAsJpegAsync(
+        CanvasBitmap bitmap,
+        Stream stream,
+        int quality,
+        byte subsampling = JpegSubsampling444
+    )
     {
         if (
             bitmap.Format
@@ -69,7 +83,7 @@ internal static class ImageSaver
         );
         options.Add(
             "JpegYCrCbSubsampling",
-            new BitmapTypedValue(3, Windows.Foundation.PropertyType.UInt8)
+            new BitmapTypedValue(subsampling, Windows.Foundation.PropertyType.UInt8)
         );
         var encoder = await BitmapEncoder.CreateAsync(
             BitmapEncoder.JpegEncoderId,
@@ -760,31 +774,75 @@ internal static class ImageSaver
         if (canvasImage.Format is DirectXPixelFormat.R16G16B16A16Float)
         {
             await Task.Delay(1).ConfigureAwait(false);
-            using HdrToneMapEffect toneMapEffect = new()
+            // 先换色域并把超域颜色压回工作色域，再做任何截断：scRGB 的广色域颜色本来就靠负通道表达，
+            // 负通道一旦被截成 0，逐通道增益再也乘不回来（增益只能放大，不能翻负）。
+            using UhdrWorkingGamutEffect workingEffect = new()
             {
                 Source = canvasImage,
+                BufferPrecision = CanvasBufferPrecision.Precision16Float,
+            };
+            using HdrToneMapEffect toneMapEffect = new()
+            {
+                Source = workingEffect,
                 InputMaxLuminance = maxCLL,
                 OutputMaxLuminance = sdrWhiteLevel,
                 DisplayMode = HdrToneMapEffectDisplayMode.Hdr,
                 BufferPrecision = CanvasBufferPrecision.Precision16Float,
             };
-            using WhiteLevelAdjustmentEffect whiteLevelEffect = new()
+            using WhiteLevelAdjustmentEffect sdrLinearEffect = new()
             {
                 Source = toneMapEffect,
                 InputWhiteLevel = 80,
                 OutputWhiteLevel = sdrWhiteLevel,
                 BufferPrecision = CanvasBufferPrecision.Precision16Float,
             };
+            // base 走的是 toneMap → 白电平 → OETF → 8bit → JPEG，libultrahdr 解码后对它做 srgbInvOetf
+            // 才拿来乘增益。所以增益的分母只能是"已经落到 8bit 的那个值"，不能是上面任何一级浮点：
+            // 分母比实际 base 小的通道（被 255 截断的高光）算出来的增益 ≈ 1，base 丢掉的余量就永久丢了。
             using SrgbGammaEffect gammaEffect = new()
             {
-                Source = whiteLevelEffect,
+                Source = sdrLinearEffect,
                 GammaMode = SrgbGammaMode.OETF,
+                BufferPrecision = CanvasBufferPrecision.Precision16Float,
+            };
+
+            // 分子必须和分母用同一个参考白：base 存的是「1.0 = 该显示器的 SDR 白」，
+            // 而 scRGB 的 1.0 恒等于 80nits。少这一步，SDR 白不是 80nits 时整张图会被重建得
+            // 亮 sdrWhiteLevel/80 倍（320nits 下实测 4 倍，灰阶误差 300%）。
+            using WhiteLevelAdjustmentEffect hdrNormalizedEffect = new()
+            {
+                Source = workingEffect,
+                InputWhiteLevel = 80,
+                OutputWhiteLevel = sdrWhiteLevel,
+                BufferPrecision = CanvasBufferPrecision.Precision16Float,
+            };
+
+            using CanvasRenderTarget renderTarget_sdr = new(
+                CanvasDevice.GetSharedDevice(),
+                canvasImage.SizeInPixels.Width,
+                canvasImage.SizeInPixels.Height,
+                96,
+                DirectXPixelFormat.R8G8B8A8UIntNormalized,
+                CanvasAlphaMode.Premultiplied
+            );
+            using (CanvasDrawingSession ds = renderTarget_sdr.CreateDrawingSession())
+            {
+                ds.Units = CanvasUnits.Pixels;
+                ds.Clear(Colors.Transparent);
+                ds.DrawImage(gammaEffect);
+            }
+
+            using SrgbGammaEffect storedLinearEffect = new()
+            {
+                Source = renderTarget_sdr,
+                GammaMode = SrgbGammaMode.EOTF,
                 BufferPrecision = CanvasBufferPrecision.Precision16Float,
             };
             using UhdrPixelGainEffect uhdrPixelGainEffect = new()
             {
-                SdrSource = toneMapEffect,
-                HdrSource = canvasImage,
+                SdrSource = storedLinearEffect,
+                HdrSource = hdrNormalizedEffect,
+                BufferPrecision = CanvasBufferPrecision.Precision16Float,
             };
 
             using CanvasRenderTarget renderTarget_gain = new(
@@ -825,34 +883,27 @@ internal static class ImageSaver
                 ds.DrawImage(uhdrGainmapEffect);
             }
 
-            using CanvasRenderTarget renderTarget_sdr = new(
-                CanvasDevice.GetSharedDevice(),
-                canvasImage.SizeInPixels.Width,
-                canvasImage.SizeInPixels.Height,
-                96,
-                DirectXPixelFormat.R8G8B8A8UIntNormalized,
-                CanvasAlphaMode.Premultiplied
-            );
-            using (CanvasDrawingSession ds = renderTarget_sdr.CreateDrawingSession())
-            {
-                ds.Units = CanvasUnits.Pixels;
-                ds.Clear(Colors.Transparent);
-                ds.DrawImage(gammaEffect);
-            }
-
             using MemoryStream ms_base = new();
             using MemoryStream ms_gainmap = new();
-            await renderTarget_sdr.SaveAsync(
-                ms_base.AsRandomAccessStream(),
-                CanvasBitmapFileFormat.Jpeg
+            // base 走 4:2:0（Ultra HDR 基图惯例，与 libultrahdr 自带编码器一致）；
+            // gain map 走 4:4:4，因为它是逐通道增益，4:2:0 会让增益在色边互相渗透。
+            await SaveAsJpegAsync(
+                renderTarget_sdr,
+                ms_base,
+                UhdrJpegQuality,
+                JpegSubsampling420
             );
-            await renderTarget_gainmap.SaveAsync(
-                ms_gainmap.AsRandomAccessStream(),
-                CanvasBitmapFileFormat.Jpeg
+            await SaveAsJpegAsync(
+                renderTarget_gainmap,
+                ms_gainmap,
+                UhdrJpegQuality,
+                JpegSubsampling444
             );
 
-            byte[] baseArray = ms_base.ToArray();
-            byte[] gainArray = ms_gainmap.ToArray();
+            // base 只有在没有 ICC 时才会被 libultrahdr 按声明色域补一份 ICC；
+            // gain map 带 ICC 会被当成增益自身所在色域，use_base_cg=1 下再乘一道转换就把增益压灰。
+            byte[] baseArray = RemoveJpegIccSegments(ms_base.ToArray());
+            byte[] gainArray = RemoveJpegIccSegments(ms_gainmap.ToArray());
 
             using var encoder = new UhdrEncoder();
             unsafe
@@ -867,7 +918,7 @@ internal static class ImageSaver
                         Data = (nint)b,
                         DataSize = (uint)baseArray.Length,
                         Capacity = (uint)baseArray.Length,
-                        ColorGamut = UhdrColorGamut.BT709,
+                        ColorGamut = UhdrColor.WorkingColorGamut,
                         ColorRange = UhdrColorRange.FullRange,
                         ColorTransfer = UhdrColorTransfer.SRGB,
                     };
@@ -876,7 +927,8 @@ internal static class ImageSaver
                         Data = (nint)g,
                         DataSize = (uint)gainArray.Length,
                         Capacity = (uint)gainArray.Length,
-                        ColorGamut = UhdrColorGamut.BT709,
+                        // 增益本身没有色域，声明成 base 色域是为了让 libultrahdr 走恒等转换
+                        ColorGamut = UhdrColor.WorkingColorGamut,
                         ColorRange = UhdrColorRange.FullRange,
                         ColorTransfer = UhdrColorTransfer.SRGB,
                     };
@@ -884,13 +936,15 @@ internal static class ImageSaver
                     UhdrGainmapMetadata metadata = new UhdrGainmapMetadata
                     {
                         Gamma = new FixedArray3<float>(1),
-                        OffsetSdr = new FixedArray3<float>(0.015625f),
-                        OffsetHdr = new FixedArray3<float>(0.015625f),
+                        OffsetSdr = new FixedArray3<float>(UhdrColor.GainOffset),
+                        OffsetHdr = new FixedArray3<float>(UhdrColor.GainOffset),
                         HdrCapacityMin = 1,
                         HdrCapacityMax = MathF.Max(
                             MathF.Max(contentBoost[3], contentBoost[4]),
                             MathF.Max(contentBoost[5], 1)
                         ),
+                        // use_base_cg≠0：base 不做色域转换，增益按 base 色域表达（jpegr.cpp applyGainMap）。
+                        // 我们的 gain 正是拿 base 的线性信号当分母算的，故为 1。
                         UseBaseColorSpace = 1,
                     };
                     metadata.MinContentBoost[0] = contentBoost[0];
@@ -905,6 +959,51 @@ internal static class ImageSaver
             encoder.Encode();
             stream.Write(encoder.GetEncodedBytes());
         }
+    }
+
+    /// <summary>
+    /// 剥掉 JPEG 头里的 ICC 段（APP2 + "ICC_PROFILE\0"，可分多段）。SOS 之后的熵编码数据原样拷走。
+    /// 没找到 ICC 时返回等价字节流。
+    /// </summary>
+    private static byte[] RemoveJpegIccSegments(byte[] jpeg)
+    {
+        using var result = new MemoryStream(jpeg.Length);
+        if (jpeg.Length < 2 || jpeg[0] is not 0xFF || jpeg[1] is not 0xD8)
+        {
+            return jpeg;
+        }
+        result.Write(jpeg, 0, 2);
+        int pos = 2;
+        while (pos + 3 < jpeg.Length && jpeg[pos] is 0xFF)
+        {
+            byte marker = jpeg[pos + 1];
+            int segmentLength = BinaryPrimitives.ReadUInt16BigEndian(jpeg.AsSpan(pos + 2)) + 2;
+            if (marker is 0xFF)
+            {
+                pos++;
+                continue;
+            }
+            if (segmentLength > jpeg.Length - pos)
+            {
+                break;
+            }
+            bool isIcc =
+                marker is 0xE2
+                && segmentLength >= 16
+                && jpeg.AsSpan(pos + 4, 12).SequenceEqual("ICC_PROFILE\0"u8);
+            if (!isIcc)
+            {
+                result.Write(jpeg, pos, segmentLength);
+            }
+            pos += segmentLength;
+            if (marker is 0xDA)
+            {
+                result.Write(jpeg, pos, jpeg.Length - pos);
+                return result.ToArray();
+            }
+        }
+        result.Write(jpeg, pos, jpeg.Length - pos);
+        return result.ToArray();
     }
 
     /// <summary>

@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Ultra HDR 色彩管线的可复现测试：直接编进 app 源码里的 ImageSaver / UhdrColor / UhdrGainmapEffect，
+       测的是真管线（GPU effect graph + libultrahdr 编解码），不是复刻一份实现。 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>UhdrColorTest</RootNamespace>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>CA1416;CS0108;CS8600;CS8603;CS8618;CS9264;IL2026;IL2087;MVVMTK0049;MVVMTK0050;WMC1506</NoWarn>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <CsWinRTAotOptimizerEnabled>false</CsWinRTAotOptimizerEnabled>
+    <CETCompat>false</CETCompat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\Starshot\Features\Codec\HDR10GammaEffect.cs" Link="HDR10GammaEffect.cs" />
+    <Compile Include="..\..\src\Starshot\Features\Codec\ImageSaver.cs" Link="ImageSaver.cs" />
+    <Compile Include="..\..\src\Starshot\Features\Codec\SrgbGammaEffect.cs" Link="SrgbGammaEffect.cs" />
+    <Compile Include="..\..\src\Starshot\Features\Codec\UhdrColor.cs" Link="UhdrColor.cs" />
+    <Compile Include="..\..\src\Starshot\Features\Codec\UhdrGainmapEffect.cs" Link="UhdrGainmapEffect.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ComputeSharp.D2D1.WinUI" Version="3.2.0" />
+    <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.3.2" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260529003" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.8249" />
+    <PackageReference Include="Starward.Codec" Version="0.5.2" />
+    <PackageReference Include="Starward.Win2D" Version="1.3.2-release.1" />
+  </ItemGroup>
+</Project>
