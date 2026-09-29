@@ -112,6 +112,57 @@ public sealed partial class ScreenshotSetting : PageBase
         }
     } = AppConfig.DeleteHDRIfSDRContent;
 
+    public bool UhdrCapacityManual
+    {
+        get;
+        set
+        {
+            if (SetProperty(ref field, value))
+                AppConfig.UhdrCapacityManual = value;
+        }
+    } = AppConfig.UhdrCapacityManual;
+
+    public double UhdrCapacityValue
+    {
+        get;
+        set
+        {
+            if (!double.IsFinite(value)) return;
+            value = Math.Clamp(value, 2, 32);
+            if (SetProperty(ref field, value))
+            {
+                AppConfig.UhdrCapacityValue = value;
+                OnPropertyChanged(nameof(UhdrCapacityStops));
+                OnPropertyChanged(nameof(UhdrCapacityLabel));
+            }
+        }
+    } = AppConfig.UhdrCapacityValue;
+
+    public double UhdrCapacityStops
+    {
+        get => Math.Log2(UhdrCapacityValue);
+        set
+        {
+            // Ignore feedback from the slider snapping a typed multiplier to its nearest step.
+            if (Math.Abs(value - Math.Log2(UhdrCapacityValue)) > 0.005001)
+                UhdrCapacityValue = Math.Round(Math.Pow(2, value), 2);
+        }
+    }
+
+    public string UhdrCapacityLabel => $"{UhdrCapacityValue:0.##}×";
+
+    private void UhdrCapacityPreset_Click(object sender, RoutedEventArgs e)
+    {
+        string preset = (string)((Button)sender).Tag;
+        if (preset == "Auto")
+        {
+            UhdrCapacityManual = false;
+            return;
+        }
+        UhdrCapacityValue = double.Parse(preset, System.Globalization.CultureInfo.InvariantCulture);
+        UhdrCapacityManual = true;
+    }
+
     public bool AutoCopyScreenshotToClipboard
     {
         get;
@@ -195,6 +246,12 @@ public sealed partial class ScreenshotSetting : PageBase
     private async void Button_OcrEngineConfig_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OcrEngineDialog { XamlRoot = this.XamlRoot };
+        await dialog.ShowAsync();
+    }
+
+    private async void Button_TranslationConfig_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new TranslationSettingsDialog(this.XamlRoot);
         await dialog.ShowAsync();
     }
 }

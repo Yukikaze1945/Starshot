@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -232,6 +233,7 @@ public sealed partial class OcrEngineDialog : ContentDialog
 
     private async void Button_FromCdn_Click(object sender, RoutedEventArgs e)
     {
+        string stagingDir = Path.Combine(Path.GetTempPath(), $"Starshot-OneOCR-{Guid.NewGuid():N}");
         try
         {
             IsBusy = true;
@@ -245,12 +247,39 @@ public sealed partial class OcrEngineDialog : ContentDialog
                 ProgressPercent = p.percent;
                 ProgressText = p.bytesText;
             });
-            await UpdateService.ExtractToDirectoryAsync(
-                AppConfig.OcrCdnUrl,
-                AppContext.BaseDirectory,
-                progress,
-                _cts.Token
-            );
+            Directory.CreateDirectory(stagingDir);
+            for (int attempt = 1; attempt <= 3; attempt++)
+            {
+                try
+                {
+                    await UpdateService.ExtractToDirectoryAsync(
+                        AppConfig.OcrCdnUrl,
+                        stagingDir,
+                        progress,
+                        _cts.Token
+                    );
+                    break;
+                }
+                catch (Exception ex) when (
+                    attempt < 3 && ex is HttpRequestException or IOException
+                )
+                {
+                    _logger.LogWarning(ex, "OCR download attempt {Attempt} failed, retrying", attempt);
+                    Directory.Delete(stagingDir, recursive: true);
+                    Directory.CreateDirectory(stagingDir);
+                    await Task.Delay(TimeSpan.FromSeconds(attempt), _cts.Token);
+                }
+            }
+
+            string dll = Path.Combine(stagingDir, "oneocr.dll");
+            string model = Path.Combine(stagingDir, "oneocr.onemodel");
+            if (!File.Exists(dll) || !File.Exists(model)
+                || new FileInfo(dll).Length == 0 || new FileInfo(model).Length == 0)
+                throw new InvalidDataException("OneOCR package is missing required files");
+
+            _cts.Token.ThrowIfCancellationRequested();
+            File.Move(dll, Path.Combine(AppContext.BaseDirectory, "oneocr.dll"), overwrite: true);
+            File.Move(model, Path.Combine(AppContext.BaseDirectory, "oneocr.onemodel"), overwrite: true);
             OcrHelper.ResetEngineCache();
             IsBusy = false;
             RefreshState();
@@ -271,6 +300,15 @@ public sealed partial class OcrEngineDialog : ContentDialog
         {
             _cts?.Dispose();
             _cts = null;
+            try
+            {
+                if (Directory.Exists(stagingDir))
+                    Directory.Delete(stagingDir, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogWarning(ex, "Failed to remove temporary OCR download files");
+            }
         }
     }
 

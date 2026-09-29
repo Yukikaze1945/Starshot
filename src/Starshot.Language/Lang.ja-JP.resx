@@ -629,10 +629,10 @@
     <value>領域をドラッグ、またはウィンドウをクリック。ビットマップをクリップボードにコピーするのみでファイルは保存しない。</value>
   </data>
   <data name="Starshot_HotkeyRegionOcr" xml:space="preserve">
-    <value>テキストを認識してコピー</value>
+    <value>テキストを認識して編集</value>
   </data>
   <data name="Starshot_HotkeyRegionOcrDesc" xml:space="preserve">
-    <value>領域をドラッグ、またはウィンドウをクリック。テキストを認識してクリップボードにコピーするのみでファイルは保存しない。</value>
+    <value>領域をドラッグ、またはウィンドウをクリック。認識結果を編集してからコピーまたは翻訳できます。</value>
   </data>
   <data name="Starshot_SDRFormat" xml:space="preserve">
     <value>SDR形式</value>

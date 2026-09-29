@@ -333,6 +333,25 @@ public static partial class AppConfig
         set => SetValue(value);
     }
 
+    /// <summary>OpenAI-compatible chat completions endpoint used for OCR text translation.</summary>
+    public static string TranslationApiUrl
+    {
+        get => GetValue("https://api.openai.com/v1/chat/completions")!;
+        set => SetValue(value);
+    }
+
+    public static string TranslationModel
+    {
+        get => GetValue("gpt-4.1-mini")!;
+        set => SetValue(value);
+    }
+
+    public static string TranslationTargetLanguage
+    {
+        get => GetValue("简体中文")!;
+        set => SetValue(value);
+    }
+
     /// <summary>
     /// 启动首页：0=截图库（默认），1=剪贴板
     /// </summary>
@@ -521,7 +540,7 @@ public static partial class AppConfig
     }
 
     /// <summary>
-    /// 识别文字快捷键（区域选区 → OCR 文本进剪贴板，不存文件）
+    /// 识别文字快捷键（区域选区 → 排版与翻译窗口，不自动复制）
     /// </summary>
     public static string? RegionOcrHotkey
     {
@@ -529,6 +548,44 @@ public static partial class AppConfig
         get => GetValue("1+79");
         set => SetValue(value);
     }
+
+    /// <summary>从剪贴板图像或图片文件创建贴图。</summary>
+    public static string? PinClipboardHotkey
+    {
+        // Ctrl + 2
+        get => GetValue("2+50");
+        set => SetValue(value);
+    }
+
+    /// <summary>重新打开最近关闭的贴图。</summary>
+    public static string? ReopenPinHotkey
+    {
+        // Ctrl + 3
+        get => GetValue("2+51");
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// 手动设置 Ultra HDR 显示容量；默认沿用每张图的最大通道增益。
+    /// </summary>
+    public static bool UhdrCapacityManual
+    {
+        get => GetValue(false);
+        set => SetValue(value);
+    }
+
+    public static double UhdrCapacityValue
+    {
+        get
+        {
+            double value = GetValue(8d);
+            return double.IsFinite(value) ? Math.Clamp(value, 2, 32) : 8;
+        }
+        set => SetValue(double.IsFinite(value) ? Math.Clamp(value, 2, 32) : 8);
+    }
+
+    // Zero preserves the encoder's existing automatic capacity calculation.
+    public static float UhdrCapacityOverride => UhdrCapacityManual ? (float)UhdrCapacityValue : 0;
 
     /// <summary>
     /// HDR 截图在主 HDR 文件之外额外保存一份 Ultra HDR JPEG（SDR 基图 + gain map，

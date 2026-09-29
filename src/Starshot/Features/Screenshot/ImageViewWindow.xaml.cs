@@ -1935,7 +1935,7 @@ public sealed partial class ImageViewWindow : Window
                         ms,
                         100
                     ),
-                    1 => ImageSaver.SaveAsUhdrAsync(bitmap, ms, maxCLL, outputNits),
+                    1 => ImageSaver.SaveAsUhdrAsync(bitmap, ms, maxCLL, outputNits, AppConfig.UhdrCapacityOverride),
                     2 => ImageSaver.SaveAsPngAsync(
                         sdr8 = RenderToSdr8bit(output, bitmap),
                         ms,
@@ -2095,6 +2095,12 @@ public sealed partial class ImageViewWindow : Window
             return;
         }
         await RunOcrAsync();
+    }
+
+    private async void Button_OcrEditor_Click(object sender, RoutedEventArgs e)
+    {
+        if (_ocrLines.Count == 0) await RunOcrAsync();
+        if (_ocrLines.Count > 0) _ = new OcrResultWindow(_ocrLines);
     }
 
     /// <summary>图库/剪贴板右键「识别文字」入口复用：打开查看器加载完直接进入 OCR。</summary>

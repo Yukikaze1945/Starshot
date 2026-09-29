@@ -25,6 +25,10 @@ public sealed partial class SystemTrayWindow : WindowEx
 
     private const int HOTKEY_REGION_OCR = 44448;
 
+    private const int HOTKEY_PIN_CLIPBOARD = 44449;
+
+    private const int HOTKEY_REOPEN_PIN = 44450;
+
     public SystemTrayWindow()
     {
         this.InitializeComponent();
@@ -65,7 +69,13 @@ public sealed partial class SystemTrayWindow : WindowEx
                     ScreenCaptureService.CaptureRegionCopyOnly();
                     break;
                 case HOTKEY_REGION_OCR:
-                    ScreenCaptureService.CaptureRegionOcrCopy();
+                    ScreenCaptureService.CaptureRegionOcr();
+                    break;
+                case HOTKEY_PIN_CLIPBOARD:
+                    PinnedCaptureWindow.PinClipboard();
+                    break;
+                case HOTKEY_REOPEN_PIN:
+                    PinnedCaptureWindow.ReopenLast();
                     break;
             }
         }
@@ -219,7 +229,21 @@ public sealed partial class SystemTrayWindow : WindowEx
     private void CaptureRegionOcr()
     {
         Hide();
-        ScreenCaptureService.CaptureRegionOcrCopy();
+        ScreenCaptureService.CaptureRegionOcr();
+    }
+
+    [RelayCommand]
+    private void PinFromClipboard()
+    {
+        Hide();
+        PinnedCaptureWindow.PinClipboard();
+    }
+
+    [RelayCommand]
+    private void ReopenPin()
+    {
+        Hide();
+        PinnedCaptureWindow.ReopenLast();
     }
 
     private void WindowEx_Closed(object sender, WindowEventArgs args)

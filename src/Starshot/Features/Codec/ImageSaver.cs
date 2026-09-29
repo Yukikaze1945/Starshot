@@ -768,9 +768,15 @@ internal static class ImageSaver
         CanvasBitmap canvasImage,
         Stream stream,
         float maxCLL,
-        float sdrWhiteLevel
+        float sdrWhiteLevel,
+        float hdrCapacityMaxOverride = 0
     )
     {
+        if (!float.IsFinite(hdrCapacityMaxOverride)
+            || (hdrCapacityMaxOverride != 0 && (hdrCapacityMaxOverride < 2 || hdrCapacityMaxOverride > 32)))
+        {
+            throw new ArgumentOutOfRangeException(nameof(hdrCapacityMaxOverride));
+        }
         if (canvasImage.Format is DirectXPixelFormat.R16G16B16A16Float)
         {
             await Task.Delay(1).ConfigureAwait(false);
@@ -861,12 +867,22 @@ internal static class ImageSaver
             }
             byte[] gainPixelBytes = renderTarget_gain.GetPixelBytes();
             float[] contentBoost = GetContentMinMaxBoost(gainPixelBytes);
+            // XMP 只能带一个量程，三通道不公共就不能写 XMP（jpegr.cpp 直接报 unsupported）。
+            // 取公共 min/max 只影响量化区间，逐通道的增益差别仍然留在 gain map 像素里。
+            float commonMinBoost = MathF.Min(
+                MathF.Min(contentBoost[0], contentBoost[1]),
+                contentBoost[2]
+            );
+            float commonMaxBoost = MathF.Max(
+                MathF.Max(contentBoost[3], contentBoost[4]),
+                contentBoost[5]
+            );
 
             using UhdrGainmapEffect uhdrGainmapEffect = new()
             {
                 PixelGainSource = renderTarget_gain,
-                MinContentBoost = MemoryMarshal.Cast<float, float3>(contentBoost)[0],
-                MaxContentBoost = MemoryMarshal.Cast<float, float3>(contentBoost)[1],
+                MinContentBoost = new float3(commonMinBoost, commonMinBoost, commonMinBoost),
+                MaxContentBoost = new float3(commonMaxBoost, commonMaxBoost, commonMaxBoost),
             };
             using CanvasRenderTarget renderTarget_gainmap = new(
                 CanvasDevice.GetSharedDevice(),
@@ -939,20 +955,22 @@ internal static class ImageSaver
                         OffsetSdr = new FixedArray3<float>(UhdrColor.GainOffset),
                         OffsetHdr = new FixedArray3<float>(UhdrColor.GainOffset),
                         HdrCapacityMin = 1,
-                        HdrCapacityMax = MathF.Max(
-                            MathF.Max(contentBoost[3], contentBoost[4]),
-                            MathF.Max(contentBoost[5], 1)
-                        ),
+                        // API uses linear boost; native XMP/ISO writers convert to log2.
+                        // Do not use this override in gain-map pixel generation or gain bounds.
+                        HdrCapacityMax = hdrCapacityMaxOverride > 0
+                            ? hdrCapacityMaxOverride : MathF.Max(commonMaxBoost, 1),
                         // use_base_cg≠0：base 不做色域转换，增益按 base 色域表达（jpegr.cpp applyGainMap）。
                         // 我们的 gain 正是拿 base 的线性信号当分母算的，故为 1。
                         UseBaseColorSpace = 1,
                     };
-                    metadata.MinContentBoost[0] = contentBoost[0];
-                    metadata.MinContentBoost[1] = contentBoost[1];
-                    metadata.MinContentBoost[2] = contentBoost[2];
-                    metadata.MaxContentBoost[0] = contentBoost[3];
-                    metadata.MaxContentBoost[1] = contentBoost[4];
-                    metadata.MaxContentBoost[2] = contentBoost[5];
+                    // 三通道必须写同一个 float 值（不是三个算出来相等的值），
+                    // libultrahdr 用 are_all_channels_identical() 比的是浮点相等。
+                    metadata.MinContentBoost[0] = commonMinBoost;
+                    metadata.MinContentBoost[1] = commonMinBoost;
+                    metadata.MinContentBoost[2] = commonMinBoost;
+                    metadata.MaxContentBoost[0] = commonMaxBoost;
+                    metadata.MaxContentBoost[1] = commonMaxBoost;
+                    metadata.MaxContentBoost[2] = commonMaxBoost;
                     encoder.SetGainmapImage(gainmapImage, metadata);
                 }
             }

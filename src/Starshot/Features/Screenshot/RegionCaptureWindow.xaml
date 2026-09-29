@@ -7,6 +7,7 @@
   xmlns:sf="using:Starshot.Frameworks"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:lang="using:Starshot.Language"
   mc:Ignorable="d"
 >
   <Grid x:Name="RootGrid" Background="Transparent" KeyDown="RootGrid_KeyDown">
@@ -16,5 +17,116 @@
       PointerMoved="Canvas_PointerMoved"
       PointerReleased="Canvas_PointerReleased"
     />
+    <Canvas>
+      <Border
+        x:Name="SelectionMetrics"
+        Background="#F20A0B0F"
+        BorderBrush="#A0AAB5C6"
+        BorderThickness="1"
+        CornerRadius="3"
+        Padding="8,4"
+        Visibility="Collapsed"
+      >
+        <TextBlock
+          x:Name="SelectionMetricsText"
+          Foreground="White"
+          FontFamily="Consolas"
+          FontSize="14"
+          Text="0,0  0 × 0 px"
+        />
+      </Border>
+      <Border
+        x:Name="SelectionToolbar"
+        Width="820"
+        Height="42"
+        Background="#F20B0D12"
+        BorderBrush="#FF3189FF"
+        BorderThickness="1"
+        CornerRadius="4"
+        Visibility="Collapsed"
+      >
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal" Spacing="0">
+          <Button x:Name="ToolSelect" Tag="Select" Width="30" Height="38" Padding="0" Background="#FF3189FF" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="选择/调整选区"><TextBlock Text="▣" FontSize="20" Foreground="White" /></Button>
+          <Button x:Name="ToolRectangle" Tag="Rectangle" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="矩形标注" AutomationProperties.Name="矩形标注"><TextBlock Text="□" FontSize="22" Foreground="White" /></Button>
+          <Button x:Name="ToolEllipse" Tag="Ellipse" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="椭圆标注"><TextBlock Text="◯" FontSize="21" Foreground="White" /></Button>
+          <Button x:Name="ToolLine" Tag="Line" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="直线"><TextBlock Text="╱" FontSize="21" Foreground="White" /></Button>
+          <Button x:Name="ToolArrow" Tag="Arrow" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="箭头"><TextBlock Text="↗" FontSize="21" Foreground="White" /></Button>
+          <Button x:Name="ToolNumber" Tag="Number" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="序号"><TextBlock Text="①" FontSize="19" Foreground="White" /></Button>
+          <Button x:Name="ToolPen" Tag="Pen" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="画笔"><TextBlock Text="✎" FontSize="21" Foreground="White" /></Button>
+          <Button x:Name="ToolHighlighter" Tag="Highlighter" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="荧光笔"><TextBlock Text="▰" FontSize="19" Foreground="White" /></Button>
+          <Button x:Name="ToolMosaic" Tag="Mosaic" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="马赛克"><TextBlock Text="▦" FontSize="20" Foreground="White" /></Button>
+          <Button x:Name="ToolBlur" Tag="Blur" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="模糊"><TextBlock Text="◌" FontSize="21" Foreground="White" /></Button>
+          <Button x:Name="ToolText" Tag="Text" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="文字"><TextBlock Text="T" FontSize="18" FontWeight="Bold" Foreground="White" /></Button>
+          <Button x:Name="ToolEraser" Tag="Eraser" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="擦除标注"><TextBlock Text="⌫" FontSize="21" Foreground="White" /></Button>
+          <Rectangle Width="1" Height="22" Fill="#6079839B" VerticalAlignment="Center" />
+          <Button x:Name="AnnotationColorButton" Width="30" Height="38" Padding="3" Background="Transparent" BorderThickness="0" Click="Toolbar_Color_Click" ToolTipService.ToolTip="切换标注颜色"><Ellipse Fill="#FFFF404D" Width="19" Height="19" Stroke="White" StrokeThickness="1" /></Button>
+          <Button x:Name="AnnotationWidthButton" Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Width_Click" ToolTipService.ToolTip="切换线宽"><TextBlock x:Name="AnnotationWidthText" Text="3" FontSize="16" Foreground="White" /></Button>
+          <Rectangle Width="1" Height="22" Fill="#6079839B" VerticalAlignment="Center" />
+          <Button Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Undo_Click" ToolTipService.ToolTip="撤销 (Ctrl+Z)"><TextBlock Text="↶" FontSize="22" Foreground="White" /></Button>
+          <Button Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Redo_Click" ToolTipService.ToolTip="重做 (Ctrl+Y)"><TextBlock Text="↷" FontSize="22" Foreground="White" /></Button>
+          <Rectangle Width="1" Height="22" Fill="#6079839B" VerticalAlignment="Center" />
+          <Button Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Pin_Click" ToolTipService.ToolTip="钉在屏幕上" AutomationProperties.Name="钉图"><FontIcon Glyph="&#xE718;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="White" /></Button>
+          <Button Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_RecordGif_Click" ToolTipService.ToolTip="录制 GIF（最长 30 秒）" AutomationProperties.Name="录制 GIF"><TextBlock Text="GIF" FontSize="10" FontWeight="Bold" Foreground="White" /></Button>
+          <Button Width="30" Height="38" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_LongCapture_Click" ToolTipService.ToolTip="长截图：滚动时自动拼接" AutomationProperties.Name="长截图"><TextBlock Text="⇵" FontSize="20" Foreground="White" /></Button>
+          <Button
+            Width="40" Height="38" Padding="0" Background="Transparent" BorderThickness="0"
+            Click="Toolbar_Reselect_Click" ToolTipService.ToolTip="重新选择区域"
+            AutomationProperties.Name="重新选择区域"
+          >
+            <FontIcon Glyph="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="17" Foreground="White" />
+          </Button>
+          <Button
+            x:Name="ToolbarCopyButton"
+            Width="40" Height="38" Padding="0" Background="Transparent" BorderThickness="0"
+            Click="Toolbar_Copy_Click" ToolTipService.ToolTip="{x:Bind lang:Lang.ImageViewWindow_CopyImage}"
+            AutomationProperties.Name="{x:Bind lang:Lang.ImageViewWindow_CopyImage}"
+          >
+            <FontIcon Glyph="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="17" Foreground="White" />
+          </Button>
+          <Button
+            x:Name="ToolbarSaveButton"
+            Width="40" Height="38" Padding="0" Background="#FF3189FF" BorderThickness="0"
+            Click="Toolbar_Save_Click" ToolTipService.ToolTip="{x:Bind lang:Lang.Common_Save}"
+            AutomationProperties.Name="{x:Bind lang:Lang.Common_Save}"
+          >
+            <FontIcon Glyph="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="17" Foreground="White" />
+          </Button>
+          <Button
+            x:Name="ToolbarOcrButton"
+            Width="40" Height="38" Padding="0" Background="Transparent" BorderThickness="0"
+            Click="Toolbar_Ocr_Click" ToolTipService.ToolTip="{x:Bind lang:Lang.ImageViewWindow_Ocr}"
+            AutomationProperties.Name="{x:Bind lang:Lang.ImageViewWindow_Ocr}"
+          >
+            <TextBlock Text="OCR" FontSize="11" FontWeight="SemiBold" Foreground="White" />
+          </Button>
+          <Button Width="40" Height="38" Padding="0" Background="Transparent" BorderThickness="0"
+                  Click="Toolbar_Translate_Click" ToolTipService.ToolTip="OCR 后翻译 (Ctrl+Q)"
+                  AutomationProperties.Name="OCR 翻译">
+            <TextBlock Text="译" FontSize="17" Foreground="White" />
+          </Button>
+          <Rectangle Width="1" Height="22" Fill="#6079839B" VerticalAlignment="Center" />
+          <Button
+            Width="40" Height="38" Padding="0" Background="Transparent" BorderThickness="0"
+            Click="Toolbar_Cancel_Click" ToolTipService.ToolTip="{x:Bind lang:Lang.Common_Cancel}"
+            AutomationProperties.Name="{x:Bind lang:Lang.Common_Cancel}"
+          >
+            <FontIcon Glyph="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="17" Foreground="White" />
+          </Button>
+        </StackPanel>
+      </Border>
+      <TextBox x:Name="AnnotationTextEditor" Width="240" MinHeight="38" Visibility="Collapsed"
+               Background="#F20B0D12" Foreground="White" BorderBrush="#FF3189FF"
+               PlaceholderText="输入文字，Enter 完成" AcceptsReturn="False"
+               KeyDown="AnnotationTextEditor_KeyDown" LostFocus="AnnotationTextEditor_LostFocus" />
+    </Canvas>
+    <Border x:Name="ShortcutHint" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+            Margin="12,0,0,12" Padding="10,8" Background="#E80A0B0F"
+            BorderBrush="#7FAAB5C6" BorderThickness="1" CornerRadius="5">
+      <StackPanel Spacing="2">
+        <TextBlock Text="方向键  移动    Shift+方向键  缩小    Ctrl+方向键  扩大" Foreground="White" FontSize="12" />
+        <TextBlock Text="C  复制颜色    Shift  RGB / HEX    Shift+C  识别文字" Foreground="White" FontSize="12" />
+        <TextBlock Text="Ctrl+Z / Y  撤销 / 重做    Ctrl+C  复制    Ctrl+Q  翻译    Ctrl+S  保存    Esc  取消" Foreground="White" FontSize="12" />
+      </StackPanel>
+    </Border>
   </Grid>
 </sf:WindowEx>

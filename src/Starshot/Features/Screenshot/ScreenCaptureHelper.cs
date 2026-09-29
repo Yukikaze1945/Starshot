@@ -20,11 +20,6 @@ internal partial class ScreenCaptureHelper
         "TryCreateFromWindowId"
     );
 
-    public static readonly bool IsTryCreateFromDisplayId = ApiInformation.IsMethodPresent(
-        "Windows.Graphics.Capture.GraphicsCaptureItem",
-        "TryCreateFromDisplayId"
-    );
-
     public static readonly bool IsIncludeSecondaryWindowsPresent = ApiInformation.IsPropertyPresent(
         "Windows.Graphics.Capture.GraphicsCaptureSession",
         "IncludeSecondaryWindows"
@@ -68,19 +63,30 @@ internal partial class ScreenCaptureHelper
             throw new InvalidOperationException("Cannot capture a minimized window.");
         }
         GraphicsCaptureItem item = CreateGraphicsCaptureItemForWindow(hwnd);
-        return await CaptureAsync(item, pixelFormat, device, cancellationToken);
+        try
+        {
+            return await CaptureAsync(item, pixelFormat, device, cancellationToken);
+        }
+        finally
+        {
+            ((WinRT.IWinRTObject)item).NativeObject.Dispose();
+        }
     }
 
-    public static async Task<Direct3D11CaptureFrame> CaptureMonitorAsync(
+    public static async Task<CanvasRenderTarget> CaptureMonitorBitmapAsync(
         nint monitor,
         DirectXPixelFormat pixelFormat,
-        CanvasDevice? device = null,
+        CanvasDevice device,
+        bool isHdr,
         CancellationToken cancellationToken = default
     )
     {
-        GraphicsCaptureItem item = CreateGraphicsCaptureItemForMonitor(monitor);
-        return await CaptureAsync(item, pixelFormat, device, cancellationToken);
+        return await MonitorCaptureContext.CaptureAsync(
+            monitor, pixelFormat, device, cancellationToken, isHdr
+        ).ConfigureAwait(false);
     }
+
+    public static void DisposeMonitorContexts() => MonitorCaptureContext.DisposeAll();
 
     public static async Task<Direct3D11CaptureFrame> CaptureAsync(
         GraphicsCaptureItem item,
@@ -106,44 +112,70 @@ internal partial class ScreenCaptureHelper
         }
         if (IsIsBorderRequiredPresent)
         {
-            session.IsBorderRequired = false;
+            try { session.IsBorderRequired = false; }
+            catch (COMException ex) when ((uint)ex.HResult == 0x80070490)
+            {
+                // 某些系统不支持此可选设置，捕获本身仍可继续。
+                Serilog.Log.Debug(ex, "WGC border option unavailable");
+            }
         }
         if (IsIsCursorCaptureEnabledPresent)
         {
             session.IsCursorCaptureEnabled = false;
         }
-        var completionSource = new TaskCompletionSource<Direct3D11CaptureFrame>();
-        cancellationToken.Register(() => completionSource.TrySetCanceled());
+        var completionSource = new TaskCompletionSource<Direct3D11CaptureFrame>(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        using var cancellationRegistration = cancellationToken.Register(() => completionSource.TrySetCanceled());
         // 额外超时保护：即使外部没传 CancellationToken，也不会永久挂起
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(TimeSpan.FromSeconds(10));
-        timeoutCts.Token.Register(() =>
+        using var timeoutRegistration = timeoutCts.Token.Register(() =>
             completionSource.TrySetException(
                 new TimeoutException("Screen capture timed out after 10 seconds")
             )
         );
+        int frameDelivered = 0;
         Windows.Foundation.TypedEventHandler<Direct3D11CaptureFramePool, object> frameArrived = (
             s,
             _
         ) =>
         {
-            if (s.TryGetNextFrame() is Direct3D11CaptureFrame frame)
+            Direct3D11CaptureFrame? frame = null;
+            try
             {
-                session.Dispose();
-                completionSource.TrySetResult(frame);
+                frame = s.TryGetNextFrame();
+                if (frame is not null
+                    && Interlocked.Exchange(ref frameDelivered, 1) == 0
+                    && completionSource.TrySetResult(frame))
+                {
+                    // The caller owns the frame only when the handoff succeeds.
+                    frame = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                completionSource.TrySetException(ex);
+            }
+            finally
+            {
+                // Includes duplicate frames and frames arriving after cancellation or timeout.
+                frame?.Dispose();
             }
         };
-        framePool.FrameArrived += frameArrived;
-        session.StartCapture();
+        bool subscribed = false;
         try
         {
+            framePool.FrameArrived += frameArrived;
+            subscribed = true;
+            session.StartCapture();
             return await completionSource.Task.ConfigureAwait(false);
         }
         finally
         {
-            // 显式取消订阅：匿名 lambda 每次是新委托实例，-= 减不掉。具名后才能正确解除，
-            // 否则 FrameArrived 闭包（持有 session/completionSource）钉住整组截图对象不释放。
-            framePool.FrameArrived -= frameArrived;
+            if (subscribed)
+                framePool.FrameArrived -= frameArrived;
+            // session and framePool are disposed by their using declarations.
         }
     }
 
@@ -166,33 +198,24 @@ internal partial class ScreenCaptureHelper
             nint abi = GraphicsCaptureItem
                 .As<IGraphicsCaptureItemInterop>()
                 .CreateForWindow(hwnd, GraphicsCaptureItemGuid);
-            graphicsCaptureItem = GraphicsCaptureItem.FromAbi(abi);
+            try { graphicsCaptureItem = GraphicsCaptureItem.FromAbi(abi); }
+            finally { Marshal.Release(abi); }
         }
         return graphicsCaptureItem;
     }
 
     /// <summary>
-    /// 按显示器创建捕获项。TryCreateFromDisplayId 仅 Win11 可用；Win10 走
-    /// IGraphicsCaptureItemInterop.CreateForMonitor。
+    /// 按显示器创建捕获项。桌面应用统一走 IGraphicsCaptureItemInterop；
+    /// TryCreateFromDisplayId 在部分系统可返回 item，但 StartCapture 会报 ERROR_NOT_FOUND。
     /// </summary>
     public static GraphicsCaptureItem CreateGraphicsCaptureItemForMonitor(nint monitor)
     {
-        GraphicsCaptureItem graphicsCaptureItem;
-        if (IsTryCreateFromDisplayId)
-        {
-            graphicsCaptureItem = GraphicsCaptureItem.TryCreateFromDisplayId(
-                new DisplayId((ulong)monitor)
-            );
-        }
-        else
-        {
-            Guid GraphicsCaptureItemGuid = new("79C3F95B-31F7-4EC2-A464-632EF5D30760");
-            nint abi = GraphicsCaptureItem
-                .As<IGraphicsCaptureItemInterop>()
-                .CreateForMonitor(monitor, GraphicsCaptureItemGuid);
-            graphicsCaptureItem = GraphicsCaptureItem.FromAbi(abi);
-        }
-        return graphicsCaptureItem;
+        Guid graphicsCaptureItemGuid = new("79C3F95B-31F7-4EC2-A464-632EF5D30760");
+        nint abi = GraphicsCaptureItem
+            .As<IGraphicsCaptureItemInterop>()
+            .CreateForMonitor(monitor, graphicsCaptureItemGuid);
+        try { return GraphicsCaptureItem.FromAbi(abi); }
+        finally { Marshal.Release(abi); }
     }
 
     [ComVisible(true)]

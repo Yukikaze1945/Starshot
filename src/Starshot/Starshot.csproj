@@ -96,6 +96,30 @@
     <ProjectReference Include="..\Starshot.Language\Starshot.Language.csproj" />
   </ItemGroup>
 
+  <!-- Starward.Codec supplies a stock native asset during build and publish. Replace it
+       only after the SDK has completed its normal copy, then validate the final file. -->
+  <PropertyGroup>
+    <_UhdrCanonicalDll>$(MSBuildThisFileDirectory)..\..\third_party\libultrahdr\v2.0.2\win-x64\uhdr.dll</_UhdrCanonicalDll>
+    <_UhdrVerifier>$(MSBuildThisFileDirectory)..\..\scripts\Verify-UhdrDll.ps1</_UhdrVerifier>
+    <_UhdrExpectedSha256>415EE12ED6E979D1A96A495AFCB634D54FBACF69E5B9E45C95C38793C737384B</_UhdrExpectedSha256>
+  </PropertyGroup>
+
+  <Target Name="InstallVerifiedUhdrForBuild" AfterTargets="Build"
+          Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(_UhdrVerifier)&quot; -Path &quot;$(_UhdrCanonicalDll)&quot; -ExpectedSha256 $(_UhdrExpectedSha256)" />
+    <Copy SourceFiles="$(_UhdrCanonicalDll)" DestinationFiles="$(TargetDir)uhdr.dll"
+          SkipUnchangedFiles="false" />
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(_UhdrVerifier)&quot; -Path &quot;$(TargetDir)uhdr.dll&quot; -ExpectedSha256 $(_UhdrExpectedSha256)" />
+  </Target>
+
+  <Target Name="InstallVerifiedUhdrForPublish" AfterTargets="Publish"
+          Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(_UhdrVerifier)&quot; -Path &quot;$(_UhdrCanonicalDll)&quot; -ExpectedSha256 $(_UhdrExpectedSha256)" />
+    <Copy SourceFiles="$(_UhdrCanonicalDll)" DestinationFiles="$(PublishDir)uhdr.dll"
+          SkipUnchangedFiles="false" />
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(_UhdrVerifier)&quot; -Path &quot;$(PublishDir)uhdr.dll&quot; -ExpectedSha256 $(_UhdrExpectedSha256)" />
+  </Target>
+
   <!-- 若先编译了启动器会自动拷到 `build/release/` -->
   <Target Name="CopyLauncher" AfterTargets="Publish">
     <PropertyGroup>

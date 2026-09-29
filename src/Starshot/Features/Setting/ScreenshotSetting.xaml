@@ -87,6 +87,35 @@
         />
       </StackPanel>
 
+      <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+        Header="{x:Bind lang:Lang.UhdrCapacityTitle}">
+        <StackPanel Spacing="12">
+          <ToggleSwitch IsOn="{x:Bind UhdrCapacityManual, Mode=TwoWay}"
+            OffContent="{x:Bind lang:Lang.UhdrCapacityAuto}"
+            OnContent="{x:Bind lang:Lang.UhdrCapacityManual}" />
+          <TextBlock Text="{x:Bind lang:Lang.UhdrCapacityDescription}" TextWrapping="Wrap"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" />
+          <StackPanel Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <NumberBox IsEnabled="{x:Bind UhdrCapacityManual}" Width="150" Minimum="2" Maximum="32" SmallChange="0.1" LargeChange="1"
+                SpinButtonPlacementMode="Compact" Value="{x:Bind UhdrCapacityValue, Mode=TwoWay}"
+                AutomationProperties.Name="HDR Capacity Max" />
+              <TextBlock VerticalAlignment="Center" Text="{x:Bind UhdrCapacityLabel}" />
+            </StackPanel>
+            <Slider IsEnabled="{x:Bind UhdrCapacityManual}" Minimum="1" Maximum="5" StepFrequency="0.01" IsThumbToolTipEnabled="False"
+              Value="{x:Bind UhdrCapacityStops, Mode=TwoWay}" AutomationProperties.Name="HDR Capacity Max" />
+            <Grid><TextBlock Text="2×" /><TextBlock Text="32×" HorizontalAlignment="Right" /></Grid>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="4×" Tag="4" Click="UhdrCapacityPreset_Click" />
+            <Button Content="8×" Tag="8" Click="UhdrCapacityPreset_Click" />
+            <Button Content="12×" Tag="12" Click="UhdrCapacityPreset_Click" />
+            <Button Content="16×" Tag="16" Click="UhdrCapacityPreset_Click" />
+            <Button Content="Auto" Tag="Auto" Click="UhdrCapacityPreset_Click" />
+          </StackPanel>
+        </StackPanel>
+      </Expander>
+
       <!--  自动复制  -->
       <ToggleSwitch
         IsOn="{x:Bind AutoCopyScreenshotToClipboard, Mode=TwoWay}"
@@ -152,6 +181,12 @@
             Text="{x:Bind lang:Lang.ScreenshotSetting_OcrEngineDesc}"
             TextWrapping="Wrap"
           />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <Button Click="Button_TranslationConfig_Click" Content="OCR 翻译 API 设置" />
+          <TextBlock VerticalAlignment="Center" FontSize="12"
+                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                     Text="识别后先排版、编辑；翻译时才向配置的模型发送文字。" />
         </StackPanel>
       </StackPanel>
     </StackPanel>

@@ -119,16 +119,13 @@ internal class ScreenCaptureService
                 colorInfo.CurrentAdvancedColorKind is DisplayAdvancedColorKind.HighDynamicRange
                     ? DirectXPixelFormat.R16G16B16A16Float
                     : DirectXPixelFormat.R8G8B8A8UIntNormalized;
-            using Direct3D11CaptureFrame frame = await ScreenCaptureHelper.CaptureMonitorAsync(
+            using CanvasRenderTarget canvasBitmap = await ScreenCaptureHelper.CaptureMonitorBitmapAsync(
                 monitor.DangerousGetHandle(),
-                pixelFormat
+                pixelFormat,
+                CanvasDevice.GetSharedDevice(),
+                colorInfo.CurrentAdvancedColorKind is DisplayAdvancedColorKind.HighDynamicRange
             );
             DateTimeOffset frameTime = DateTimeOffset.Now;
-            using CanvasBitmap canvasBitmap = CanvasBitmap.CreateFromDirect3D11Surface(
-                CanvasDevice.GetSharedDevice(),
-                frame.Surface,
-                96
-            );
 
             float maxCLL = -1;
             float maxFALL = -1;
@@ -215,31 +212,31 @@ internal class ScreenCaptureService
     }
 
     /// <summary>
-    /// 识别文字：区域选区 → OCR 全文进剪贴板，不存文件
+    /// 识别文字：区域选区 → 可编辑的排版/翻译窗口，不自动复制或存文件。
     /// </summary>
-    public static void CaptureRegionOcrCopy()
+    public static void CaptureRegionOcr()
     {
-        Instance.CaptureRegionInternal(ocrCopy: true);
+        Instance.CaptureRegionInternal(ocrEditor: true);
     }
 
-    private enum OcrCopyResult
+    private enum OcrResultStatus
     {
-        Copied,
+        Opened,
         NoText,
         NoEngine,
         Failed,
     }
 
     /// <summary>
-    /// 选区 OCR → 全文进剪贴板。sdrCrop 已是覆盖层 tonemap 好的 B8G8R8A8，
+    /// 选区 OCR → 可编辑窗口。sdrCrop 已是覆盖层 tonemap 好的 B8G8R8A8，
     /// UI 线程取像素（GPU 回读不跨线程），纯 CPU 识别下线程池。
     /// 状态提示由调用方走信息浮窗（此处只 log）。
     /// </summary>
-    private async Task<OcrCopyResult> OcrCopyRegionAsync(CanvasRenderTarget? sdrCrop)
+    private async Task<OcrResultStatus> OpenOcrResultAsync(CanvasRenderTarget? sdrCrop, bool translate)
     {
         if (sdrCrop is null)
         {
-            return OcrCopyResult.Failed;
+            return OcrResultStatus.Failed;
         }
         try
         {
@@ -250,27 +247,26 @@ internal class ScreenCaptureService
             );
             if (lines is null)
             {
-                _logger.LogWarning("Region OCR copy: no engine available");
-                return OcrCopyResult.NoEngine;
+                _logger.LogWarning("Region OCR: no engine available");
+                return OcrResultStatus.NoEngine;
             }
             if (lines.Count == 0)
             {
-                _logger.LogInformation("Region OCR copy: no text found");
-                return OcrCopyResult.NoText;
+                _logger.LogInformation("Region OCR: no text found");
+                return OcrResultStatus.NoText;
             }
-            string text = string.Join(Environment.NewLine, lines.Select(l => l.Text));
-            ClipboardHelper.SetText(text);
-            _logger.LogInformation("Region OCR copy: {Count} lines copied", lines.Count);
-            return OcrCopyResult.Copied;
+            _ = new OcrResultWindow(lines, translate);
+            _logger.LogInformation("Region OCR editor opened: {Count} lines, translate={Translate}", lines.Count, translate);
+            return OcrResultStatus.Opened;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Region OCR copy failed");
-            return OcrCopyResult.Failed;
+            _logger.LogError(ex, "Region OCR failed");
+            return OcrResultStatus.Failed;
         }
     }
 
-    private async void CaptureRegionInternal(bool copyOnly = false, bool ocrCopy = false)
+    private async void CaptureRegionInternal(bool copyOnly = false, bool ocrEditor = false)
     {
         if (Interlocked.CompareExchange(ref _isCapturing, 1, 0) != 0)
             return;
@@ -281,6 +277,7 @@ internal class ScreenCaptureService
         CanvasRenderTarget composite = null;
         CanvasRenderTarget cropped = null;
         CanvasRenderTarget sdrCrop = null; // 覆盖层裁出的 SDR 选区（剪贴板用）
+        CanvasRenderTarget annotationLayer = null;
         nint fgHwnd = 0; // try 内赋值，catch 里 CaptureError 要用
         bool captureStarted = false;
         try
@@ -326,9 +323,8 @@ internal class ScreenCaptureService
             var captureTasks = new Task<(
                 int ox,
                 int oy,
-                CanvasBitmap bmp,
-                bool isHDR,
-                Direct3D11CaptureFrame frame
+                CanvasRenderTarget bmp,
+                bool isHDR
             )>[displays.Count];
             for (int i = 0; i < displays.Count; i++)
             {
@@ -339,30 +335,30 @@ internal class ScreenCaptureService
                 bool isHDR = isHdrDisplay[i];
                 captureTasks[i] = Task.Run(async () =>
                 {
-                    // frame 不 using：CreateFromDirect3D11Surface 包同一块 D3D 纹理（非深拷贝），
-                    // frame 提前 Dispose 会让 bmp 持有的 surface 引用计数不清零。frame 延迟到 bmp Dispose 后释放。
-                    var frame = await ScreenCaptureHelper.CaptureMonitorAsync(
+                    // Helper returns an independent pixel copy. WGC frames stay in
+                    // the capture context only long enough to make that copy.
+                    var bmp = await ScreenCaptureHelper.CaptureMonitorBitmapAsync(
                         (nint)d.DisplayId.Value,
-                        pixelFormat
+                        pixelFormat,
+                        device,
+                        isHDR
                     );
-                    var bmp = CanvasBitmap.CreateFromDirect3D11Surface(device, frame.Surface, 96);
-                    return (ox, oy, bmp, isHDR, frame);
+                    return (ox, oy, bmp, isHDR);
                 });
             }
-            (int ox, int oy, CanvasBitmap bmp, bool isHDR, Direct3D11CaptureFrame frame)[] results;
+            (int ox, int oy, CanvasRenderTarget bmp, bool isHDR)[] results;
             try
             {
                 results = await Task.WhenAll(captureTasks);
             }
             catch
             {
-                // 任一屏失败（超时/无法创建 capture item）：回收其余已成功屏的 bmp+frame（显存无 GC 压力，不释放会持续累积）
+                // 任一屏失败时，回收其余已成功屏的独立位图。
                 foreach (var t in captureTasks)
                 {
                     if (t.Status == TaskStatus.RanToCompletion)
                     {
                         t.Result.bmp.Dispose();
-                        t.Result.frame.Dispose();
                     }
                 }
                 throw;
@@ -370,39 +366,46 @@ internal class ScreenCaptureService
 
             // 合成到虚拟屏幕大小的 CanvasRenderTarget
             // float 路径下 SDR 屏白=1.0(80nits)、HDR 屏白=SdrWhiteLevel/80；SDR 屏帧先 ×(SdrWhiteLevel/80) 提亮，让 composite 统一为 scene-referred，下游才能共用同一个 sdrWhiteLevel
-            composite = new CanvasRenderTarget(
-                device,
-                vw,
-                vh,
-                96,
-                pixelFormat,
-                CanvasAlphaMode.Premultiplied
-            );
-            for (int i = 0; i < results.Length; i++)
+            try
             {
-                var r = results[i];
-                using (var ds = composite.CreateDrawingSession())
+                composite = new CanvasRenderTarget(
+                    device,
+                    vw,
+                    vh,
+                    96,
+                    pixelFormat,
+                    CanvasAlphaMode.Premultiplied
+                );
+                for (int i = 0; i < results.Length; i++)
                 {
-                    if (anyHDR && !r.isHDR && sdrWhiteLevel != 80)
+                    var r = results[i];
+                    using (var ds = composite.CreateDrawingSession())
                     {
-                        var wle = new WhiteLevelAdjustmentEffect
+                        if (anyHDR && !r.isHDR && sdrWhiteLevel != 80)
                         {
-                            Source = r.bmp,
-                            InputWhiteLevel = sdrWhiteLevel,
-                            OutputWhiteLevel = 80,
-                            BufferPrecision = CanvasBufferPrecision.Precision16Float,
-                        };
-                        ds.DrawImage(wle, r.ox, r.oy);
-                    }
-                    else
-                    {
-                        ds.DrawImage(r.bmp, r.ox, r.oy);
+                            var wle = new WhiteLevelAdjustmentEffect
+                            {
+                                Source = r.bmp,
+                                InputWhiteLevel = sdrWhiteLevel,
+                                OutputWhiteLevel = 80,
+                                BufferPrecision = CanvasBufferPrecision.Precision16Float,
+                            };
+                            ds.DrawImage(wle, r.ox, r.oy);
+                        }
+                        else
+                        {
+                            ds.DrawImage(r.bmp, r.ox, r.oy);
+                        }
                     }
                 }
-                r.bmp.Dispose();
-                r.frame.Dispose();
             }
-
+            finally
+            {
+                foreach (var r in results)
+                {
+                    r.bmp.Dispose();
+                }
+            }
             fgHwnd = (nint)User32.GetForegroundWindow();
 
             _logger.LogInformation("Region capture: showing overlay window");
@@ -411,28 +414,74 @@ internal class ScreenCaptureService
             {
                 _regionWindow = new RegionCaptureWindow();
             }
-            _regionWindow.SetCapture(composite, sdrWhiteLevel, vw, vh);
-
-            bool confirmed = await _regionWindow.Completion.Task;
+            var defaultAction = ocrEditor ? RegionCaptureAction.Ocr
+                : copyOnly ? RegionCaptureAction.Copy : RegionCaptureAction.Save;
+            RegionCaptureResult result;
+            using (MonitorCaptureContext.PauseBackgroundFrames())
+            {
+                _regionWindow.SetCapture(composite, sdrWhiteLevel, vw, vh, defaultAction);
+                result = await _regionWindow.Completion.Task;
+            }
 
             if (
-                !confirmed
-                || _regionWindow.SelectionRect.Width < 2
-                || _regionWindow.SelectionRect.Height < 2
+                result.Action == RegionCaptureAction.Cancel
+                || result.PhysicalRect.Width < 2
+                || result.PhysicalRect.Height < 2
             )
             {
                 return; // 取消
             }
 
             // 覆盖层隐藏时已从 _displayBitmap（tonemap 好的 SDR）裁出选区
-            sdrCrop = _regionWindow.SdrCrop;
+            sdrCrop = result.SdrCrop;
+            annotationLayer = result.AnnotationLayer;
 
-            if (copyOnly || ocrCopy)
+            if (result.Action == RegionCaptureAction.Pin)
             {
-                OcrCopyResult ocrResult = OcrCopyResult.Copied;
-                if (ocrCopy)
+                if (sdrCrop is null)
+                    throw new InvalidOperationException("Pinned capture has no image.");
+                _ = new PinnedCaptureWindow(sdrCrop,
+                    vx + (int)result.PhysicalRect.X, vy + (int)result.PhysicalRect.Y);
+                _logger.LogInformation("Region capture pinned on screen");
+                return;
+            }
+
+            if (result.Action == RegionCaptureAction.RecordGif)
+            {
+                if (sdrCrop is null)
+                    throw new InvalidOperationException("GIF recording has no initial frame.");
+                composite.Dispose();
+                composite = null;
+                string? gifPath = await GifRegionRecorder.RecordAsync(result.PhysicalRect,
+                    sdrCrop, annotationLayer, vx, vy, vw, vh);
+                if (gifPath is not null)
+                    _logger.LogInformation("Region GIF recording saved: {Path}", gifPath);
+                return;
+            }
+
+            if (result.Action == RegionCaptureAction.LongCapture)
+            {
+                if (sdrCrop is null)
+                    throw new InvalidOperationException("Long capture has no initial frame.");
+                composite.Dispose();
+                composite = null;
+                string? longPath = await ScrollingRegionCapture.CaptureAsync(result.PhysicalRect,
+                    sdrCrop, annotationLayer, vx, vy, vw, vh);
+                if (longPath is not null)
+                    _logger.LogInformation("Long region screenshot saved: {Path}", longPath);
+                return;
+            }
+
+            if (result.Action is RegionCaptureAction.Copy or RegionCaptureAction.Ocr or RegionCaptureAction.Translate)
+            {
+                // Copy/OCR 只需要选区 SDR crop，立即释放全桌面 HDR composite。
+                composite.Dispose();
+                composite = null;
+                OcrResultStatus ocrResult = OcrResultStatus.Opened;
+                if (result.Action is RegionCaptureAction.Ocr or RegionCaptureAction.Translate)
                 {
-                    ocrResult = await OcrCopyRegionAsync(sdrCrop);
+                    ocrResult = await OpenOcrResultAsync(sdrCrop,
+                        result.Action == RegionCaptureAction.Translate);
                 }
                 else
                 {
@@ -447,12 +496,12 @@ internal class ScreenCaptureService
                 if (ShouldShowInfoWindow())
                 {
                     _infoWindow ??= new ScreenCaptureInfoWindow();
-                    if (ocrCopy)
+                    if (result.Action is RegionCaptureAction.Ocr or RegionCaptureAction.Translate)
                     {
                         // 状态全部走信息浮窗（热键触发时主窗口可能不可见）
                         switch (ocrResult)
                         {
-                            case OcrCopyResult.NoEngine:
+                            case OcrResultStatus.NoEngine:
                                 // 成因二义（oneocr 文件未获取 或 系统无 OCR 语言包），
                                 // 两条出路都指：热键场景弹不了配置对话框，文案兼容引导
                                 _infoWindow.CaptureError(
@@ -461,25 +510,23 @@ internal class ScreenCaptureService
                                     errorText: Lang.Ocr_EngineUnavailable
                                 );
                                 break;
-                            case OcrCopyResult.Failed:
+                            case OcrResultStatus.Failed:
                                 _infoWindow.CaptureError(
                                     fgHwnd,
                                     captureStarted: true,
                                     errorText: Lang.Ocr_Failed
                                 );
                                 break;
-                            default:
-                                // 成功 / 未识别到文字都显示选区图：主文案区分，
-                                // 空结果走中性态（图标黄、右侧"未复制"）
+                            case OcrResultStatus.NoText:
                                 _infoWindow.CaptureCopySuccess(
                                     dispId,
                                     sdrCrop,
-                                    statusText: ocrResult is OcrCopyResult.NoText
-                                        ? Lang.Ocr_NoneFound
-                                        : Lang.Ocr_CopiedText,
-                                    noCopy: ocrResult is OcrCopyResult.NoText
+                                    statusText: Lang.Ocr_NoneFound,
+                                    noCopy: true
                                 );
                                 break;
+                            case OcrResultStatus.Opened:
+                                break; // 编辑窗口本身就是结果反馈。
                         }
                     }
                     else
@@ -487,12 +534,13 @@ internal class ScreenCaptureService
                         _infoWindow.CaptureCopySuccess(dispId, sdrCrop);
                     }
                 }
-                _logger.LogInformation(ocrCopy ? "Region OCR copy done" : "Region copy-only done");
+                _logger.LogInformation(result.Action is RegionCaptureAction.Ocr or RegionCaptureAction.Translate
+                    ? "Region OCR editor ready" : "Region copy-only done");
                 return;
             }
 
             // 裁剪 HDR 选区用于保存（用窗口提供的物理像素坐标）
-            var srcRect = _regionWindow.GetPhysicalSourceRect();
+            var srcRect = result.PhysicalRect;
             int cx = (int)srcRect.X;
             int cy = (int)srcRect.Y;
             int cw = (int)srcRect.Width;
@@ -508,7 +556,25 @@ internal class ScreenCaptureService
             using (var ds = cropped.CreateDrawingSession())
             {
                 ds.DrawImage(composite, 0, 0, new Windows.Foundation.Rect(cx, cy, cw, ch));
+                if (annotationLayer is not null)
+                {
+                    if (anyHDR && sdrWhiteLevel != 80)
+                    {
+                        var whiteLevel = new WhiteLevelAdjustmentEffect
+                        {
+                            Source = annotationLayer,
+                            InputWhiteLevel = sdrWhiteLevel,
+                            OutputWhiteLevel = 80,
+                            BufferPrecision = CanvasBufferPrecision.Precision16Float,
+                        };
+                        ds.DrawImage(whiteLevel, 0, 0);
+                    }
+                    else
+                        ds.DrawImage(annotationLayer, 0, 0);
+                }
             }
+            composite.Dispose();
+            composite = null;
 
             // ===== 走保存管线 =====
             DateTimeOffset frameTime = DateTimeOffset.Now;
@@ -591,6 +657,7 @@ internal class ScreenCaptureService
         {
             cropped?.Dispose();
             sdrCrop?.Dispose();
+            annotationLayer?.Dispose();
             composite?.Dispose();
             if (!guardReleased)
             {
@@ -805,7 +872,7 @@ internal class ScreenCaptureService
         {
             sdrPath = Path.ChangeExtension(filePath, ".jpg");
             using var ms2 = new MemoryStream();
-            await ImageSaver.SaveAsUhdrAsync(bitmap, ms2, maxCLL, sdrWhiteLevel);
+            await ImageSaver.SaveAsUhdrAsync(bitmap, ms2, maxCLL, sdrWhiteLevel, AppConfig.UhdrCapacityOverride);
             ms2.Position = 0;
             using var fs2 = File.Create(sdrPath);
             await ms2.CopyToAsync(fs2);

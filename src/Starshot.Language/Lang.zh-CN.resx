@@ -629,10 +629,10 @@
     <value>框选区域或单击窗口。只把位图复制到剪贴板，不保存文件。</value>
   </data>
   <data name="Starshot_HotkeyRegionOcr" xml:space="preserve">
-    <value>识别文字并复制</value>
+    <value>识别文字并排版</value>
   </data>
   <data name="Starshot_HotkeyRegionOcrDesc" xml:space="preserve">
-    <value>框选区域或单击窗口。识别其中的文字并复制到剪贴板，不保存文件。</value>
+    <value>框选区域或单击窗口。识别后打开排版与翻译窗口，由你决定何时复制。</value>
   </data>
   <data name="Starshot_SDRFormat" xml:space="preserve">
     <value>SDR 格式</value>
@@ -1032,5 +1032,17 @@
   </data>
   <data name="AppearanceSetting_InfoWindowDurationDesc" xml:space="preserve">
     <value>截图完成或复制后信息浮窗的停留时长（毫秒）</value>
+  </data>
+  <data name="UhdrCapacityTitle" xml:space="preserve">
+    <value>Ultra HDR 高级设置 · HDR Capacity Max</value>
+  </data>
+  <data name="UhdrCapacityAuto" xml:space="preserve">
+    <value>自动（RGB 最大增益）</value>
+  </data>
+  <data name="UhdrCapacityManual" xml:space="preserve">
+    <value>手动（实验性）</value>
+  </data>
+  <data name="UhdrCapacityDescription" xml:space="preserve">
+    <value>应用于之后的 Ultra HDR 截图、导出和批量转换。数值越低，HDR 显示余量有限的设备会更积极应用增益图；过低可能导致高光裁切或色调映射。自动值按每张图片计算。</value>
   </data>
 </root>

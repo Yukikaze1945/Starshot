@@ -629,10 +629,10 @@
     <value>Drag a region or click a window. Copies the bitmap to the clipboard only; no file is saved.</value>
   </data>
   <data name="Starshot_HotkeyRegionOcr" xml:space="preserve">
-    <value>Recognize Text and Copy</value>
+    <value>Recognize and Edit Text</value>
   </data>
   <data name="Starshot_HotkeyRegionOcrDesc" xml:space="preserve">
-    <value>Drag a region or click a window. Recognizes the text in it and copies it to the clipboard; no file is saved.</value>
+    <value>Drag a region or click a window. Review and format recognized text before copying or translating.</value>
   </data>
   <data name="Starshot_SDRFormat" xml:space="preserve">
     <value>SDR Format</value>
@@ -1032,5 +1032,17 @@
   </data>
   <data name="AppearanceSetting_InfoWindowDurationDesc" xml:space="preserve">
     <value>How long the info window stays after a capture is saved or copied (milliseconds)</value>
+  </data>
+  <data name="UhdrCapacityTitle" xml:space="preserve">
+    <value>Ultra HDR · HDR Capacity Max</value>
+  </data>
+  <data name="UhdrCapacityAuto" xml:space="preserve">
+    <value>Automatic (RGB maximum gain)</value>
+  </data>
+  <data name="UhdrCapacityManual" xml:space="preserve">
+    <value>Manual (experimental)</value>
+  </data>
+  <data name="UhdrCapacityDescription" xml:space="preserve">
+    <value>Applies to new Ultra HDR screenshots, exports and batch conversions. Lower values apply more gain on displays with limited HDR headroom; too low may cause highlight clipping or tone mapping. Automatic is calculated per image.</value>
   </data>
 </root>

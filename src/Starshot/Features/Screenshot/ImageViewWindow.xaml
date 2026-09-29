@@ -107,6 +107,10 @@
           Symbol="ScanText"
         />
       </Button>
+      <Button Height="36" Margin="4,0,0,0" Padding="10,5,10,5"
+              BorderThickness="0" Click="Button_OcrEditor_Click"
+              Style="{ThemeResource DateTimePickerFlyoutButtonStyle}"
+              Content="OCR 排版/翻译" ToolTipService.ToolTip="识别、编辑排版并翻译文字" />
       <!--  打开菜单  -->
       <Button
         x:Name="Button_OpenMenu"

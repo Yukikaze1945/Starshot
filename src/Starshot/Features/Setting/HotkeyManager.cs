@@ -39,6 +39,14 @@ internal static class HotkeyManager
             User32.VK.VK_O
         );
 
+    public static HotkeyInfo PinClipboard { get; private set; } =
+        new HotkeyInfo(nameof(AppConfig.PinClipboardHotkey), 44449,
+            User32.HotKeyModifiers.MOD_CONTROL, User32.VK.VK_2);
+
+    public static HotkeyInfo ReopenPin { get; private set; } =
+        new HotkeyInfo(nameof(AppConfig.ReopenPinHotkey), 44450,
+            User32.HotKeyModifiers.MOD_CONTROL, User32.VK.VK_3);
+
     private static nint _registeredHwnd;
 
     public static void InitializeHotkey(nint hwnd)
@@ -47,7 +55,7 @@ internal static class HotkeyManager
         try
         {
             foreach (
-                var item in new HotkeyInfo[] { ScreenshotCapture, RegionCapture, RegionCopyOnly, RegionOcrCopy }
+                var item in new HotkeyInfo[] { ScreenshotCapture, RegionCapture, RegionCopyOnly, RegionOcrCopy, PinClipboard, ReopenPin }
             )
             {
                 User32.HotKeyModifiers modifiers = User32.HotKeyModifiers.MOD_NONE;
@@ -110,7 +118,7 @@ internal static class HotkeyManager
     /// </summary>
     public static void ShowRegistrationErrors()
     {
-        foreach (var item in new HotkeyInfo[] { ScreenshotCapture, RegionCapture, RegionCopyOnly, RegionOcrCopy })
+        foreach (var item in new HotkeyInfo[] { ScreenshotCapture, RegionCapture, RegionCopyOnly, RegionOcrCopy, PinClipboard, ReopenPin })
         {
             if (item.ErrorShown || item.Error.Succeeded)
                 continue;
@@ -248,6 +256,8 @@ internal static class HotkeyManager
             44446 => RegionCapture,
             44447 => RegionCopyOnly,
             44448 => RegionOcrCopy,
+            44449 => PinClipboard,
+            44450 => ReopenPin,
             _ => null,
         };
     }

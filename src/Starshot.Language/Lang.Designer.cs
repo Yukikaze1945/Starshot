@@ -1,4 +1,4 @@
-﻿namespace Starshot.Language {
+namespace Starshot.Language {
     using System;
     
     
@@ -13,6 +13,11 @@
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Lang {
+        public static string UhdrCapacityTitle => ResourceManager.GetString("UhdrCapacityTitle", resourceCulture);
+        public static string UhdrCapacityAuto => ResourceManager.GetString("UhdrCapacityAuto", resourceCulture);
+        public static string UhdrCapacityManual => ResourceManager.GetString("UhdrCapacityManual", resourceCulture);
+        public static string UhdrCapacityDescription => ResourceManager.GetString("UhdrCapacityDescription", resourceCulture);
+
         
         private static global::System.Resources.ResourceManager resourceMan;
         

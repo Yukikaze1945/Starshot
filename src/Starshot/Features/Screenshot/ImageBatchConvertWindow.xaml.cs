@@ -212,61 +212,75 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         }
     }
 
+    private bool _resumePending;
+    private bool _resetAfterStop;
+
     private async void Button_StartConvert_Click(object sender, RoutedEventArgs e)
     {
+        // The active invocation owns cleanup. A pause must not release the run guard.
+        if (_cancellationTokenSource is not null)
+        {
+            _cancellationTokenSource.Cancel();
+            return;
+        }
+        DisableControls();
+        using var cancellation = new CancellationTokenSource();
+        _cancellationTokenSource = cancellation;
         try
         {
-            DisableControls();
-            if (_cancellationTokenSource is null)
-            {
-                _cancellationTokenSource = new CancellationTokenSource();
-                await ConvertInternalAsync(_cancellationTokenSource.Token);
-            }
-            else
-            {
-                _cancellationTokenSource.Cancel();
-            }
+            await ConvertInternalAsync(cancellation.Token);
+            _resumePending = false;
         }
         catch (OperationCanceledException)
         {
+            _resumePending = true;
             _logger.LogInformation("Convert images canceled");
         }
         catch (Exception ex)
         {
+            _resumePending = false;
             _logger.LogError(ex, "Convert images failed");
         }
         finally
         {
             _cancellationTokenSource = null;
+            if (_resetAfterStop)
+            {
+                ResetConversionResults();
+                _resetAfterStop = false;
+            }
             RestoreControls();
         }
     }
 
     private void Button_Stop_Click(object sender, RoutedEventArgs e)
     {
-        try
+        if (_cancellationTokenSource is not null)
         {
-            _cancellationTokenSource?.Cancel();
-            _cancellationTokenSource = null;
-            RestoreControls();
-            DisplayInfo = false;
-            foreach (var item in ImageConvertItems)
-            {
-                item.Converting = false;
-                item.ConvertError = false;
-                item.ConvertSuccess = false;
-                item.ErrorMessage = null!;
-                item.OutputFileName = null!;
-                item.OutputFilePath = null!;
-                item.OutputFileSize = 0;
-                item.OutputFileSizeText = null!;
-                item.FileDeltaPercent = null!;
-                item.FileDeltaTextBrush = null!;
-            }
+            _resetAfterStop = true;
+            _cancellationTokenSource.Cancel();
+            return;
         }
-        catch (Exception ex)
+        ResetConversionResults();
+    }
+
+    private void ResetConversionResults()
+    {
+        _resumePending = false;
+        DisplayInfo = false;
+        foreach (var item in ImageConvertItems)
         {
-            _logger.LogError(ex, "Stop converting images failed");
+            item.Converting = false;
+            item.ConvertError = false;
+            item.ConvertSuccess = false;
+            item.Skipped = false;
+            item.ErrorMessage = null!;
+            item.OutputFileName = null!;
+            item.OutputFilePath = null!;
+            item.OutputFileSize = 0;
+            item.OutputFileSizeText = null!;
+            item.FileDeltaPercent = null!;
+            item.FileDeltaTextBrush = null!;
         }
     }
 
@@ -414,6 +428,10 @@ public sealed partial class ImageBatchConvertWindow : PageBase
 
     private int _quality;
 
+    private float _sdrWhiteLevel;
+    private float _uhdrCapacity;
+    private (string Format, string? Folder, int Exists, int Quality, float White, float Capacity)? _lastRunSettings;
+
     private string _avifenc;
 
     private string _cjxl;
@@ -462,6 +480,18 @@ public sealed partial class ImageBatchConvertWindow : PageBase
             _outputFolder = OutputFolder;
         }
         _quality = (int)Math.Clamp(Slider_Quality.Value, 0, 100);
+        _sdrWhiteLevel = AppConfig.SdrWhiteLevel;
+        _uhdrCapacity = AppConfig.UhdrCapacityOverride;
+        var settings = (_format, _outputFolder, _overwriteMode, _quality, _sdrWhiteLevel, _uhdrCapacity);
+        // Resume completed items only within the same interrupted batch and settings.
+        if (!_resumePending || _lastRunSettings != settings)
+        {
+            ResetConversionResults();
+            DisplayInfo = true;
+        }
+        _lastRunSettings = settings;
+        _logger.LogInformation("Batch conversion: format={Format}, existsMode={ExistsMode}, SDRWhite={White}, UhdrCapacityOverride={Capacity} (0=Auto)",
+            _format, _overwriteMode, _sdrWhiteLevel, _uhdrCapacity);
         _avifenc = Path.Combine(AppContext.BaseDirectory, "avifenc.exe");
         _cjxl = Path.Combine(AppContext.BaseDirectory, "cjxl.exe");
 
@@ -480,9 +510,12 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         if (item.ConvertSuccess)
         {
             SuccessCount++;
+            TotalSourceFileSize += item.SourceFileSize;
+            TotalOutputFileSize += item.OutputFileSize;
             return;
         }
         item.ConvertError = false;
+        item.Skipped = false;
         try
         {
             item.Converting = true;
@@ -532,9 +565,10 @@ public sealed partial class ImageBatchConvertWindow : PageBase
             item.OutputFileName = Path.GetFileName(item.OutputFilePath);
             item.OutputFileSize = new FileInfo(item.OutputFilePath).Length;
             item.OutputFileSizeText = $"{item.OutputFileSize / 1024:N0} KB";
-            if (skippedSameFormat)
+            if (skippedSameFormat || item.Skipped)
             {
                 // 跳过未转换，体积差显示「未转换」而非误导性的 0%
+                _logger.LogInformation("Not converted (existing file / same format): {Output}", item.OutputFilePath);
                 item.FileDeltaPercent = Lang.ImageBatchConvertWindow_NotConverted;
                 item.FileDeltaTextBrush = _deltaZeroBrush;
             }
@@ -594,6 +628,7 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         if (File.Exists(outputPath) && _overwriteMode is 0)
         {
             item.OutputFilePath = outputPath;
+            item.Skipped = true;
             return;
         }
         if (_format == ".avif")
@@ -661,6 +696,7 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         if (File.Exists(outputPath) && _overwriteMode is 0)
         {
             item.OutputFilePath = outputPath;
+            item.Skipped = true;
             return;
         }
         using var imageInfo = await ImageLoader.LoadImageAsync(
@@ -727,6 +763,7 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         if (File.Exists(outputPath) && _overwriteMode is 0)
         {
             item.OutputFilePath = outputPath;
+            item.Skipped = true;
             return;
         }
         using var fs_read = File.OpenRead(item.SourceFilePath);
@@ -780,6 +817,7 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         if (File.Exists(outputPath) && _overwriteMode is 0)
         {
             item.OutputFilePath = outputPath;
+            item.Skipped = true;
             return;
         }
         using var imageInfo = await ImageLoader.LoadImageAsync(
@@ -812,6 +850,7 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         if (File.Exists(outputPath) && _overwriteMode is 0)
         {
             item.OutputFilePath = outputPath;
+            item.Skipped = true;
             return;
         }
         using var imageInfo = await ImageLoader.LoadImageAsync(
@@ -827,7 +866,14 @@ public sealed partial class ImageBatchConvertWindow : PageBase
             .MaxCLL;
         using var ms = new MemoryStream();
         // SDR 白用 AppConfig 统一定义（与截图回退、查看器默认值同源）
-        await ImageSaver.SaveAsUhdrAsync(imageInfo.CanvasBitmap, ms, maxCLL, AppConfig.SdrWhiteLevel);
+        await ImageSaver.SaveAsUhdrAsync(imageInfo.CanvasBitmap, ms, maxCLL, _sdrWhiteLevel, _uhdrCapacity);
+        cancellationToken.ThrowIfCancellationRequested();
+        using (var decoder = Starward.Codec.UltraHdr.UhdrDecoder.Create(ms.ToArray()))
+        {
+            var metadata = decoder.GetGainmapMetadata();
+            _logger.LogInformation("Ultra HDR encoded: output={Output}, requestedCapacity={Requested}, actualCapacity={Actual}, gainMax={GainMax}",
+                outputPath, _uhdrCapacity, metadata.HdrCapacityMax, metadata.MaxContentBoost[0]);
+        }
         using var fs = File.Create(outputPath);
         ms.Position = 0;
         await ms.CopyToAsync(fs, CancellationToken.None);
@@ -843,6 +889,7 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         if (File.Exists(outputPath) && _overwriteMode is 0)
         {
             item.OutputFilePath = outputPath;
+            item.Skipped = true;
             return;
         }
         using var imageInfo = await ImageLoader.LoadImageAsync(
@@ -1188,6 +1235,8 @@ public class ImageConvertItem : ObservableObject
         get => field;
         set => SetProperty(ref field, value);
     }
+
+    public bool Skipped { get; set; }
 
     public bool ConvertSuccess
     {

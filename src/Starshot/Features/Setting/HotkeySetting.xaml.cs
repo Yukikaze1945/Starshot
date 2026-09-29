@@ -29,6 +29,8 @@ public sealed partial class HotkeySetting : PageBase
             HotkeyManager.InitializeHotkeyInput(HotkeyInput_RegionCapture);
             HotkeyManager.InitializeHotkeyInput(HotkeyInput_RegionCopy);
             HotkeyManager.InitializeHotkeyInput(HotkeyInput_RegionOcr);
+            HotkeyManager.InitializeHotkeyInput(HotkeyInput_PinClipboard);
+            HotkeyManager.InitializeHotkeyInput(HotkeyInput_ReopenPin);
         }
         catch { }
     }
@@ -56,6 +58,8 @@ public sealed partial class HotkeySetting : PageBase
                     HotkeyInput_RegionCapture,
                     HotkeyInput_RegionCopy,
                     HotkeyInput_RegionOcr,
+                    HotkeyInput_PinClipboard,
+                    HotkeyInput_ReopenPin,
                 }
             )
             {

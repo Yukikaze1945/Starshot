@@ -82,6 +82,23 @@
         </StackPanel>
       </Button>
       <MenuFlyoutSeparator />
+      <Button Height="36" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+              Command="{x:Bind PinFromClipboardCommand}"
+              Style="{ThemeResource DateTimePickerFlyoutButtonStyle}">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <FontIcon FontSize="16" Glyph="&#xE718;" />
+          <TextBlock VerticalAlignment="Center" Text="从剪贴板贴图" />
+        </StackPanel>
+      </Button>
+      <Button Height="36" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+              Command="{x:Bind ReopenPinCommand}"
+              Style="{ThemeResource DateTimePickerFlyoutButtonStyle}">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <FontIcon FontSize="16" Glyph="&#xE72C;" />
+          <TextBlock VerticalAlignment="Center" Text="恢复最近关闭的贴图" />
+        </StackPanel>
+      </Button>
+      <MenuFlyoutSeparator />
       <Button
         Height="36"
         HorizontalAlignment="Stretch"

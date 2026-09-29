@@ -8,6 +8,7 @@ using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -23,6 +24,16 @@ using Windows.UI;
 
 namespace Starshot.Features.Screenshot;
 
+public enum RegionCaptureAction { Cancel, Save, Copy, Ocr, Translate, Pin, RecordGif, LongCapture }
+
+public sealed record RegionCaptureResult(
+    RegionCaptureAction Action,
+    Rect SelectionRect,
+    Rect PhysicalRect,
+    CanvasRenderTarget? SdrCrop,
+    CanvasRenderTarget? AnnotationLayer = null
+);
+
 public sealed partial class RegionCaptureWindow : WindowEx
 {
     private const int MinimumRectangleSize = 5;
@@ -31,20 +42,27 @@ public sealed partial class RegionCaptureWindow : WindowEx
     private const int MagnifierCoordGap = 4;
     private const int MagnifierCoordHeight = 22;
 
-    public Rect SelectionRect { get; private set; }
-    public bool IsConfirmed { get; private set; }
+    private enum RegionCaptureState { Selecting, Selected, Completing, Closed }
+    private enum DragMode { None, Creating, Moving, Resizing }
+    private enum ResizeHandle { None, TopLeft, Top, TopRight, Left, Right, BottomLeft, Bottom, BottomRight }
 
-    // 确认时从 _displayBitmap（冻结帧，已 tonemap 的 SDR）裁出的选区，供剪贴板直接复用，不再二次 tonemap
-    public CanvasRenderTarget? SdrCrop { get; private set; }
+    public Rect SelectionRect { get; private set; }
+    private RegionCaptureState _state = RegionCaptureState.Closed;
+    private RegionCaptureAction _defaultAction;
 
     private CanvasBitmap _canvasOriginal; // 原始帧（裁剪用，可能 HDR），每次 SetCapture 更新
     private CanvasBitmap? _displayBitmap; // 显示用（SDR 色调映射后），每次 SetCapture 重建；会话间为 null（CloseWindow 清引用）
+    private byte[]? _displayPixels; // One readback per capture; color picking never blocks a redraw on GPU readback.
+    private Color _sampledColor;
     private float _scale;
-    private readonly int _vx,
+    private int _vx,
         _vy; // 虚拟屏幕物理坐标原点（放大镜钳制到当前显示器用）
 
     private Point _positionOnClick;
-    private bool _isMouseDown;
+    private DragMode _dragMode;
+    private ResizeHandle _activeHandle;
+    private Rect _dragStartPhysicalRect;
+    private Point _dragStartPhysicalPoint;
     private bool _pressedOnHover; // 左键按下瞬间是否悬停在某个窗口上（单击截图用）
     private Point _currentMousePos;
 
@@ -56,11 +74,11 @@ public sealed partial class RegionCaptureWindow : WindowEx
     private Rect _hoverRect;
     private bool _hasHover;
 
-    private float _dashOffset;
-    private readonly System.Diagnostics.Stopwatch _timer;
     private bool _isClosed;
     private CanvasSwapChain? _swapChain;
-    private DispatcherTimer _renderTimer;
+    private DispatcherQueueTimer? _moveInTimer;
+    private bool _redrawQueued;
+    private bool _traceNextRedraw;
 
     // 锁定画布尺寸（首帧后固定，防止布局抖动导致冻结帧移动）
     private float _lockedW;
@@ -75,7 +93,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
     // 关窗移屏外方案配套：截图前的前台窗口（关窗时还焦点）、待移回屏内标记与节拍计数
     private nint _prevForeground;
     private bool _pendingMoveIn;
-    private int _moveInTick;
+    private int _captureGeneration;
 
     // 原生兜底覆盖进程内首次完成光标交接前的截图会话；真实物理移动后不再启用。
     // 如果首次会话未发生物理移动就结束，后续会话仍可继续尝试。
@@ -86,13 +104,12 @@ public sealed partial class RegionCaptureWindow : WindowEx
     private bool _captureCursorApplied;
     private POINT? _captureCursorOrigin;
 
-    // 单例：选区完成信号（替代 Closed），ScreenCaptureService await 它；窗口不 Close 只 Hide
-    public TaskCompletionSource<bool> Completion { get; private set; }
+    // 单例：最终动作只交付一次；覆盖层与保存/复制/OCR 解耦。
+    public TaskCompletionSource<RegionCaptureResult> Completion { get; private set; }
 
     public RegionCaptureWindow()
     {
         InitializeComponent();
-        _timer = System.Diagnostics.Stopwatch.StartNew();
         this.Closed += RegionCaptureWindow_Closed;
 
         // 窗口设置（单例，只一次）
@@ -101,6 +118,13 @@ public sealed partial class RegionCaptureWindow : WindowEx
         Title = "Starshot";
         AppWindow.IsShownInSwitchers = false;
         SystemBackdrop = new TransparentBackdrop();
+
+        // The monitor WGC session remains active while this overlay is visible. Exclude our
+        // own top-level window so presenting the frozen frame cannot feed it back into WGC.
+        if (!SetWindowDisplayAffinity(WindowHandle, 0x11))
+            Serilog.Log.Warning("Region overlay capture exclusion failed: error={Error}", Marshal.GetLastPInvokeError());
+        else
+            Serilog.Log.Information("Region overlay excluded from monitor capture: hwnd={Hwnd}", (nint)WindowHandle);
 
         if (AppWindow.Presenter is OverlappedPresenter presenter)
         {
@@ -151,9 +175,6 @@ public sealed partial class RegionCaptureWindow : WindowEx
         // _scale 按覆盖层窗口 DPI（d56df02）；swapChain 移到 SetCapture 创建（CloseWindow 释放本进程显存）
         float dpi = User32.GetDpiForWindow(WindowHandle);
         _scale = dpi / 96f;
-        _renderTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
-        _renderTimer.Tick += (_, _) => Redraw();
-        // 不 Start：SetCapture 时启动（单例每次截图复用窗口）
     }
 
     /// <summary>
@@ -167,9 +188,21 @@ public sealed partial class RegionCaptureWindow : WindowEx
     /// 关窗时移到屏外保持 IsWindowVisible（合成管线不停摆），下次截图先把新帧 Present 上屏
     /// 再移回屏内，从根上避免 Show 瞬间 DWM 先合成保留的旧会话帧（启动闪上次截图界面）。
     /// </summary>
-    public void SetCapture(CanvasBitmap canvas, float sdrWhiteLevel, int physW, int physH)
+    public void SetCapture(CanvasBitmap canvas, float sdrWhiteLevel, int physW, int physH,
+        RegionCaptureAction defaultAction)
     {
-        // swapChain 常驻（关窗只移屏外不销毁）；分辨率变了尺寸过期则重建
+        int generation = ++_captureGeneration;
+        StopMoveInTimer();
+        _pendingMoveIn = false;
+        _redrawQueued = false;
+        LogOverlayPhase("Region overlay SetCapture begin", generation);
+        _vx = User32.GetSystemMetrics((User32.SystemMetric)76);
+        _vy = User32.GetSystemMetrics((User32.SystemMetric)77);
+        // 显示器布局改变时先在屏外调整 HWND 尺寸；不能把旧内容提前移回桌面。
+        User32.SetWindowPos(WindowHandle, IntPtr.Zero, -32000, -32000, physW, physH,
+            User32.SetWindowPosFlags.SWP_NOZORDER | User32.SetWindowPosFlags.SWP_NOACTIVATE);
+        _scale = GetCaptureScale();
+        // 每次会话在屏外创建新 swap chain，结束时释放，避免 idle 常驻全屏双缓冲。
         float needW = physW / _scale,
             needH = physH / _scale;
         if (
@@ -178,12 +211,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
             || Math.Abs((float)_swapChain.Size.Height - needH) > 0.5f
         )
         {
-            try
-            {
-                Canvas.SwapChain = null;
-                _swapChain?.Dispose();
-            }
-            catch { }
+            ReleaseSwapChain();
             _swapChain = new CanvasSwapChain(
                 CanvasDevice.GetSharedDevice(),
                 needW,
@@ -200,13 +228,25 @@ public sealed partial class RegionCaptureWindow : WindowEx
         _canvasOriginal = canvas;
         _displayBitmap = CreateDisplayBitmap(canvas, physW, physH, sdrWhiteLevel);
         _ownsDisplayBitmap = !ReferenceEquals(_displayBitmap, canvas);
+        try { _displayPixels = _displayBitmap.GetPixelBytes(); }
+        catch (Exception ex)
+        {
+            _displayPixels = null;
+            Serilog.Log.Warning(ex, "Region color sampling unavailable");
+        }
 
         // 重置交互状态（为本次截图清场）
         SelectionRect = default;
-        IsConfirmed = false;
-        SdrCrop = null;
+        _state = RegionCaptureState.Selecting;
+        _defaultAction = defaultAction;
+        var accent = new Microsoft.UI.Xaml.Media.SolidColorBrush(Color.FromArgb(255, 49, 137, 255));
+        var clear = new Microsoft.UI.Xaml.Media.SolidColorBrush(Colors.Transparent);
+        ToolbarSaveButton.Background = defaultAction == RegionCaptureAction.Save ? accent : clear;
+        ToolbarCopyButton.Background = defaultAction == RegionCaptureAction.Copy ? accent : clear;
+        ToolbarOcrButton.Background = defaultAction == RegionCaptureAction.Ocr ? accent : clear;
         _positionOnClick = default;
-        _isMouseDown = false;
+        _dragMode = DragMode.None;
+        _activeHandle = ResizeHandle.None;
         _pressedOnHover = false;
         _captureCursorActive = false;
         _captureCursorApplied = false;
@@ -220,23 +260,81 @@ public sealed partial class RegionCaptureWindow : WindowEx
         }
         _selectionFromDrag = false;
         _windowRects = new List<Rect>();
+        ResetAnnotations();
         _hoverRect = default;
         _hasHover = false;
         _lockedW = 0;
         _lockedH = 0;
         _sizeLocked = false; // 首帧重新锁尺寸 + 触发 DetectWindows
         _cleanedUp = false;
-        Completion = new TaskCompletionSource<bool>();
+        Completion = new TaskCompletionSource<RegionCaptureResult>();
+        SelectionToolbar.Visibility = Visibility.Collapsed;
+        SelectionMetrics.Visibility = Visibility.Collapsed;
         _prevForeground = (nint)User32.GetForegroundWindow();
 
+        // 首次 Show 也先放到屏外，避免 DWM 在首帧 Present 前合成空白/旧帧。
+        MoveOffscreen();
         Show(); // 首次显示；后续会话窗口一直可见（在屏外），no-op
         // 会话激活放在 Show 之后：万一 Show 在已销毁窗口上抛（用户真关过窗、service 未能重建的兜底路径），
         // _isClosed 仍为 true、timer 未启动，Redraw 守卫生效，不会拿已释放的帧再画导致 FATAL
         _isClosed = false;
-        _renderTimer.Start();
         Redraw(); // 屏外先把新冻结帧 Present 上屏（窗口可见，合成照常提交）
-        _pendingMoveIn = true; // 第 2 个 tick（新帧确定已合成）再移回屏内，移回瞬间不可能是旧内容
-        _moveInTick = 0;
+        LogOverlayPhase("Region overlay initial Present done", generation);
+        ScheduleMoveIn(generation);
+    }
+
+    private void ScheduleMoveIn(int generation)
+    {
+        _pendingMoveIn = true;
+        var timer = DispatcherQueue.CreateTimer();
+        timer.Interval = TimeSpan.FromMilliseconds(24);
+        timer.IsRepeating = false;
+        _moveInTimer = timer;
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            if (!ReferenceEquals(_moveInTimer, timer)
+                || generation != _captureGeneration || _isClosed || !_pendingMoveIn)
+                return;
+            _moveInTimer = null;
+            _pendingMoveIn = false;
+            MoveOnscreen(generation);
+        };
+        LogOverlayPhase("Region overlay move-in scheduled", generation);
+        timer.Start();
+    }
+
+    private void StopMoveInTimer()
+    {
+        _moveInTimer?.Stop();
+        _moveInTimer = null;
+    }
+
+    private void LogOverlayPhase(string phase, int generation)
+    {
+        bool hasRect = User32.GetWindowRect(WindowHandle, out RECT rect);
+        Serilog.Log.Information(
+            "{Phase}: generation={Generation}, closed={Closed}, pendingMoveIn={PendingMoveIn}, swapChain={HasSwapChain}, hwnd={Hwnd}, visible={Visible}, rect={X},{Y},{Width}x{Height}, rectValid={RectValid}",
+            phase, generation, _isClosed, _pendingMoveIn, _swapChain is not null,
+            (nint)WindowHandle, User32.IsWindowVisible(WindowHandle),
+            hasRect ? rect.left : 0, hasRect ? rect.top : 0,
+            hasRect ? rect.Width : 0, hasRect ? rect.Height : 0, hasRect
+        );
+    }
+
+    [DllImport("shcore.dll")]
+    private static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowDisplayAffinity(IntPtr hwnd, uint affinity);
+
+    private float GetCaptureScale()
+    {
+        var anchor = new POINT { x = _vx + 1, y = _vy + 1 };
+        var monitor = User32.MonitorFromPoint(anchor, User32.MonitorFlags.MONITOR_DEFAULTTONEAREST);
+        return GetDpiForMonitor(monitor.DangerousGetHandle(), 0, out uint dpi, out _) == 0
+            ? dpi / 96f : User32.GetDpiForWindow(WindowHandle) / 96f;
     }
 
     private static CanvasBitmap CreateDisplayBitmap(
@@ -369,8 +467,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
                         return true;
 
                     var winRect = new Rect(
-                        wr.left / _scale,
-                        wr.top / _scale,
+                        (wr.left - _vx) / _scale,
+                        (wr.top - _vy) / _scale,
                         wr.Width / _scale,
                         wr.Height / _scale
                     );
@@ -389,8 +487,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
                             if (User32.ClientToScreen(hWnd, ref tl))
                             {
                                 var c = new Rect(
-                                    (tl.x + cr.left) / _scale,
-                                    (tl.y + cr.top) / _scale,
+                                    (tl.x + cr.left - _vx) / _scale,
+                                    (tl.y + cr.top - _vy) / _scale,
                                     cr.Width / _scale,
                                     cr.Height / _scale
                                 );
@@ -450,9 +548,30 @@ public sealed partial class RegionCaptureWindow : WindowEx
         {
             if (!_isClosed)
             {
-                UpdateHover(_currentMousePos);
+                if (_state == RegionCaptureState.Selecting)
+                {
+                    UpdateHover(_currentMousePos);
+                    RequestRedraw();
+                }
             }
         });
+    }
+
+    private void RequestRedraw()
+    {
+        if (_isClosed || _pendingMoveIn || _redrawQueued)
+            return;
+        int generation = _captureGeneration;
+        _redrawQueued = true;
+        if (!DispatcherQueue.TryEnqueue(() =>
+            {
+                if (generation != _captureGeneration)
+                    return;
+                _redrawQueued = false;
+                if (!_pendingMoveIn)
+                    Redraw();
+            }))
+            _redrawQueued = false;
     }
 
     private void Redraw()
@@ -460,10 +579,15 @@ public sealed partial class RegionCaptureWindow : WindowEx
         if (_isClosed || _swapChain is null || _displayBitmap is null)
             return;
 
+        bool trace = _traceNextRedraw;
+        _traceNextRedraw = false;
+        if (trace)
+            Serilog.Log.Information("Region overlay click redraw begin: generation={Generation}, state={State}, drag={Drag}",
+                _captureGeneration, _state, _dragMode);
+
         // 首次会话真实移动前由原生光标兜底；移动后立即交回 ProtectedCursor。
         if (_captureCursorActive)
             ApplyCaptureCursor();
-        _dashOffset = (float)_timer.Elapsed.TotalSeconds * -15;
 
         // 首帧锁定画布尺寸（_scale 构造时已按覆盖层窗口 DPI 设定）
         if (!_sizeLocked)
@@ -483,7 +607,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
                 (cursorPosition.x - _vx) / _scale,
                 (cursorPosition.y - _vy) / _scale
             );
-            if (!_isMouseDown)
+            if (_state == RegionCaptureState.Selecting && _dragMode == DragMode.None)
                 UpdateHover(_currentMousePos);
         }
 
@@ -501,15 +625,15 @@ public sealed partial class RegionCaptureWindow : WindowEx
                 CanvasImageInterpolation.Linear
             );
 
-            // 1b. 整帧压黑 alpha 51（BackgroundDimStrength=20 → 255*0.2）
-            ds.FillRectangle(new Rect(0, 0, _lockedW, _lockedH), Color.FromArgb(51, 0, 0, 0));
+            // Darken the surroundings; repaint the selected area from the frozen frame below.
+            ds.FillRectangle(new Rect(0, 0, _lockedW, _lockedH), Color.FromArgb(145, 0, 0, 0));
 
             // 2. 选区或悬停边框（纯绘图，不碰冻结帧）
             Rect rect = default;
             bool hasRect = false;
 
             if (
-                _isMouseDown
+                (_state == RegionCaptureState.Selected || _dragMode == DragMode.Creating)
                 && SelectionRect.Width > MinimumRectangleSize
                 && SelectionRect.Height > MinimumRectangleSize
             )
@@ -517,7 +641,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
                 rect = SelectionRect;
                 hasRect = true;
             }
-            else if (_hasHover && _hoverRect.Width > 2 && _hoverRect.Height > 2)
+            else if (_state == RegionCaptureState.Selecting && _hasHover && _hoverRect.Width > 2 && _hoverRect.Height > 2)
             {
                 rect = _hoverRect;
                 hasRect = true;
@@ -548,27 +672,22 @@ public sealed partial class RegionCaptureWindow : WindowEx
                     );
                 }
 
-                ds.DrawRectangle(rect, Colors.Black, 1);
-                using var anim = new CanvasStrokeStyle
-                {
-                    CustomDashStyle = new float[] { 5, 5 },
-                    DashOffset = _dashOffset,
-                };
-                ds.DrawRectangle(rect, Colors.White, 1, anim);
-
-                // 与 GetPhysicalSourceRect 一致：拖拽中 +1，悬停窗口不 +1
-                var phys = ComputePhysicalRect(rect, _isMouseDown);
-                DrawInfoBox(
-                    ds,
-                    $"X: {(int)phys.X}, Y: {(int)phys.Y}, W: {(int)phys.Width}, H: {(int)phys.Height}",
-                    new Vector2((float)rect.X + 3, (float)rect.Y + 3)
-                );
+                if (_state == RegionCaptureState.Selected)
+                    DrawAnnotations(ds);
+                ds.DrawRectangle(rect, Color.FromArgb(180, 2, 10, 24), 4);
+                ds.DrawRectangle(rect, Color.FromArgb(255, 49, 137, 255), 2);
+                if (_state == RegionCaptureState.Selected)
+                    DrawResizeHandles(ds, rect);
             }
+            UpdateSelectionMetrics(rect, hasRect);
 
             // 3. 放大镜与坐标条整体钳制到光标所在显示器，坐标条随上下翻转保持在远离鼠标的一侧
             float mx = (float)_currentMousePos.X,
                 my = (float)_currentMousePos.Y;
             GetActiveMonitorDip(mx, my, out float ml, out float mt, out float mr, out float mb);
+            bool hasColor = TrySampleColor(mx, my, out _sampledColor);
+            bool hex = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+                .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
             DrawMagnifier(
                 ds,
                 mx,
@@ -577,21 +696,18 @@ public sealed partial class RegionCaptureWindow : WindowEx
                 mt,
                 mr,
                 mb,
-                $"X: {(int)(mx * _scale)} Y: {(int)(my * _scale)}"
+                $"({(int)(mx * _scale) + _vx}, {(int)(my * _scale) + _vy})\n"
+                    + (hasColor ? (hex ? $"#{_sampledColor.R:X2}{_sampledColor.G:X2}{_sampledColor.B:X2}"
+                        : $"RGB: {_sampledColor.R},{_sampledColor.G},{_sampledColor.B}") : "RGB: —")
+                    + "\nC: 复制颜色值"
             );
         }
+        if (trace)
+            Serilog.Log.Information("Region overlay click drawing done: generation={Generation}", _captureGeneration);
         _swapChain.Present();
+        if (trace)
+            Serilog.Log.Information("Region overlay click Present done: generation={Generation}", _captureGeneration);
 
-        // SetCapture 挂的移回任务：第 2 个 tick（首帧 Present 已过 16ms，新帧确定合成进 surface）移回屏内
-        if (_pendingMoveIn)
-        {
-            _moveInTick++;
-            if (_moveInTick >= 2)
-            {
-                _pendingMoveIn = false;
-                MoveOnscreen();
-            }
-        }
     }
 
     // 光标所在显示器在 canvas DIP 坐标下的边界（放大镜、坐标框共用，不跨屏）
@@ -644,7 +760,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         int magSize = MagnifierPixelCount * MagnifierPixelSize;
         const int offset = 10;
         // 先按放大镜 + 坐标条的整体高度定位，再按上下方向排列两者
-        int totalH = magSize + MagnifierCoordGap + MagnifierCoordHeight;
+        int totalH = magSize + MagnifierCoordGap + 58;
 
         float destX = mx + offset;
         float groupY = my + offset;
@@ -658,8 +774,21 @@ public sealed partial class RegionCaptureWindow : WindowEx
         if (groupY < monTop)
             groupY = monTop;
 
+        if (_state == RegionCaptureState.Selected && SelectionToolbar.Visibility == Visibility.Visible)
+        {
+            double barX = Microsoft.UI.Xaml.Controls.Canvas.GetLeft(SelectionToolbar);
+            double barY = Microsoft.UI.Xaml.Controls.Canvas.GetTop(SelectionToolbar);
+            if (!double.IsNaN(barX) && !double.IsNaN(barY)
+                && destX < barX + SelectionToolbar.Width && destX + magSize > barX
+                && groupY < barY + SelectionToolbar.Height && groupY + totalH > barY)
+            {
+                groupY = (float)Math.Max(monTop, barY - totalH - 8);
+                showAbove = true;
+            }
+        }
+
         // 坐标条始终放在远离鼠标的一侧：向下展开时在像素图下方，向上翻转时在像素图上方
-        float destY = groupY + (showAbove ? MagnifierCoordHeight + MagnifierCoordGap : 0);
+        float destY = groupY + (showAbove ? 58 + MagnifierCoordGap : 0);
         float coordY = showAbove ? groupY : destY + magSize + MagnifierCoordGap;
 
         // 源矩形整数对齐，让 NearestNeighbor 真正锐利（不再糊）
@@ -704,6 +833,27 @@ public sealed partial class RegionCaptureWindow : WindowEx
         DrawCoordStrip(ds, coordText, destX, coordY, magSize);
     }
 
+    private bool TrySampleColor(float x, float y, out Color color)
+    {
+        color = default;
+        if (_displayPixels is null || _displayBitmap is null)
+            return false;
+        int width = (int)_displayBitmap.SizeInPixels.Width;
+        int height = (int)_displayBitmap.SizeInPixels.Height;
+        int px = Math.Clamp((int)Math.Floor(x * _scale), 0, width - 1);
+        int py = Math.Clamp((int)Math.Floor(y * _scale), 0, height - 1);
+        long offset = ((long)py * width + px) * 4;
+        if (offset + 3 >= _displayPixels.Length)
+            return false;
+        int index = (int)offset;
+        bool bgra = _displayBitmap.Format == DirectXPixelFormat.B8G8R8A8UIntNormalized;
+        color = Color.FromArgb(255,
+            _displayPixels[index + (bgra ? 2 : 0)],
+            _displayPixels[index + 1],
+            _displayPixels[index + (bgra ? 0 : 2)]);
+        return true;
+    }
+
     /// <summary>坐标条：宽与放大镜对齐，文本水平居中，黑底白字圆角。</summary>
     private void DrawCoordStrip(
         CanvasDrawingSession ds,
@@ -726,58 +876,85 @@ public sealed partial class RegionCaptureWindow : WindowEx
                 text,
                 fmt,
                 width,
-                MagnifierCoordHeight
+                58
             );
-            float textY = y + (MagnifierCoordHeight - (float)layout.LayoutBounds.Height) / 2;
-            var stripRect = new Rect(x, y, width, MagnifierCoordHeight);
-            ds.FillRoundedRectangle(stripRect, 3, 3, Color.FromArgb(200, 0, 0, 0));
-            ds.DrawRoundedRectangle(stripRect, 3, 3, Color.FromArgb(200, 128, 128, 128), 1);
+            float textY = y + (58 - (float)layout.LayoutBounds.Height) / 2;
+            var stripRect = new Rect(x, y, width, 58);
+            ds.FillRoundedRectangle(stripRect, 3, 3, Color.FromArgb(238, 7, 8, 15));
+            ds.DrawRoundedRectangle(stripRect, 3, 3, Color.FromArgb(200, 170, 184, 206), 1);
+            if (_displayPixels is not null)
+            {
+                ds.FillRectangle(new Rect(x + 3, y + 22, 11, 11), _sampledColor);
+                ds.DrawRectangle(new Rect(x + 3, y + 22, 11, 11), Colors.White, 1);
+            }
             ds.DrawTextLayout(layout, new Vector2(x, textY), Colors.White);
         }
         catch { }
     }
 
-    private void DrawInfoBox(CanvasDrawingSession ds, string text, Vector2 pos)
+    private void UpdateSelectionMetrics(Rect rect, bool visible)
     {
-        try
-        {
-            using var fmt = new Microsoft.Graphics.Canvas.Text.CanvasTextFormat
-            {
-                FontSize = 13,
-                FontFamily = "Consolas",
-            };
-            using var layout = new Microsoft.Graphics.Canvas.Text.CanvasTextLayout(
-                ds,
-                text,
-                fmt,
-                400,
-                30
-            );
-            float w = (float)layout.LayoutBounds.Width;
-            float h = (float)layout.LayoutBounds.Height;
-            var bgRect = new Rect(pos.X - 3, pos.Y - 2, w + 6, h + 4);
-            ds.FillRoundedRectangle(bgRect, 3, 3, Color.FromArgb(200, 0, 0, 0));
-            ds.DrawRoundedRectangle(bgRect, 3, 3, Color.FromArgb(200, 128, 128, 128), 1);
-            ds.DrawTextLayout(layout, pos, Colors.White);
-        }
-        catch { }
+        SelectionMetrics.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        if (!visible)
+            return;
+        var physical = ComputePhysicalRect(rect, _dragMode == DragMode.Creating);
+        SelectionMetricsText.Text = $"{(int)physical.X},{(int)physical.Y}  {(int)physical.Width} × {(int)physical.Height} px";
+        double labelWidth = Math.Max(SelectionMetrics.ActualWidth, 230);
+        double x = Math.Clamp(rect.Left, 0, Math.Max(0, _lockedW - labelWidth));
+        double y = rect.Top >= 40 ? rect.Top - 38 : Math.Min(_lockedH - 32, rect.Top + 5);
+        Microsoft.UI.Xaml.Controls.Canvas.SetLeft(SelectionMetrics, x);
+        Microsoft.UI.Xaml.Controls.Canvas.SetTop(SelectionMetrics, Math.Max(0, y));
     }
 
     // ===== 鼠标事件 =====
 
     private void Canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
+        if (_state is RegionCaptureState.Completing or RegionCaptureState.Closed)
+            return;
         var pt = e.GetCurrentPoint(Canvas);
         _currentMousePos = pt.Position;
         if (pt.Properties.IsLeftButtonPressed)
         {
-            _positionOnClick = pt.Position;
-            _isMouseDown = true;
-            _selectionFromDrag = true;
-            _pressedOnHover = _hasHover; // 记下：是否在悬停窗口上按下（单击截图用）
-            SelectionRect = new Rect(pt.Position.X, pt.Position.Y, 0, 0);
+            if (StartAnnotation(pt.Position))
+            {
+                Canvas.CapturePointer(e.Pointer);
+                e.Handled = true;
+                return;
+            }
+            Serilog.Log.Information("Region overlay pointer press: generation={Generation}, state={State}, pos={X},{Y}",
+                _captureGeneration, _state, pt.Position.X, pt.Position.Y);
+            _traceNextRedraw = true;
+            if (_state == RegionCaptureState.Selected)
+            {
+                _activeHandle = HitTestHandle(pt.Position);
+                if (_activeHandle != ResizeHandle.None || SelectionRect.Contains(pt.Position))
+                {
+                    _dragMode = _activeHandle == ResizeHandle.None ? DragMode.Moving : DragMode.Resizing;
+                    _dragStartPhysicalRect = GetPhysicalSourceRect();
+                    _dragStartPhysicalPoint = ToPhysicalPoint(pt.Position);
+                }
+                else
+                {
+                    ReturnToSelectingState();
+                    BeginSelection(pt.Position);
+                }
+            }
+            else
+                BeginSelection(pt.Position);
+            Canvas.CapturePointer(e.Pointer);
+            RequestRedraw();
             e.Handled = true;
         }
+    }
+
+    private void BeginSelection(Point pos)
+    {
+        _positionOnClick = pos;
+        _dragMode = DragMode.Creating;
+        _selectionFromDrag = true;
+        _pressedOnHover = _hasHover;
+        SelectionRect = new Rect(pos.X, pos.Y, 0, 0);
     }
 
     private void Canvas_PointerMoved(object sender, PointerRoutedEventArgs e)
@@ -800,62 +977,235 @@ public sealed partial class RegionCaptureWindow : WindowEx
         }
         _currentMousePos = pos;
 
-        if (_isMouseDown)
+        if (_draftAnnotation is not null)
         {
-            double x = Math.Min(_positionOnClick.X, pos.X);
-            double y = Math.Min(_positionOnClick.Y, pos.Y);
-            double w = Math.Abs(pos.X - _positionOnClick.X);
-            double h = Math.Abs(pos.Y - _positionOnClick.Y);
+            UpdateAnnotation(pos);
+            e.Handled = true;
+            return;
+        }
+
+        if (_dragMode == DragMode.Creating)
+        {
+            double px = Math.Clamp(pos.X, 0, _lockedW);
+            double py = Math.Clamp(pos.Y, 0, _lockedH);
+            double x = Math.Min(_positionOnClick.X, px);
+            double y = Math.Min(_positionOnClick.Y, py);
+            double w = Math.Abs(px - _positionOnClick.X);
+            double h = Math.Abs(py - _positionOnClick.Y);
             SelectionRect = new Rect(x, y, w, h);
         }
-        else
+        else if (_dragMode == DragMode.Moving)
+            UpdateSelectionMove(pos);
+        else if (_dragMode == DragMode.Resizing)
+            UpdateSelectionResize(pos);
+        else if (_state == RegionCaptureState.Selecting)
         {
             UpdateHover(pos);
         }
+        if (_state == RegionCaptureState.Selected)
+            UpdateToolbarPlacement();
+        RequestRedraw();
         e.Handled = true;
     }
 
     private void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
         var pt = e.GetCurrentPoint(Canvas);
+        Serilog.Log.Information("Region overlay pointer release: generation={Generation}, state={State}, drag={Drag}, pos={X},{Y}",
+            _captureGeneration, _state, _dragMode, pt.Position.X, pt.Position.Y);
+        _traceNextRedraw = true;
 
-        if (pt.Properties.PointerUpdateKind == PointerUpdateKind.RightButtonReleased)
+        if (_draftAnnotation is not null)
         {
-            if (_isMouseDown)
-            {
-                _isMouseDown = false;
-                SelectionRect = default;
-            }
-            else
-            {
-                CloseWindow();
-            }
+            FinishAnnotation(pt.Position);
+            Canvas.ReleasePointerCapture(e.Pointer);
             e.Handled = true;
             return;
         }
 
-        if (_isMouseDown)
+        if (pt.Properties.PointerUpdateKind == PointerUpdateKind.RightButtonReleased)
         {
-            _isMouseDown = false;
-            if (
-                SelectionRect.Width > MinimumRectangleSize
-                && SelectionRect.Height > MinimumRectangleSize
-            )
+            HandleRightClick();
+            e.Handled = true;
+            return;
+        }
+
+        if (_dragMode != DragMode.None)
+        {
+            var completedDrag = _dragMode;
+            _dragMode = DragMode.None;
+            Canvas.ReleasePointerCapture(e.Pointer);
+            if (completedDrag == DragMode.Creating)
             {
-                // 拖拽选区
-                IsConfirmed = true;
-                CloseWindow();
+                if (SelectionRect.Width > MinimumRectangleSize && SelectionRect.Height > MinimumRectangleSize)
+                    EnterSelectedState();
+                else if (_pressedOnHover && _hoverRect.Width > 2 && _hoverRect.Height > 2)
+                {
+                    SelectionRect = _hoverRect;
+                    _selectionFromDrag = false;
+                    EnterSelectedState();
+                }
+                else
+                    SelectionRect = default;
             }
-            else if (_pressedOnHover && _hoverRect.Width > 2 && _hoverRect.Height > 2)
-            {
-                // 单击（未拖动）落在悬停窗口上 → 直接截该窗口（QuickCrop）
-                SelectionRect = _hoverRect;
-                _selectionFromDrag = false;
-                IsConfirmed = true;
-                CloseWindow();
-            }
+            else
+                UpdateToolbarPlacement();
+            RequestRedraw();
             e.Handled = true;
         }
+    }
+
+    private Point ToPhysicalPoint(Point dip) => new(
+        Math.Round(dip.X * _canvasOriginal.SizeInPixels.Width / _lockedW),
+        Math.Round(dip.Y * _canvasOriginal.SizeInPixels.Height / _lockedH)
+    );
+
+    private void SetPhysicalSelection(Rect physical)
+    {
+        Rect oldSelection = SelectionRect;
+        double rx = _canvasOriginal.SizeInPixels.Width / _lockedW;
+        double ry = _canvasOriginal.SizeInPixels.Height / _lockedH;
+        SelectionRect = new Rect(physical.X / rx, physical.Y / ry,
+            physical.Width / rx, physical.Height / ry);
+        if (Math.Abs(oldSelection.Width - SelectionRect.Width) < 0.01
+            && Math.Abs(oldSelection.Height - SelectionRect.Height) < 0.01)
+            TranslateAnnotations(SelectionRect.X - oldSelection.X, SelectionRect.Y - oldSelection.Y);
+        _selectionFromDrag = false;
+    }
+
+    private void UpdateSelectionMove(Point pos)
+    {
+        Point current = ToPhysicalPoint(pos);
+        int width = (int)_canvasOriginal.SizeInPixels.Width;
+        int height = (int)_canvasOriginal.SizeInPixels.Height;
+        Rect start = _dragStartPhysicalRect;
+        int x = Math.Clamp((int)(start.X + current.X - _dragStartPhysicalPoint.X), 0,
+            width - (int)start.Width);
+        int y = Math.Clamp((int)(start.Y + current.Y - _dragStartPhysicalPoint.Y), 0,
+            height - (int)start.Height);
+        SetPhysicalSelection(new Rect(x, y, start.Width, start.Height));
+    }
+
+    private void UpdateSelectionResize(Point pos)
+    {
+        Point current = ToPhysicalPoint(pos);
+        int dx = (int)(current.X - _dragStartPhysicalPoint.X);
+        int dy = (int)(current.Y - _dragStartPhysicalPoint.Y);
+        Rect r = _dragStartPhysicalRect;
+        int left = (int)r.Left, top = (int)r.Top;
+        int right = (int)r.Right, bottom = (int)r.Bottom;
+        const int min = MinimumRectangleSize;
+        int maxX = (int)_canvasOriginal.SizeInPixels.Width;
+        int maxY = (int)_canvasOriginal.SizeInPixels.Height;
+        if (_activeHandle is ResizeHandle.TopLeft or ResizeHandle.Left or ResizeHandle.BottomLeft)
+            left = Math.Clamp(left + dx, 0, right - min);
+        if (_activeHandle is ResizeHandle.TopRight or ResizeHandle.Right or ResizeHandle.BottomRight)
+            right = Math.Clamp(right + dx, left + min, maxX);
+        if (_activeHandle is ResizeHandle.TopLeft or ResizeHandle.Top or ResizeHandle.TopRight)
+            top = Math.Clamp(top + dy, 0, bottom - min);
+        if (_activeHandle is ResizeHandle.BottomLeft or ResizeHandle.Bottom or ResizeHandle.BottomRight)
+            bottom = Math.Clamp(bottom + dy, top + min, maxY);
+        SetPhysicalSelection(new Rect(left, top, right - left, bottom - top));
+    }
+
+    private static Point[] HandleCenters(Rect r) =>
+    [
+        new(r.Left, r.Top), new(r.Left + r.Width / 2, r.Top), new(r.Right, r.Top),
+        new(r.Left, r.Top + r.Height / 2), new(r.Right, r.Top + r.Height / 2),
+        new(r.Left, r.Bottom), new(r.Left + r.Width / 2, r.Bottom), new(r.Right, r.Bottom),
+    ];
+
+    private ResizeHandle HitTestHandle(Point pos)
+    {
+        Point[] centers = HandleCenters(SelectionRect);
+        for (int i = 0; i < centers.Length; i++)
+            if (Math.Abs(pos.X - centers[i].X) <= 10 && Math.Abs(pos.Y - centers[i].Y) <= 10)
+                return (ResizeHandle)(i + 1);
+        return ResizeHandle.None;
+    }
+
+    private static void DrawResizeHandles(CanvasDrawingSession ds, Rect rect)
+    {
+        foreach (Point c in HandleCenters(rect))
+        {
+            ds.FillCircle(new Vector2((float)c.X, (float)c.Y), 7, Color.FromArgb(170, 0, 0, 0));
+            ds.FillCircle(new Vector2((float)c.X, (float)c.Y), 6, Colors.White);
+            ds.FillCircle(new Vector2((float)c.X, (float)c.Y), 5, Color.FromArgb(255, 49, 137, 255));
+        }
+    }
+
+    private void EnterSelectedState()
+    {
+        Rect physical = GetPhysicalSourceRect();
+        Serilog.Log.Information("Region selection committed: dip={DipRect}, physical={PhysicalRect}, fromDrag={FromDrag}",
+            SelectionRect, physical, _selectionFromDrag);
+        if (physical.Width < MinimumRectangleSize || physical.Height < MinimumRectangleSize)
+            return;
+        SetPhysicalSelection(physical);
+        _state = RegionCaptureState.Selected;
+        _hasHover = false;
+        SelectionToolbar.Visibility = Visibility.Visible;
+        UpdateToolbarPlacement();
+        RequestRedraw();
+    }
+
+    private void ReturnToSelectingState()
+    {
+        if (_state != RegionCaptureState.Selected)
+            return;
+        ResetAnnotations();
+        _state = RegionCaptureState.Selecting;
+        _dragMode = DragMode.None;
+        SelectionRect = default;
+        SelectionToolbar.Visibility = Visibility.Collapsed;
+        UpdateHover(_currentMousePos);
+        RequestRedraw();
+    }
+
+    private void UpdateToolbarPlacement()
+    {
+        if (_state != RegionCaptureState.Selected)
+            return;
+        const double barWidth = 780, barHeight = 42, gap = 8;
+        GetActiveMonitorDip(
+            (float)(SelectionRect.Left + SelectionRect.Width / 2),
+            (float)(SelectionRect.Top + SelectionRect.Height / 2),
+            out float ml, out float mt, out float mr, out float mb);
+        // 跨屏选区以覆盖面积最大的显示器放工具栏；FindAll 的 WinRT vector
+        // 使用索引访问，避免此环境中 foreach 枚举器的 CsWinRT 接口异常。
+        try
+        {
+            Rect physical = GetPhysicalSourceRect();
+            double bestArea = 0;
+            var displays = DisplayArea.FindAll();
+            for (int i = 0; i < displays.Count; i++)
+            {
+                var bounds = displays[i].OuterBounds;
+                double left = Math.Max(physical.Left + _vx, bounds.X);
+                double top = Math.Max(physical.Top + _vy, bounds.Y);
+                double right = Math.Min(physical.Right + _vx, bounds.X + bounds.Width);
+                double bottom = Math.Min(physical.Bottom + _vy, bounds.Y + bounds.Height);
+                double area = Math.Max(0, right - left) * Math.Max(0, bottom - top);
+                if (area <= bestArea)
+                    continue;
+                bestArea = area;
+                ml = (bounds.X - _vx) / _scale;
+                mt = (bounds.Y - _vy) / _scale;
+                mr = (bounds.X + bounds.Width - _vx) / _scale;
+                mb = (bounds.Y + bounds.Height - _vy) / _scale;
+            }
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "Failed to locate primary monitor for region toolbar");
+        }
+        double x = Math.Clamp(SelectionRect.Right - barWidth,
+            ml, Math.Max(ml, mr - barWidth));
+        double y = SelectionRect.Bottom + gap + barHeight + 16 <= mb
+            ? SelectionRect.Bottom + gap : SelectionRect.Top - gap - barHeight;
+        y = Math.Clamp(y, mt, Math.Max(mt, mb - barHeight));
+        Microsoft.UI.Xaml.Controls.Canvas.SetLeft(SelectionToolbar, x);
+        Microsoft.UI.Xaml.Controls.Canvas.SetTop(SelectionToolbar, y);
     }
 
     private void UpdateHover(Point pos)
@@ -874,38 +1224,56 @@ public sealed partial class RegionCaptureWindow : WindowEx
         }
     }
 
-    private void CloseWindow()
+    private void CompleteCapture(RegionCaptureAction action)
     {
+        if (_state != RegionCaptureState.Selected)
+            return;
+        _state = RegionCaptureState.Completing;
+        Rect physical = GetPhysicalSourceRect();
         try
         {
-            _renderTimer?.Stop();
-        }
-        catch { }
-        if (IsConfirmed)
-        {
-            // _displayBitmap 是冻结帧的 SDR 版（覆盖层已 tonemap），隐藏前（它还活着）裁出选区给剪贴板
+            CommitAnnotationText();
+            // 完成动作前裁出 SDR 选区；保存时 HDR crop 由 service 从原始 composite 裁出。
+            CanvasRenderTarget sdrCrop = CropDisplayToBgra();
+            CanvasRenderTarget? annotationLayer = null;
             try
             {
-                SdrCrop = CropDisplayToBgra();
+                if (_annotations.Count > 0)
+                    annotationLayer = CreateAnnotationLayer(physical);
+                CloseWindow(new RegionCaptureResult(action, SelectionRect, physical, sdrCrop, annotationLayer));
             }
-            catch { }
+            catch
+            {
+                sdrCrop.Dispose();
+                annotationLayer?.Dispose();
+                throw;
+            }
         }
+        catch (Exception ex)
+        {
+            CloseWindow(new RegionCaptureResult(RegionCaptureAction.Cancel, default, default, null), ex);
+        }
+    }
+
+    private void CancelCapture() => CloseWindow(
+        new RegionCaptureResult(RegionCaptureAction.Cancel, default, default, null));
+
+    private void CloseWindow(RegionCaptureResult result, Exception? error = null)
+    {
+        if (_state == RegionCaptureState.Closed)
+            return;
+        _state = RegionCaptureState.Closed;
+        ++_captureGeneration;
+        StopMoveInTimer();
+        SelectionToolbar.Visibility = Visibility.Collapsed;
+        AnnotationTextEditor.Visibility = Visibility.Collapsed;
         ReleaseCaptureCursor();
         _isClosed = true;
         _pendingMoveIn = false;
         // 不 Hide：移到屏外保持 IsWindowVisible，合成管线不停摆，
         // 否则下次 Show 瞬间 DWM 先合成保留的旧会话帧（启动闪上次截图的完整界面）
-        User32.SetWindowPos(
-            WindowHandle,
-            IntPtr.Zero,
-            -32000,
-            -32000,
-            0,
-            0,
-            User32.SetWindowPosFlags.SWP_NOSIZE
-                | User32.SetWindowPosFlags.SWP_NOZORDER
-                | User32.SetWindowPosFlags.SWP_NOACTIVATE
-        );
+        MoveOffscreen();
+        ReleaseSwapChain();
         // 交还焦点（屏外窗口不 Hide 仍持有键盘焦点，不还的话用户打字被吞）
         if (_prevForeground != 0 && _prevForeground != (nint)WindowHandle)
         {
@@ -923,17 +1291,56 @@ public sealed partial class RegionCaptureWindow : WindowEx
             }
             catch { }
         }
-        // _displayBitmap 引用清掉（自有的已 dispose）；_canvasOriginal 不清：
-        // service 在 Completion 后还要 GetPhysicalSourceRect 读它（底层是 service 的 composite，由 service dispose）；
-        // swapChain 常驻不销毁（屏外窗口还靠它承接下次会话的 Present）
+        // 窗口不再持有 full desktop texture；service 只接收物理裁剪坐标和选区 SDR crop。
         _displayBitmap = null;
+        _displayPixels = null;
+        _canvasOriginal = null!;
         _ownsDisplayBitmap = false;
-        Completion?.TrySetResult(IsConfirmed);
+        if (error is null)
+            Completion?.TrySetResult(result);
+        else
+            Completion?.TrySetException(error);
     }
 
-    /// <summary>移回虚拟屏幕原位（SetCapture 后第 2 个 tick 调：新帧已合成，移回瞬间不闪旧内容）。</summary>
-    private void MoveOnscreen()
+    private void MoveOffscreen()
     {
+        User32.SetWindowPos(
+            WindowHandle,
+            IntPtr.Zero,
+            -32000,
+            -32000,
+            0,
+            0,
+            User32.SetWindowPosFlags.SWP_NOSIZE
+                | User32.SetWindowPosFlags.SWP_NOZORDER
+                | User32.SetWindowPosFlags.SWP_NOACTIVATE
+        );
+    }
+
+    private void ReleaseSwapChain()
+    {
+        var old = _swapChain;
+        _swapChain = null;
+        try { Canvas.SwapChain = null; }
+        catch (Exception ex) { Serilog.Log.Warning(ex, "Failed to detach region swap chain"); }
+        try { old?.Dispose(); }
+        catch (Exception ex) { Serilog.Log.Warning(ex, "Failed to dispose region swap chain"); }
+    }
+
+    private void Toolbar_Copy_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.Copy);
+    private void Toolbar_Save_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.Save);
+    private void Toolbar_Ocr_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.Ocr);
+    private void Toolbar_Translate_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.Translate);
+    private void Toolbar_Pin_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.Pin);
+    private void Toolbar_RecordGif_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.RecordGif);
+    private void Toolbar_LongCapture_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.LongCapture);
+    private void Toolbar_Cancel_Click(object sender, RoutedEventArgs e) => CancelCapture();
+    private void Toolbar_Reselect_Click(object sender, RoutedEventArgs e) => ReturnToSelectingState();
+
+    /// <summary>首帧已 Present 后，由当前会话的一次性 timer 移回虚拟屏幕。</summary>
+    private void MoveOnscreen(int generation)
+    {
+        LogOverlayPhase("Region overlay MoveOnscreen begin", generation);
         int vx = User32.GetSystemMetrics((User32.SystemMetric)76);
         int vy = User32.GetSystemMetrics((User32.SystemMetric)77);
         int vw = User32.GetSystemMetrics((User32.SystemMetric)78);
@@ -947,7 +1354,9 @@ public sealed partial class RegionCaptureWindow : WindowEx
             vh,
             User32.SetWindowPosFlags.SWP_NOZORDER
         );
+        LogOverlayPhase("Region overlay MoveOnscreen done", generation);
         Activate();
+        LogOverlayPhase("Region overlay Activate done", generation);
         // 首次完成交接前持续兜底；只有本次会话真正发生物理移动后，后续会话才永久停用。
         _captureCursorActive = !_firstCaptureCursorHandoffCompleted;
         _captureCursorOrigin = User32.GetCursorPos(out var cursorPosition)
@@ -1037,6 +1446,11 @@ public sealed partial class RegionCaptureWindow : WindowEx
                 1f,
                 CanvasImageInterpolation.Linear
             );
+            if (_annotations.Count > 0)
+            {
+                ds.Transform = AnnotationTransform(srcRect);
+                DrawAnnotations(ds);
+            }
         }
         return rt;
     }
@@ -1046,7 +1460,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
         // 用户从任务栏/系统真关了窗口（正常运行期我们只移屏外不 Close）：
         // 标记销毁让 service 下次重建，放行 pending 的 Completion 防 service 悬等
         IsDestroyed = true;
-        Completion?.TrySetResult(false);
+        _state = RegionCaptureState.Closed;
+        Completion?.TrySetResult(new RegionCaptureResult(RegionCaptureAction.Cancel, default, default, null));
         Cleanup();
     }
 
@@ -1060,27 +1475,15 @@ public sealed partial class RegionCaptureWindow : WindowEx
             return;
         _cleanedUp = true;
         ReleaseCaptureCursor();
+        ++_captureGeneration;
         _pendingMoveIn = false;
         _isClosed = true;
-        try
-        {
-            _renderTimer?.Stop();
-        }
-        catch { }
-        try
-        {
-            Canvas.SwapChain = null;
-        }
+        StopMoveInTimer();
+        try { ReleaseSwapChain(); }
         catch { }
         try
         {
             Canvas.RemoveFromVisualTree();
-        }
-        catch { }
-        try
-        {
-            _swapChain?.Dispose();
-            _swapChain = null;
         }
         catch { }
         if (_ownsDisplayBitmap)
@@ -1095,19 +1498,160 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
     private void RootGrid_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == Windows.System.VirtualKey.Escape)
-        {
-            CloseWindow();
+        if (HandleCaptureKey(e.Key))
             e.Handled = true;
-        }
-        else if (e.Key == Windows.System.VirtualKey.Enter && _hasHover && !_isMouseDown)
+    }
+
+    private bool HandleCaptureKey(Windows.System.VirtualKey key)
+    {
+        if (_isClosed)
+            return false;
+        if (AnnotationTextEditor.Visibility == Visibility.Visible)
         {
-            SelectionRect = _hoverRect;
-            _selectionFromDrag = false;
-            IsConfirmed = true;
-            CloseWindow();
-            e.Handled = true;
+            if (key == Windows.System.VirtualKey.Escape)
+            {
+                AnnotationTextEditor.Text = "";
+                AnnotationTextEditor.Visibility = Visibility.Collapsed;
+                return true;
+            }
+            if (key == Windows.System.VirtualKey.Enter)
+            {
+                CommitAnnotationText();
+                return true;
+            }
+            return false;
         }
+        bool control = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        bool shift = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        if (control && key == Windows.System.VirtualKey.Z && _state == RegionCaptureState.Selected)
+        {
+            if (shift) RedoAnnotation(); else UndoAnnotation();
+            return true;
+        }
+        if (control && key == Windows.System.VirtualKey.Y && _state == RegionCaptureState.Selected)
+        {
+            RedoAnnotation();
+            return true;
+        }
+        if (key == Windows.System.VirtualKey.C)
+        {
+            if (control && _state == RegionCaptureState.Selected)
+                CompleteCapture(RegionCaptureAction.Copy);
+            else if (shift && _state == RegionCaptureState.Selected)
+                CompleteCapture(RegionCaptureAction.Ocr);
+            else if (TrySampleColor((float)_currentMousePos.X, (float)_currentMousePos.Y, out var color))
+            {
+                try
+                {
+                    ClipboardHelper.SetText(shift ? $"#{color.R:X2}{color.G:X2}{color.B:X2}"
+                        : $"{color.R},{color.G},{color.B}");
+                }
+                catch (Exception ex) { Serilog.Log.Warning(ex, "Failed to copy region pixel color"); }
+            }
+            return true;
+        }
+        if (control && key == Windows.System.VirtualKey.S && _state == RegionCaptureState.Selected)
+        {
+            CompleteCapture(RegionCaptureAction.Save);
+            return true;
+        }
+        if (control && key == Windows.System.VirtualKey.Q && _state == RegionCaptureState.Selected)
+        {
+            CompleteCapture(RegionCaptureAction.Translate);
+            return true;
+        }
+        if (key == Windows.System.VirtualKey.Escape)
+        {
+            if (_state == RegionCaptureState.Selected)
+                ReturnToSelectingState();
+            else if (_state == RegionCaptureState.Selecting)
+                CancelCapture();
+            return true;
+        }
+        if (key == Windows.System.VirtualKey.Enter)
+        {
+            if (_state == RegionCaptureState.Selected)
+            {
+                CompleteCapture(_defaultAction);
+                return true;
+            }
+            else if (_state == RegionCaptureState.Selecting && _hasHover && _dragMode == DragMode.None)
+            {
+                SelectionRect = _hoverRect;
+                _selectionFromDrag = false;
+                EnterSelectedState();
+                return true;
+            }
+        }
+        return _state == RegionCaptureState.Selected && TryAdjustWithArrow(key);
+    }
+
+    private bool TryAdjustWithArrow(Windows.System.VirtualKey key)
+    {
+        int dx = key switch
+        {
+            Windows.System.VirtualKey.Left => -1,
+            Windows.System.VirtualKey.Right => 1,
+            _ => 0,
+        };
+        int dy = key switch
+        {
+            Windows.System.VirtualKey.Up => -1,
+            Windows.System.VirtualKey.Down => 1,
+            _ => 0,
+        };
+        if (dx == 0 && dy == 0)
+            return false;
+        var ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        var shift = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        Rect r = GetPhysicalSourceRect();
+        int left = (int)r.Left, top = (int)r.Top;
+        int right = (int)r.Right, bottom = (int)r.Bottom;
+        int maxX = (int)_canvasOriginal.SizeInPixels.Width;
+        int maxY = (int)_canvasOriginal.SizeInPixels.Height;
+        if (shift)
+        {
+            if (dx < 0) left = Math.Min(left + 1, right - MinimumRectangleSize);
+            if (dx > 0) right = Math.Max(right - 1, left + MinimumRectangleSize);
+            if (dy < 0) top = Math.Min(top + 1, bottom - MinimumRectangleSize);
+            if (dy > 0) bottom = Math.Max(bottom - 1, top + MinimumRectangleSize);
+        }
+        else if (ctrl)
+        {
+            if (dx < 0) left = Math.Max(0, left - 1);
+            if (dx > 0) right = Math.Min(maxX, right + 1);
+            if (dy < 0) top = Math.Max(0, top - 1);
+            if (dy > 0) bottom = Math.Min(maxY, bottom + 1);
+        }
+        else
+        {
+            left = Math.Clamp(left + dx, 0, maxX - (int)r.Width);
+            top = Math.Clamp(top + dy, 0, maxY - (int)r.Height);
+            right = left + (int)r.Width;
+            bottom = top + (int)r.Height;
+        }
+        SetPhysicalSelection(new Rect(left, top, right - left, bottom - top));
+        UpdateToolbarPlacement();
+        RequestRedraw();
+        return true;
+    }
+
+    private void HandleRightClick()
+    {
+        if (_state == RegionCaptureState.Selected)
+            ReturnToSelectingState();
+        else if (_state == RegionCaptureState.Selecting && _dragMode != DragMode.None)
+        {
+            _dragMode = DragMode.None;
+            SelectionRect = default;
+            RequestRedraw();
+        }
+        else if (_state == RegionCaptureState.Selecting)
+            CancelCapture();
     }
 
     protected override nint WindowSubclassProc(
@@ -1121,17 +1665,14 @@ public sealed partial class RegionCaptureWindow : WindowEx
     {
         if (uMsg == (uint)User32.WindowMessage.WM_RBUTTONUP)
         {
-            if (_isMouseDown)
-            {
-                _isMouseDown = false;
-                SelectionRect = default;
-            }
-            else
-            {
-                CloseWindow();
-            }
+            HandleRightClick();
             return 0;
         }
+        if ((uMsg == 0x100 || uMsg == 0x101)
+            && (Windows.System.VirtualKey)(int)wParam == Windows.System.VirtualKey.Shift)
+            RequestRedraw();
+        if (uMsg == 0x100 && HandleCaptureKey((Windows.System.VirtualKey)(int)wParam))
+            return 0;
         return base.WindowSubclassProc(hWnd, uMsg, wParam, lParam, uIdSubclass, dwRefData);
     }
 
@@ -1152,16 +1693,12 @@ public sealed partial class RegionCaptureWindow : WindowEx
         int x2 = (int)Math.Round((dipRect.X + dipRect.Width) * ratioX);
         int y2 = (int)Math.Round((dipRect.Y + dipRect.Height) * ratioY);
 
-        int x = Math.Min(x1, x2);
-        int y = Math.Min(y1, y2);
         int physW = (int)_canvasOriginal.SizeInPixels.Width;
         int physH = (int)_canvasOriginal.SizeInPixels.Height;
-        int w = Math.Abs(x2 - x1) + (fromDrag ? 1 : 0);
-        int h = Math.Abs(y2 - y1) + (fromDrag ? 1 : 0);
-        // 选区/hover 经 ratio 缩放 + round 后可能落在画布物理边界外（边缘 round 把 x2/y2 顶到 physW/physH+1），
-        // physW-x / physH-y 此时会为负，必须 clamp 到 0，否则 new Rect 负宽高抛 ArgumentOutOfRangeException
-        w = Math.Max(0, Math.Min(w, physW - x));
-        h = Math.Max(0, Math.Min(h, physH - y));
-        return new Rect(x, y, w, h);
+        int left = Math.Clamp(Math.Min(x1, x2), 0, physW);
+        int top = Math.Clamp(Math.Min(y1, y2), 0, physH);
+        int right = Math.Clamp(Math.Max(x1, x2) + (fromDrag ? 1 : 0), 0, physW);
+        int bottom = Math.Clamp(Math.Max(y1, y2) + (fromDrag ? 1 : 0), 0, physH);
+        return new Rect(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
     }
 }

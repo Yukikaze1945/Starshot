@@ -244,7 +244,7 @@ public sealed partial class MainWindow : WindowEx
             }
             else if (wParam == HOTKEY_REGION_OCR)
             {
-                ScreenCaptureService.CaptureRegionOcrCopy();
+                ScreenCaptureService.CaptureRegionOcr();
             }
         }
         else if (uMsg == (uint)User32.WindowMessage.WM_ACTIVATE)

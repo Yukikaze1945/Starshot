@@ -238,7 +238,7 @@
           </Grid>
         </Border>
 
-        <!--  识别文字并复制  -->
+        <!--  识别文字并排版  -->
         <Border
           Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -307,6 +307,36 @@
               WindowHandle="{x:Bind WindowHandle}"
             />
           </Grid>
+        </Border>
+        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="8" Padding="20">
+          <StackPanel Spacing="10">
+            <TextBlock Text="从剪贴板贴图" FontSize="16" FontWeight="SemiBold" />
+            <TextBlock Text="将剪贴板图像或图片文件贴到屏幕中央。" FontSize="13"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <local:HotkeyInput x:Name="HotkeyInput_PinClipboard" HotkeyId="44449"
+                               MinWidth="240" HorizontalAlignment="Left"
+                               WindowHandle="{x:Bind WindowHandle}"
+                               HotkeyDeleted="HotkeyInput_HotkeyDeleted"
+                               HotkeyEditFinished="HotkeyInput_HotkeyEditFinished"
+                               HotkeyEditing="HotkeyInput_HotkeyEditing" />
+          </StackPanel>
+        </Border>
+        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="8" Padding="20">
+          <StackPanel Spacing="10">
+            <TextBlock Text="恢复最近关闭的贴图" FontSize="16" FontWeight="SemiBold" />
+            <TextBlock Text="关闭的贴图可恢复；销毁的贴图不进入历史。" FontSize="13"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <local:HotkeyInput x:Name="HotkeyInput_ReopenPin" HotkeyId="44450"
+                               MinWidth="240" HorizontalAlignment="Left"
+                               WindowHandle="{x:Bind WindowHandle}"
+                               HotkeyDeleted="HotkeyInput_HotkeyDeleted"
+                               HotkeyEditFinished="HotkeyInput_HotkeyEditFinished"
+                               HotkeyEditing="HotkeyInput_HotkeyEditing" />
+          </StackPanel>
         </Border>
       </StackPanel>
     </StackPanel>

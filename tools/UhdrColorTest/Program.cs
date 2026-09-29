@@ -19,7 +19,17 @@ void Log(string line = "")
     report.AppendLine(line);
 }
 
+if (args.Length > 0 && args[0] == "icc")
+{
+    // 剥段逻辑是纯字节操作，不碰 GPU，放在建设备之前，无显卡环境也能跑。
+    return IccStripTest.Run(AppContext.BaseDirectory);
+}
+
 var device = CanvasDevice.GetSharedDevice();
+if (args.Length > 0 && args[0] == "capacity")
+{
+    return CapacityTest.Run(device);
+}
 if (args.Length > 0 && args[0] == "dump")
 {
     Dump.Run(device, Path.Combine(AppContext.BaseDirectory, "uhdr-dump.txt"));
