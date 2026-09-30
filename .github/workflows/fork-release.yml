@@ -71,7 +71,7 @@ jobs:
           $version = $env:RELEASE_VERSION
           $repo = 'Yukikaze1945/Starshot-releases'
           $root = "build/fork-release/$version"
-          $args = @('release', 'create', $version, '--repo', $repo, '--draft', '--title', "Starshot Fork $version", '--notes', 'Windows x64. Offline setup and portable ZIP. Source remains private.')
+          $args = @('release', 'create', $version, '--repo', $repo, '--draft', '--title', "Starshot Fork $version", '--notes', 'Windows x64. Offline setup and portable ZIP. Source: https://github.com/Yukikaze1945/Starshot-private')
           if ($version.Contains('-preview.')) { $args += '--prerelease' }
           & gh @args
           if ($LASTEXITCODE -ne 0) { throw 'Could not create draft release.' }
