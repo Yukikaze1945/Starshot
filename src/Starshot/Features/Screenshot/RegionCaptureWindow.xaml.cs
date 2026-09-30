@@ -239,7 +239,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         SelectionRect = default;
         _state = RegionCaptureState.Selecting;
         _defaultAction = defaultAction;
-        var accent = new Microsoft.UI.Xaml.Media.SolidColorBrush(Color.FromArgb(255, 49, 137, 255));
+        var accent = new Microsoft.UI.Xaml.Media.SolidColorBrush(Color.FromArgb(255, 221, 243, 105));
         var clear = new Microsoft.UI.Xaml.Media.SolidColorBrush(Colors.Transparent);
         ToolbarSaveButton.Background = defaultAction == RegionCaptureAction.Save ? accent : clear;
         ToolbarCopyButton.Background = defaultAction == RegionCaptureAction.Copy ? accent : clear;
@@ -675,7 +675,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
                 if (_state == RegionCaptureState.Selected)
                     DrawAnnotations(ds);
                 ds.DrawRectangle(rect, Color.FromArgb(180, 2, 10, 24), 4);
-                ds.DrawRectangle(rect, Color.FromArgb(255, 49, 137, 255), 2);
+                ds.DrawRectangle(rect, Color.FromArgb(255, 157, 183, 70), 2);
                 if (_state == RegionCaptureState.Selected)
                     DrawResizeHandles(ds, rect);
             }
@@ -880,14 +880,14 @@ public sealed partial class RegionCaptureWindow : WindowEx
             );
             float textY = y + (58 - (float)layout.LayoutBounds.Height) / 2;
             var stripRect = new Rect(x, y, width, 58);
-            ds.FillRoundedRectangle(stripRect, 3, 3, Color.FromArgb(238, 7, 8, 15));
-            ds.DrawRoundedRectangle(stripRect, 3, 3, Color.FromArgb(200, 170, 184, 206), 1);
+            ds.FillRoundedRectangle(stripRect, 8, 8, Color.FromArgb(248, 249, 250, 243));
+            ds.DrawRoundedRectangle(stripRect, 8, 8, Color.FromArgb(255, 215, 221, 206), 1);
             if (_displayPixels is not null)
             {
                 ds.FillRectangle(new Rect(x + 3, y + 22, 11, 11), _sampledColor);
                 ds.DrawRectangle(new Rect(x + 3, y + 22, 11, 11), Colors.White, 1);
             }
-            ds.DrawTextLayout(layout, new Vector2(x, textY), Colors.White);
+            ds.DrawTextLayout(layout, new Vector2(x, textY), Color.FromArgb(255, 36, 43, 36));
         }
         catch { }
     }
@@ -1130,7 +1130,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         {
             ds.FillCircle(new Vector2((float)c.X, (float)c.Y), 7, Color.FromArgb(170, 0, 0, 0));
             ds.FillCircle(new Vector2((float)c.X, (float)c.Y), 6, Colors.White);
-            ds.FillCircle(new Vector2((float)c.X, (float)c.Y), 5, Color.FromArgb(255, 49, 137, 255));
+            ds.FillCircle(new Vector2((float)c.X, (float)c.Y), 5, Color.FromArgb(255, 157, 183, 70));
         }
     }
 
@@ -1166,7 +1166,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
     {
         if (_state != RegionCaptureState.Selected)
             return;
-        const double barWidth = 780, barHeight = 42, gap = 8;
+        double barWidth = SelectionToolbar.Width, barHeight = SelectionToolbar.Height;
+        const double gap = 8;
         GetActiveMonitorDip(
             (float)(SelectionRect.Left + SelectionRect.Width / 2),
             (float)(SelectionRect.Top + SelectionRect.Height / 2),

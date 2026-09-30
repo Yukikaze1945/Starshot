@@ -1,0 +1,81 @@
+name: Fork Release
+run-name: "Fork ${{ inputs.version }}"
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Unique version, e.g. 2.6.0-preview.2 or 2.6.0"
+        required: true
+        type: string
+      publish:
+        description: "Publish binaries to the public download repository"
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: fork-release
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: windows-2025-vs2026
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - uses: microsoft/setup-msbuild@v3
+      - name: Validate version
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          if ($env:RELEASE_VERSION -notmatch '^\d+\.\d+\.\d+(-preview\.\d+)?$') { throw 'Invalid release version' }
+      - name: Build native launcher
+        run: msbuild src/Starshot.Launcher/Starshot.Launcher.vcxproj -p:Configuration=Release -p:Platform=x64
+      - name: Prepare packaging tools
+        shell: pwsh
+        run: |
+          choco install innosetup --version=6.7.3 --yes --no-progress
+          New-Item -ItemType Directory build/packaging-tools -Force | Out-Null
+          Invoke-WebRequest 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile build/packaging-tools/WebView2RuntimeX64.exe
+      - name: Validate frontend
+        working-directory: src/Starshot.WebUI
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+      - name: Package
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          ./tools/Build-ForkRelease.ps1 -Version $env:RELEASE_VERSION -LauncherPath build/Starshot.exe -RuntimeInstaller build/packaging-tools/WebView2RuntimeX64.exe
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Starshot-${{ inputs.version }}-win-x64
+          path: |
+            build/fork-release/${{ inputs.version }}/*.zip
+            build/fork-release/${{ inputs.version }}/*-setup-x64.exe
+            build/fork-release/${{ inputs.version }}/SHA256SUMS.txt
+      - name: Publish download release
+        if: inputs.publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          if (!$env:GH_TOKEN) { throw 'Set RELEASE_TOKEN with Contents write access to Starshot-releases, or rerun without publish.' }
+          $version = $env:RELEASE_VERSION
+          $repo = 'Yukikaze1945/Starshot-releases'
+          $root = "build/fork-release/$version"
+          $args = @('release', 'create', $version, '--repo', $repo, '--draft', '--title', "Starshot Fork $version", '--notes', 'Windows x64. Offline setup and portable ZIP. Source remains private.')
+          if ($version.Contains('-preview.')) { $args += '--prerelease' }
+          & gh @args
+          if ($LASTEXITCODE -ne 0) { throw 'Could not create draft release.' }
+          gh release upload $version "$root/Starshot-$version-win-x64.zip" "$root/Starshot-$version-setup-x64.exe" "$root/SHA256SUMS.txt" --repo $repo
+          if ($LASTEXITCODE -ne 0) { throw 'Asset upload failed; release remains a draft.' }
+          gh release edit $version --draft=false --repo $repo
+          if ($LASTEXITCODE -ne 0) { throw 'Could not publish completed release.' }

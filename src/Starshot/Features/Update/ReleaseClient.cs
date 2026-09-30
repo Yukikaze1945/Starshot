@@ -75,6 +75,8 @@ public static class ReleaseClient
         // pre-release 用 /releases 取列表第一个（最新，含 pre-release）；正式版用 /releases/latest（跳过 pre-release）
         string url = includePrerelease ? AllReleasesUrl : LatestReleaseUrl;
         using var resp = await _http.GetAsync(url, ct);
+        // A new download repository may have previews but no stable release yet.
+        if (!includePrerelease && resp.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
         resp.EnsureSuccessStatusCode();
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
 

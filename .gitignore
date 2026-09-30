@@ -421,3 +421,8 @@ Screenshots/
 
 # 源码内 Assets 需要纳入版本控制（覆盖通用 Assets/ 忽略，针对 VS 模板的 MSIX Assets 规则）
 !src/Starshot/Assets/
+
+# WebUI dependencies and generated assets
+src/Starshot.WebUI/node_modules/
+src/Starshot.WebUI/dist/
+src/Starshot.WebUI/*.tsbuildinfo

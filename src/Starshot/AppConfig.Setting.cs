@@ -259,7 +259,7 @@ public static partial class AppConfig
     /// </summary>
     public static bool EnablePreReleaseUpdateCheck
     {
-        get => GetValue(false);
+        get => GetValue(AppVersion?.Contains("-preview", StringComparison.OrdinalIgnoreCase) == true);
         set => SetValue(value);
     }
 
@@ -295,14 +295,15 @@ public static partial class AppConfig
     /// </summary>
     public static int UpdateSource
     {
-        get => GetValue(0);
-        set => SetValue(value);
+        // This fork uses its public downloads repository. Ignore persisted upstream CDN choices.
+        get => 1;
+        set => SetValue(1);
     }
 
     /// <summary>
     /// 官网地址（下载页等由此拼接）
     /// </summary>
-    public const string WebSiteUrl = "https://starshot.cialo.site";
+    public const string WebSiteUrl = "https://github.com/Yukikaze1945/Starshot-releases/releases";
 
     /// <summary>
     /// CDN 更新源基址（UpdateSource=Cloudflare 时用）
@@ -312,12 +313,12 @@ public static partial class AppConfig
     /// <summary>
     /// GitHub 仓库基址（网页版；releases / blob 等链接由此拼接）
     /// </summary>
-    public const string RepoBaseUrl = "https://github.com/loliri/Starshot";
+    public const string RepoBaseUrl = "https://github.com/Yukikaze1945/Starshot-releases";
 
     /// <summary>
     /// GitHub API 基址（查 release 信息用）
     /// </summary>
-    public const string RepoApiBaseUrl = "https://api.github.com/repos/loliri/Starshot";
+    public const string RepoApiBaseUrl = "https://api.github.com/repos/Yukikaze1945/Starshot-releases";
 
     /// <summary>
     /// OCR 引擎包 CDN 地址（oneocr.dll + oneocr.onemodel 平铺 zip，供按需下载）
@@ -614,6 +615,13 @@ public static partial class AppConfig
     public static bool AutoCopyScreenshotToClipboard
     {
         get => GetValue(true);
+        set => SetValue(value);
+    }
+
+    /// <summary>Explicit OCR preference, separate from screenshot image copying. Off by default.</summary>
+    public static bool AutoCopyOcrText
+    {
+        get => GetValue(false);
         set => SetValue(value);
     }
 

@@ -96,6 +96,38 @@
     <ProjectReference Include="..\Starshot.Language\Starshot.Language.csproj" />
   </ItemGroup>
 
+  <!-- The shipped WebUI is local and offline. No Vite server is required at runtime. -->
+  <PropertyGroup>
+    <WebUiRoot>$(MSBuildThisFileDirectory)..\Starshot.WebUI</WebUiRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <WebUiSource Include="$(WebUiRoot)\src\**\*;$(WebUiRoot)\scripts\**\*;$(WebUiRoot)\index.html;$(WebUiRoot)\package.json;$(WebUiRoot)\package-lock.json;$(WebUiRoot)\vite.config.ts;$(WebUiRoot)\tsconfig.json" />
+  </ItemGroup>
+  <Target Name="RestoreStarshotWebUi"
+          Condition="'$(DesignTimeBuild)' != 'true'"
+          Inputs="$(WebUiRoot)\package.json;$(WebUiRoot)\package-lock.json"
+          Outputs="$(WebUiRoot)\node_modules\.package-lock.json">
+    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(WebUiRoot)" />
+  </Target>
+  <Target Name="CompileStarshotWebUi" BeforeTargets="PrepareForBuild" DependsOnTargets="RestoreStarshotWebUi"
+          Condition="'$(DesignTimeBuild)' != 'true'"
+          Inputs="@(WebUiSource)" Outputs="$(WebUiRoot)\dist\index.html">
+    <Exec Command="npm run build" WorkingDirectory="$(WebUiRoot)" />
+  </Target>
+  <Target Name="CopyStarshotWebUiForBuild" AfterTargets="Build" DependsOnTargets="CompileStarshotWebUi"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <_WebUiBuildAsset Include="$(WebUiRoot)\dist\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WebUiBuildAsset)" DestinationFiles="@(_WebUiBuildAsset->'$(TargetDir)WebUI\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="CopyStarshotWebUiForPublish" AfterTargets="Publish" DependsOnTargets="CompileStarshotWebUi">
+    <ItemGroup>
+      <_WebUiPublishAsset Include="$(WebUiRoot)\dist\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WebUiPublishAsset)" DestinationFiles="@(_WebUiPublishAsset->'$(PublishDir)WebUI\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+
   <!-- Starward.Codec supplies a stock native asset during build and publish. Replace it
        only after the SDK has completed its normal copy, then validate the final file. -->
   <PropertyGroup>

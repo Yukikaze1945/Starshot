@@ -58,7 +58,7 @@ public sealed partial class RegionCaptureWindow
     private void SetAnnotationTool(AnnotationTool tool)
     {
         _annotationTool = tool;
-        var active = new Microsoft.UI.Xaml.Media.SolidColorBrush(Color.FromArgb(255, 49, 137, 255));
+        var active = new Microsoft.UI.Xaml.Media.SolidColorBrush(Color.FromArgb(255, 221, 243, 105));
         var idle = new Microsoft.UI.Xaml.Media.SolidColorBrush(Colors.Transparent);
         foreach (Button button in new[] { ToolSelect, ToolRectangle, ToolEllipse, ToolLine, ToolArrow,
                      ToolNumber, ToolPen, ToolHighlighter, ToolMosaic, ToolBlur, ToolText, ToolEraser })

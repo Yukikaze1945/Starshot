@@ -103,18 +103,8 @@ public static partial class AppConfig
             UserDataFolder = localAppData;
         }
 
-        // 首次启动（配置文件不存在）弹欢迎页；用户关掉不完成则退出
-        WelcomeWindow? welcome = null;
-        if (!File.Exists(ConfigFilePath))
-        {
-            welcome = new Features.ViewHost.WelcomeWindow();
-            if (!await welcome.WaitAsync())
-            {
-                Environment.Exit(0);
-            }
-            // 落盘首启判定文件：全默认不改设置的用户 config.sjson 也会生成，不再重复弹欢迎页
-            EnsureConfigFile();
-        }
+        // The WebUI provides the first-run workspace; initialization must not block on a legacy wizard.
+        if (!File.Exists(ConfigFilePath)) EnsureConfigFile();
 
         // 高优先级运行开关：开了每次启动自提升（对自身 SetPriorityClass 无需权限，任何启动方式都生效）；关=系统默认
         try
@@ -123,32 +113,6 @@ public static partial class AppConfig
                 Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
         }
         catch { }
-
-        // 欢迎页选的配置在此写入（之前配置缓存未初始化，直接写会丢）
-        if (welcome is not null)
-        {
-            if (welcome.WallpaperIsVideo && !string.IsNullOrWhiteSpace(welcome.WallpaperVideoPath))
-            {
-                AppConfig.WallpaperVideoFile = welcome.WallpaperVideoPath;
-                AppConfig.WallpaperMode = 2;
-            }
-            else if (!string.IsNullOrWhiteSpace(welcome.WallpaperFileName))
-            {
-                AppConfig.WallpaperFile = welcome.WallpaperFileName;
-                AppConfig.WallpaperMode = 1;
-            }
-            else
-            {
-                // 没选壁纸 → 默认用内置 pic.jpg（拷 Assets → cache/bg）
-                string bgPath = Path.Combine(CacheFolder, "bg", "pic.jpg");
-                Directory.CreateDirectory(Path.GetDirectoryName(bgPath)!);
-                string assetPath = Path.Combine(AppContext.BaseDirectory, "Assets", "pic.jpg");
-                if (File.Exists(assetPath))
-                    File.Copy(assetPath, bgPath, overwrite: true);
-                AppConfig.WallpaperFile = "pic.jpg";
-                AppConfig.WallpaperMode = 1;
-            }
-        }
 
         // 应用强调色与语言
         AccentColorHelper.ChangeAppAccentColor(AccentColor);
