@@ -303,7 +303,7 @@ public static partial class AppConfig
     /// <summary>
     /// 官网地址（下载页等由此拼接）
     /// </summary>
-    public const string WebSiteUrl = "https://github.com/Yukikaze1945/Starshot-releases/releases";
+    public const string WebSiteUrl = "https://github.com/Yukikaze1945/Starshot/releases";
 
     /// <summary>
     /// CDN 更新源基址（UpdateSource=Cloudflare 时用）
@@ -313,12 +313,12 @@ public static partial class AppConfig
     /// <summary>
     /// GitHub 仓库基址（网页版；releases / blob 等链接由此拼接）
     /// </summary>
-    public const string RepoBaseUrl = "https://github.com/Yukikaze1945/Starshot-releases";
+    public const string RepoBaseUrl = "https://github.com/Yukikaze1945/Starshot";
 
     /// <summary>
     /// GitHub API 基址（查 release 信息用）
     /// </summary>
-    public const string RepoApiBaseUrl = "https://api.github.com/repos/Yukikaze1945/Starshot-releases";
+    public const string RepoApiBaseUrl = "https://api.github.com/repos/Yukikaze1945/Starshot";
 
     /// <summary>
     /// OCR 引擎包 CDN 地址（oneocr.dll + oneocr.onemodel 平铺 zip，供按需下载）

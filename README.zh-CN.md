@@ -1,3 +1,5 @@
+> **Starshot Fork**：本仓库公开维护 React/WebView2 界面与原生截图功能。源码、[安装包](https://github.com/Yukikaze1945/Starshot/releases)和更新统一放在本仓库；[发布说明](docs/releasing-fork.md)。基于 loliri/Starshot（MIT）。
+
 <div align="center">
 
 <img src="src/logo.png" width="300" alt="Starshot Logo">
@@ -10,11 +12,11 @@
 
 16bit 全链路捕获 · 区域截图 · AVIF / JPEG XL / PNGv3 编码 · 色彩管理
 
-[![Release](https://img.shields.io/github/v/release/loliri/Starshot?style=flat-square)](../../releases)
+[![Release](https://img.shields.io/github/v/release/Yukikaze1945/Starshot?include_prereleases&style=flat-square)](../../releases)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/loliri/Starshot?tab=MIT-1-ov-file)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6?style=flat-square&logo=windows)](../../releases)
 
-[官网](https://starshot.cialo.site) · [下载](https://starshot.cialo.site/download) · [快速上手](#快速上手) · [功能详解](#功能详解) · [从源码构建](#从源码构建)
+[官网](https://starshot.cialo.site) · [下载](https://github.com/Yukikaze1945/Starshot/releases) · [快速上手](#快速上手) · [功能详解](#功能详解) · [从源码构建](#从源码构建)
 
 **[English](README.md)** | **简体中文** |
 [繁體中文](docs/README.zh-TW.md) | [日本語](docs/README.ja.md) | [Français](docs/README.fr.md) | [Русский](docs/README.ru.md) | [Español](docs/README.es.md)
@@ -74,7 +76,7 @@ SDR 显示器上，Starshot 自动走标准 SDR 截图路径，是一款通用�
 
 ## 下载
 
-全部安装包可在[官网下载页](https://starshot.cialo.site/download)获取（自动识别 x64 / arm64），也可在 [GitHub Releases](../../releases) 下载。
+全部安装包可在[官网下载页](https://github.com/Yukikaze1945/Starshot/releases)获取（自动识别 x64 / arm64），也可在 [GitHub Releases](../../releases) 下载。
 
 两种分发方式，装哪种就走哪条更新线，互不交叉：
 

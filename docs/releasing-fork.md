@@ -1,20 +1,18 @@
 # Starshot Fork 发布与更新
 
-源码仓库 `Yukikaze1945/Starshot-private` 已公开（仓库名保留历史名称）。公开下载仓库
-`Yukikaze1945/Starshot-releases` 只保存下载说明、版本记录和编译后的发行包。
-不得把源码、配置、API 密钥、数据库、缓存或测试截图上传到下载仓库。
+统一使用公开 fork `Yukikaze1945/Starshot`：源码、Issues、Actions 和安装包 Releases
+都在同一个仓库。不得提交配置、API 密钥、数据库、缓存或测试截图。
 
 ## 发布流程
 
 1. 在源码仓库提交并推送完成验证的代码。
 2. 手动运行 **Fork Release** workflow，输入唯一版本号，例如
-   `2.6.0-preview.2` 或 `2.6.0`；勾选 publish 才发布到公开下载仓库。
+   `2.6.0-preview.3` 或 `2.6.0`；勾选 publish 才发布到本仓库 Releases。
 3. workflow 生成 x64 离线安装包、完整便携 ZIP、SHA256SUMS；上传完成后才公开 Release。
    `-preview.N` 自动标记为预览版。已发布版本不可覆盖；修复用新版本号。
 
-跨仓库发布需要源码仓库 Actions secret `RELEASE_TOKEN`：使用 GitHub fine-grained PAT，
-只授权公开下载仓库的 **Contents: Read and write**。普通 GITHUB_TOKEN 只能写当前源码仓库。
-没有该 secret 也可以取消 publish，仅构建下载 artifacts，然后通过本机已登录的 gh 手动发布。
+发布使用 GitHub 自带 `GITHUB_TOKEN` 与 workflow 的 `contents: write` 权限，
+不需要额外 PAT 或跨仓库 secret。取消 publish 时仅构建可下载的 Actions artifacts。
 
 本机打包使用 `tools/Build-ForkRelease.ps1`，需要 .NET 10、Node、Inno Setup 6、
 已编译的原生启动器和 Microsoft 签名的 WebView2 Evergreen x64 离线安装程序。
@@ -23,9 +21,12 @@
 
 ## 客户端行为
 
-更新固定查询公开下载仓库 GitHub Releases；不会再查询上游的软件更新 CDN。
+更新固定查询 `Yukikaze1945/Starshot` 的 GitHub Releases；不会再查询上游的软件更新 CDN。
 OneOCR 引擎下载源保持独立。预览构建初次启动默认接收预览版；可在“设置 → 应用”关闭。
 自动检查与手动检查均先提示，再由用户确认下载。当前发行全量更新；未接入差分发布。
+
+`2.6.0-preview.2` 起使用统一仓库更新源。此前的 `2.6.0-preview.1` 仍内置旧仓库地址，
+需要覆盖安装一次新版以切换地址；保留配置，后续由软件正常检查更新。
 
 安装版与便携版共享启动器布局：根目录 `Starshot.exe`、`version.ini` 和
 `app-{version}`。安装包使用独立的每用户目录 `%LOCALAPPDATA%\Programs\Starshot Fork`，

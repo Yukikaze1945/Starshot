@@ -8,11 +8,11 @@ on:
         required: true
         type: string
       publish:
-        description: "Publish binaries to the public download repository"
+        description: "Publish binaries to this repository's Releases"
         type: boolean
         default: false
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: fork-release
   cancel-in-progress: false
@@ -64,14 +64,13 @@ jobs:
         if: inputs.publish
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          if (!$env:GH_TOKEN) { throw 'Set RELEASE_TOKEN with Contents write access to Starshot-releases, or rerun without publish.' }
           $version = $env:RELEASE_VERSION
-          $repo = 'Yukikaze1945/Starshot-releases'
+          $repo = $env:GITHUB_REPOSITORY
           $root = "build/fork-release/$version"
-          $args = @('release', 'create', $version, '--repo', $repo, '--draft', '--title', "Starshot Fork $version", '--notes', 'Windows x64. Offline setup and portable ZIP. Source: https://github.com/Yukikaze1945/Starshot-private')
+          $args = @('release', 'create', $version, '--repo', $repo, '--target', $env:GITHUB_SHA, '--draft', '--title', "Starshot Fork $version", '--notes', 'Windows x64. Offline setup and portable ZIP. Source and updates are hosted in this repository.')
           if ($version.Contains('-preview.')) { $args += '--prerelease' }
           & gh @args
           if ($LASTEXITCODE -ne 0) { throw 'Could not create draft release.' }

@@ -1,3 +1,5 @@
+> **Starshot Fork**: Public React/WebView2 workspace with native screenshot capabilities. Source, [installers](https://github.com/Yukikaze1945/Starshot/releases), and updates are hosted in this repository. [Release guide](docs/releasing-fork.md). Based on loliri/Starshot (MIT).
+
 <div align="center">
 
 <img src="src/logo.png" width="300" alt="Starshot Logo">
@@ -8,11 +10,11 @@
 
 Full 16-bit HDR Pipeline · Region Screenshot · AVIF / JPEG XL / PNGv3 Encoding · Color Management
 
-[![Release](https://img.shields.io/github/v/release/loliri/Starshot?style=flat-square)](../../releases)
+[![Release](https://img.shields.io/github/v/release/Yukikaze1945/Starshot?include_prereleases&style=flat-square)](../../releases)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/loliri/Starshot?tab=MIT-1-ov-file)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6?style=flat-square&logo=windows)](../../releases)
 
-[Website](https://starshot.cialo.site) · [Download](https://starshot.cialo.site/download) · [Quick Start](#quick-start) · [Features](#features) · [Build from Source](#build-from-source)
+[Website](https://starshot.cialo.site) · [Download](https://github.com/Yukikaze1945/Starshot/releases) · [Quick Start](#quick-start) · [Features](#features) · [Build from Source](#build-from-source)
 
 **English** | **[简体中文](README.zh-CN.md)** |
 [繁體中文](docs/README.zh-TW.md) | [日本語](docs/README.ja.md) | [Français](docs/README.fr.md) | [Русский](docs/README.ru.md) | [Español](docs/README.es.md)
@@ -72,7 +74,7 @@ On SDR displays, Starshot automatically falls back to the standard SDR screensho
 
 ## Download
 
-All installers can be downloaded from the [website download page](https://starshot.cialo.site/download) (auto-detects x64 / arm64), or from [GitHub Releases](../../releases).
+All installers can be downloaded from the [website download page](https://github.com/Yukikaze1945/Starshot/releases) (auto-detects x64 / arm64), or from [GitHub Releases](../../releases).
 
 Two distribution lines — whichever you install is the line you stay on; they never cross:
 
