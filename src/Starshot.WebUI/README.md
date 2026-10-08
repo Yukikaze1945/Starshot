@@ -23,7 +23,7 @@ Node 22.19+ or 24 is required for the frontend build. MSBuild builds assets incr
 ## UI ownership
 
 - React: creative workspace, gallery/search/filter/import, preview drawer, clipboard, OCR editor, translation and preferences.
-- C#: WGC capture/overlays, annotations, scrolling/GIF capture, HDR/P3 decoding/encoding, original-image viewer, floating pins, OneOCR installation, global hotkeys, tray, Windows clipboard and batch conversion.
+- C#: WGC capture/overlays, annotations, scrolling/GIF capture, HDR/P3 decoding/encoding, original-image viewer, floating pins, bundled PP-OCRv6 Tiny, global hotkeys, tray, Windows clipboard and batch conversion.
 - Native pixel surfaces stay native. Web previews are SDR thumbnails. The original-image action retains the existing HDR viewer.
 - The legacy welcome wizard no longer blocks startup. First run creates the config and opens the workspace.
 
@@ -36,6 +36,14 @@ OCR results open a separate 720×560 WebView2 window (`?surface=ocr`), leaving t
 Response: `{ type: 'response', id, ok, result }` or `{ type: 'response', id, ok: false, error }`.
 
 Event: `{ type: 'event', name, data }`. `app.ready` establishes frontend readiness, with OCR results retained until ready. Requests are correlated by UUID, support AbortSignal cancellation, and time out after 90 seconds. Frontend reloads do not add multiple host handlers.
+
+OCR settings select `ocrModel: tiny | small`; the DLC tab uses allowlisted
+`ocr.models.status/download/cancel/select/delete/source` RPCs. Status accepts
+`verify: true` for a forced hash check. Download starts a background data-only
+job and returns immediately; the UI polls progress without initializing OCR.
+Selection/deletion is serialized with inference, and Tiny remains the built-in
+default. Browser preview reports Small as unavailable rather than simulating a
+native download. Headless UI contract checks are in `tools/OcrSmallTest/ui-check.mjs`.
 
 Commands are allowlisted in `Features/WebUI/WebUiBridge.cs`. Gallery commands accept host-issued image IDs, never frontend filesystem paths. Only `https://starshot.local` may navigate or call the bridge. New windows, downloads and permission requests are denied. CSP prevents remote scripts, frames and web network APIs. API keys stay in DPAPI storage; only the key-present flag is returned. The bridge never logs message payloads.
 

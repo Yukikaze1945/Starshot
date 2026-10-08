@@ -623,7 +623,7 @@ public sealed partial class StorageSetting : PageBase
         set => SetProperty(ref field, value);
     } = "—";
 
-    /// <summary>OCR 引擎文件（exe 旁 oneocr.dll + oneocr.onemodel）大小，仅展示，不参与任何清理逻辑</summary>
+    /// <summary>随应用部署的 OCR 引擎与模型程序集大小，仅展示，不参与任何清理逻辑</summary>
     public string OcrEngineSize
     {
         get;
@@ -695,13 +695,8 @@ public sealed partial class StorageSetting : PageBase
                 long ocr = 0;
                 try
                 {
-                    string dir = AppContext.BaseDirectory;
-                    string dll = Path.Combine(dir, "oneocr.dll");
-                    string model = Path.Combine(dir, "oneocr.onemodel");
-                    if (File.Exists(dll))
-                        ocr += new FileInfo(dll).Length;
-                    if (File.Exists(model))
-                        ocr += new FileInfo(model).Length;
+                    foreach (string assembly in Directory.EnumerateFiles(AppContext.BaseDirectory, "Sdcb.SimdPaddleOCR*.dll"))
+                        ocr += new FileInfo(assembly).Length;
                 }
                 catch { }
                 return (s, cc, bg, ll, bk, ocr);

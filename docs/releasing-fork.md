@@ -22,7 +22,10 @@
 ## 客户端行为
 
 更新固定查询 `Yukikaze1945/Starshot` 的 GitHub Releases；不会再查询上游的软件更新 CDN。
-OneOCR 引擎下载源保持独立。预览构建初次启动默认接收预览版；可在“设置 → 应用”关闭。
+OCR 使用内置的 SimdPaddleOCR PP-OCRv6 Tiny 官方模型程序集，不再下载 OneOCR。
+发布目录必须包含 Tiny、TextLineOrientation、ModelProvider 程序集及 ThirdParty/SimdPaddleOCR 许可文件。
+Small 是可选数据 DLC：发布包不加入 ChineseV6Small DLL 或模型二进制，只包含 `small-manifest.json` 与许可说明。运行时仅下载固定官方版本的 DET/REC/字典，复用内置 CLS；模型保存在既有用户数据目录，升级不得清理该目录。详见 `docs/reports/2026-10-08-paddle-small-dlc-validation.md`。
+预览构建初次启动默认接收预览版；可在“设置 → 应用”关闭。
 自动检查与手动检查均先提示，再由用户确认下载。当前发行全量更新；未接入差分发布。
 
 `2.6.0-preview.2` 起使用统一仓库更新源。此前的 `2.6.0-preview.1` 仍内置旧仓库地址，

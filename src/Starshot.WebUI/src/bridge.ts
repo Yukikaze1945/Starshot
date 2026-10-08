@@ -44,15 +44,16 @@ export function request<T = void>(method: string, params: unknown = {}, signal?:
 
 // Browser preview is intentionally empty: it never pretends to capture or translate.
 const preview: Bootstrap = {
-  version: 'Browser preview', protocol: 1, oneOcrReady: false, hasApiKey: false,
+  version: 'Browser preview', protocol: 1, hasApiKey: false,
   hotkeys: [44446, 44445, 44447, 44448, 44449, 44450].map((id, i) => ({ id, modifiers: 1, key: [81,87,65,79,50,51][i], text: ['Alt + Q','Alt + W','Alt + A','Alt + O','Ctrl + 2','Ctrl + 3'][i], registered: false, error: false })),
-  settings: { screenshotFolder: '图片 / Starshot', extraFolders: [], subfolders: false, subfolderPattern: '{year}/{month}', filenamePattern: '{title}_{timestamp}', regionFilenamePattern: '{title}_region_{timestamp}', autoCopy: true, autoCopyOcr: false, ultraHdr: true, capacityManual: false, capacity: 8, captureMode: 2, videoCodec: 0, sdrFormat: 0, hdrFormat: 0, quality: 2, colorManagement: false, deleteSdrHdr: false, sdrWhite: 0, monitorSource: 0, muteFullscreen: false, ocrEngine: 0, endpoint: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4.1-mini', targetLanguage: '简体中文', theme: 1, language: '', autoUpdate: true, previewUpdates: false, startupHidden: true, highPriority: false },
+  settings: { screenshotFolder: '图片 / Starshot', extraFolders: [], subfolders: false, subfolderPattern: '{year}/{month}', filenamePattern: '{title}_{timestamp}', regionFilenamePattern: '{title}_region_{timestamp}', autoCopy: true, autoCopyOcr: false, ocrModel: 'tiny', ultraHdr: true, capacityManual: false, capacity: 8, captureMode: 2, videoCodec: 0, sdrFormat: 0, hdrFormat: 0, quality: 2, colorManagement: false, deleteSdrHdr: false, sdrWhite: 0, monitorSource: 0, muteFullscreen: false, endpoint: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4.1-mini', targetLanguage: '简体中文', theme: 1, language: '', autoUpdate: true, previewUpdates: false, startupHidden: true, highPriority: false },
 }
 async function previewRequest(method: string, params: unknown) {
   const p = params as Record<string, unknown>
   switch (method) {
     case 'app.bootstrap': return structuredClone(preview)
     case 'app.ready': case 'window.hide': return null
+    case 'ocr.models.status': return {selected: preview.settings.ocrModel, state: 'notInstalled', installed: false, downloadedBytes: 0, totalBytes: 31114837, error: null, directory: '', version: '1.0.0'}
     case 'settings.get': return structuredClone(preview.settings)
     case 'settings.set': Object.assign(preview.settings, { [p.key as string]: p.value }); return structuredClone(preview.settings)
     case 'library.list': return { items: [], total: 0, offset: 0 }

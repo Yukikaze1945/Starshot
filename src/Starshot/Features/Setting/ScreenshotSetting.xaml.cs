@@ -243,12 +243,6 @@ public sealed partial class ScreenshotSetting : PageBase
         );
     }
 
-    private async void Button_OcrEngineConfig_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new OcrEngineDialog { XamlRoot = this.XamlRoot };
-        await dialog.ShowAsync();
-    }
-
     private async void Button_TranslationConfig_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new TranslationSettingsDialog(this.XamlRoot);

@@ -1927,21 +1927,21 @@ public sealed partial class ImageViewWindow : Window
                     return;
                 }
                 (path, int filterIndex) = picked.Value;
-                // SDR JPEG / SDR PNG：渲染 SDR 显示管线（HdrToneMap + 白电平 + 色彩管理）到 8bit，所见即所得
+                // File exports target sRGB, independently of the monitor's preview gamut.
                 encodeTask = filterIndex switch
                 {
                     0 => ImageSaver.SaveAsJpegAsync(
-                        sdr8 = RenderToSdr8bit(output, bitmap),
+                        sdr8 = RenderOrdinarySdr8bit(output, bitmap, outputNits),
                         ms,
                         100
                     ),
                     1 => ImageSaver.SaveAsUhdrAsync(bitmap, ms, maxCLL, outputNits, AppConfig.UhdrCapacityOverride),
                     2 => ImageSaver.SaveAsPngAsync(
-                        sdr8 = RenderToSdr8bit(output, bitmap),
+                        sdr8 = RenderOrdinarySdr8bit(output, bitmap, outputNits),
                         ms,
                         ColorPrimaries.BT709,
                         null,
-                        false
+                        colorPrimaries.TryGetDefinedPrimaries(out int id) && id == 1
                     ),
                     _ => throw new ArgumentOutOfRangeException(
                         $"Unknown filter index {filterIndex}."
@@ -1973,11 +1973,20 @@ public sealed partial class ImageViewWindow : Window
         }
     }
 
-    /// <summary>
-    /// 把显示管线图像（SDR 模式的 tonemap 链）渲染到 8bit B8G8R8A8——所见即所得的 SDR 导出像素。
-    /// 链输出是线性 scRGB，画进 8bit 前必须补 sRGB OETF（显示路径由 DWM 对 float swapchain 编码，
-    /// 落盘文件没有这层），否则按 sRGB 解读严重偏暗——与 TonemapToSdr / Ultra HDR 基图同款处理。
-    /// </summary>
+    private CanvasRenderTarget RenderOrdinarySdr8bit(ICanvasImage legacyOutput, CanvasBitmap source, float whiteNits)
+    {
+        // WGC screenshots and recognized HDR10 loaders are linear BT.709 scRGB.
+        // Arbitrary float JXL/ICC inputs do not have that guarantee: preserve their
+        // existing display conversion until the loader establishes a linear contract.
+        if (!ImageColorPrimaries.TryGetDefinedPrimaries(out int id) || id != 1)
+            return RenderToSdr8bit(legacyOutput, source);
+        float displayPeak = 0;
+        try { displayPeak = (float)_displayInformation.GetAdvancedColorInfo().MaxLuminanceInNits; }
+        catch { }
+        return StarshotPerceptual.Render(source, whiteNits, displayPeak);
+    }
+
+    // Legacy conversion for float files whose input transfer/gamut is not scRGB.
     private static CanvasRenderTarget RenderToSdr8bit(ICanvasImage output, CanvasBitmap sizeSource)
     {
         var rt = new CanvasRenderTarget(
@@ -2084,7 +2093,7 @@ public sealed partial class ImageViewWindow : Window
     private List<OcrLine> _ocrLines = [];
 
     /// <summary>
-    /// 识别文字：oneocr 引擎（照片应用同款，随安装包分发）+ swapchain 聚光灯遮罩
+    /// 识别文字：内置 PP-OCRv6 Tiny + 现有 swapchain 聚光灯遮罩。
     /// （无 XAML overlay，不碰 ScrollViewer 布局）。再点按钮 / ESC / 切图退出；拖选后 Ctrl+C 复制。
     /// </summary>
     private async void Button_Ocr_Click(object sender, RoutedEventArgs e)
@@ -2109,28 +2118,18 @@ public sealed partial class ImageViewWindow : Window
         if (_sourceBitmap is null)
             return;
 
-        // 选了 OneOCR 但文件未落地：首次使用引导配置（toast + 弹配置对话框）。
-        // 不自动重跑：配置完用户再点一次即可，递归重试反而引入风险。
-        if (AppConfig.OcrEngine == 0 && !OcrHelper.IsOneOcrReady)
-        {
-            ShowInfo(InfoBarSeverity.Informational, Lang.Ocr_NotConfigured, "", 3000);
-            var dialog = new Starshot.Features.Setting.OcrEngineDialog
-            {
-                XamlRoot = Content.XamlRoot,
-            };
-            await dialog.ShowAsync();
-            return;
-        }
-
         Button_Ocr.IsEnabled = false;
         try
         {
             // GPU 取像素留在 UI 线程（CanvasDevice 非线程安全），纯 CPU 识别下线程池
-            var prep = OcrHelper.PreparePixels(_sourceBitmap);
+            // Reuse the application's existing SDR conversion for HDR viewer images.
+            // Region OCR already receives the overlay's SDR crop; never clamp FP16 here.
+            using var sdr = IsHDRImage ? ScreenCaptureService.TonemapToSdr(_sourceBitmap, SDRLuminance) : null;
+            var prep = OcrHelper.PreparePixels(sdr ?? _sourceBitmap);
             var lines = await Task.Run(() =>
                 OcrHelper.RecognizeAsync(prep.Pixels, prep.Width, prep.Height, prep.Scale)
             );
-            // null = 双引擎都不可用（oneocr 缺文件 + 旧引擎无语言包）；空列表 = 识别了但没文字
+            // null = Tiny 异常后系统回退也不可用；空列表 = 没识别到文字。
             if (lines is null)
             {
                 ShowInfo(InfoBarSeverity.Warning, Lang.Ocr_NoEngine, "", 5000);
@@ -2145,12 +2144,6 @@ public sealed partial class ImageViewWindow : Window
             _ocrLines = lines;
             _ocrActive = true;
             DrawImage();
-            // 文件在但 init 失败（模型/dll 损坏类深层问题）：不弹配置对话框，
-            // toast 指路日志与重新获取；识别本身已降级系统引擎完成
-            if (AppConfig.OcrEngine == 0 && OcrHelper.OneOcrInitFailed)
-            {
-                ShowInfo(InfoBarSeverity.Warning, Lang.Ocr_InitFailed, "", 5000);
-            }
         }
         catch (Exception ex)
         {

@@ -1,0 +1,29 @@
+{
+  "name": "PP-OCRv6 Small",
+  "modelPackageVersion": "1.0.0",
+  "runtimeVersion": "1.4.2",
+  "revision": "315e4fff4466260fd8f09cd4d53a70ec3b63f65c",
+  "license": "Apache-2.0",
+  "totalBytes": 31114837,
+  "assets": [
+    {
+      "file": "det.onnx",
+      "url": "https://raw.githubusercontent.com/sdcb/SimdPaddleOCR/315e4fff4466260fd8f09cd4d53a70ec3b63f65c/models/small_det.onnx",
+      "bytes": 9880512,
+      "sha256": "D73E0058B7A8086BBD57F3D10B8BCD4FF95363F67E06E2762B5E814FE9C9410E"
+    },
+    {
+      "file": "rec.onnx",
+      "url": "https://raw.githubusercontent.com/sdcb/SimdPaddleOCR/315e4fff4466260fd8f09cd4d53a70ec3b63f65c/models/small_rec.onnx",
+      "bytes": 21159378,
+      "sha256": "5435FD747C9E0EFE15A96D0B378D5BD157E9492ED8FD80EDF08F30D02FA24634"
+    },
+    {
+      "file": "dict.txt",
+      "url": "https://raw.githubusercontent.com/sdcb/SimdPaddleOCR/315e4fff4466260fd8f09cd4d53a70ec3b63f65c/models/rec_keys.txt",
+      "bytes": 74947,
+      "sha256": "B5F2BFE2BDD9448429E3E82B51C789775D9B42F2403D082B00662EB77E401C5D"
+    }
+  ],
+  "classifier": "Bundled TextLineOrientation 1.0.0; not downloaded"
+}

@@ -35,7 +35,7 @@ Starshot captures game window content with [Windows Graphics Capture](https://le
 - 🧠 **Smart HDR/SDR Detection** — Automatically distinguishes genuine HDR content from SDR content wrapped in an HDR format, avoiding wasted space.
 - ✂️ **Region Screenshot** — Frozen-frame multi-monitor overlay with window detection and magnifier for pixel-precise selection.
 - 📋 **Clipboard Support** — Screenshots auto-copy to clipboard; browse clipboard history images in a dedicated page, preview / recopy / delete
-- 🔤 **Text Recognition (OCR)** — Same OneOCR engine as the Windows Photos app; drag-select and copy in the viewer, or grab text with a global shortcut
+- 🔤 **Text Recognition (OCR)** — Bundled PP-OCRv6 Tiny DET/CLS/REC on the CPU; select recognized lines in the viewer, or grab text with a global shortcut
 - 🗂️ **Multi-format Support** — AVIF / JPEG XL / PNGv3 / Ultra HDR JPEG / PNG, including a batch conversion tool.
 - 🖥️ **Multi-Monitor** — Region screenshots can span across monitors, composing captures that cross screen boundaries.
 - 🔄 **Auto Update Check** — Built-in update check; delta updates on new releases.
@@ -228,10 +228,11 @@ After a screenshot, a thumbnail + status toast pops up (does not interfere with 
 
 ### Text Recognition (OCR)
 
-- **Dual engines**: OneOCR (the same engine as the Windows Photos app, higher accuracy) takes priority; falls back to the system engine (Windows.Media.Ocr, no download needed, lower accuracy) when unavailable. Switchable in Settings → Screenshot → Configure Engine.
-- **On-demand engine files**: OneOCR engine files (about 95 MB) are not bundled with the installer. A configuration dialog appears on first use — copy them directly from the local Windows Snipping Tool or Photos app (no download), or download from CDN; delete them from the same dialog when no longer needed.
+- **Default engine**: SimdPaddleOCR PP-OCRv6 Tiny recognizes Chinese and English with its official managed .NET API. Windows.Media.Ocr is used only after an actual Tiny exception, with an explicit fallback log.
+- **Bundled, lazy models**: Tiny DET/REC/dictionary and text-line CLS are embedded in official model assemblies, loaded on the first OCR request and reused until switching models or application exit. No OneOCR download, OpenCV or ONNX Runtime is required. BGRA32 screenshot crops retain their original dimensions; HDR sources first use the existing SDR preview conversion.
+- **Optional Small DLC**: Settings → DLC downloads PP-OCRv6 Small 1.0.0 official DET/REC/dictionary resources (29.67 MiB), with SHA-256 verification, progress, cancel, switch and delete. The existing CLS is reused. Model data lives under the current user-data root; no downloaded DLL executes. Only the selected engine loads on an actual OCR request. Switching/deleting waits for in-flight OCR; missing or damaged Small falls back to bundled Tiny. See [Small validation](docs/reports/2026-10-08-paddle-small-dlc-validation.md).
 - **In-viewer recognition**: Enter via the toolbar button or the "Recognize Text" context-menu item in the gallery / clipboard pages. A spotlight mask marks all text regions (same interaction as the Photos app); drag over text (Ctrl+A to select all) and press Ctrl+C to copy. Extra spaces between characters in mixed CJK/Latin text are removed automatically.
-- **Global shortcut Alt+O**: Drag a region → recognized text goes straight to the clipboard (no file saved, image not copied); same entry in the tray menu; result feedback shows in the on-screen info popup.
+- **Global shortcut Alt+O**: Drag a region → recognized text opens the compact editing window (no image file saved). OCR auto-copy is optional and defaults off; manual copy remains available after editing. The same action is available from the tray menu.
 
 ### Batch Format Conversion
 

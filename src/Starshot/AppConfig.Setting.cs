@@ -320,20 +320,6 @@ public static partial class AppConfig
     /// </summary>
     public const string RepoApiBaseUrl = "https://api.github.com/repos/Yukikaze1945/Starshot";
 
-    /// <summary>
-    /// OCR 引擎包 CDN 地址（oneocr.dll + oneocr.onemodel 平铺 zip，供按需下载）
-    /// </summary>
-    public const string OcrCdnUrl = CdnBase + "/ocr/oneocr.zip";
-
-    /// <summary>
-    /// OCR 引擎选择：0=OneOCR（默认，精度高，需 exe 旁的 oneocr 文件），1=系统引擎（Windows.Media.Ocr，免下载精度低）
-    /// </summary>
-    public static int OcrEngine
-    {
-        get => GetValue(0);
-        set => SetValue(value);
-    }
-
     /// <summary>OpenAI-compatible chat completions endpoint used for OCR text translation.</summary>
     public static string TranslationApiUrl
     {
@@ -625,6 +611,13 @@ public static partial class AppConfig
         set => SetValue(value);
     }
 
+    /// <summary>Data-only optional Small DLC; missing/invalid choices normalize to Tiny.</summary>
+    public static string OcrModel
+    {
+        get => GetValue("tiny") == "small" ? "small" : "tiny";
+        set => SetValue(value == "small" ? "small" : "tiny");
+    }
+
     /// <summary>
     /// 全屏时静默截图通知：开=截图弹浮窗前检测独占全屏（SHQueryUserNotificationState），
     /// 全屏中不弹（浮窗会把游戏最小化到桌面），平时照常弹。
@@ -749,6 +742,8 @@ public static partial class AppConfig
 
     // 值放宽为 object：普通键是 string，数组键（ExtraScreenshotFolders）是 List<string> 原生存取，
     // 读文件时统一解析为 JsonElement 占位（字符串/数组都原样保留，写回时原生输出，无嵌套转义）
+    // OCR fallback can update its preference off the UI thread. Serialize cache and atomic file writes.
+    private static readonly object SettingGate = new();
     private static Dictionary<string, object?>? _settingCache;
 
     /// <summary>
@@ -832,42 +827,48 @@ public static partial class AppConfig
     /// </summary>
     public static void EnsureConfigFile()
     {
-        InitializeSettingProvider();
-        if (!File.Exists(ConfigFilePath))
+        lock (SettingGate)
         {
-            SaveConfigFile();
+            InitializeSettingProvider();
+            if (!File.Exists(ConfigFilePath))
+            {
+                SaveConfigFile();
+            }
         }
     }
 
     public static T? GetValue<T>(T? defaultValue = default, [CallerMemberName] string? key = null)
     {
-        if (string.IsNullOrWhiteSpace(key))
+        lock (SettingGate)
         {
-            return defaultValue;
-        }
-        if (string.IsNullOrWhiteSpace(UserDataFolder))
-        {
-            return defaultValue;
-        }
-        InitializeSettingProvider();
-        if (_settingCache?.TryGetValue(key, out object? value) ?? false)
-        {
-            string? raw = value switch
-            {
-                string s => s,
-                JsonElement { ValueKind: JsonValueKind.String } je => je.GetString(),
-                _ => null,
-            };
-            try
-            {
-                return ConvertFromString(raw, defaultValue);
-            }
-            catch
+            if (string.IsNullOrWhiteSpace(key))
             {
                 return defaultValue;
             }
+            if (string.IsNullOrWhiteSpace(UserDataFolder))
+            {
+                return defaultValue;
+            }
+            InitializeSettingProvider();
+            if (_settingCache?.TryGetValue(key, out object? value) ?? false)
+            {
+                string? raw = value switch
+                {
+                    string s => s,
+                    JsonElement { ValueKind: JsonValueKind.String } je => je.GetString(),
+                    _ => null,
+                };
+                try
+                {
+                    return ConvertFromString(raw, defaultValue);
+                }
+                catch
+                {
+                    return defaultValue;
+                }
+            }
+            return defaultValue;
         }
-        return defaultValue;
     }
 
     private static T? ConvertFromString<T>(string? value, T? defaultValue = default)
@@ -886,29 +887,32 @@ public static partial class AppConfig
 
     public static void SetValue<T>(T? value, [CallerMemberName] string? key = null)
     {
-        if (string.IsNullOrWhiteSpace(key))
+        lock (SettingGate)
         {
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(UserDataFolder))
-        {
-            return;
-        }
-        InitializeSettingProvider();
-        try
-        {
-            string? val = value?.ToString();
-            if (
-                _settingCache!.TryGetValue(key, out object? cacheValue)
-                && AsString(cacheValue) == val
-            )
+            if (string.IsNullOrWhiteSpace(key))
             {
                 return;
             }
-            _settingCache[key] = val;
-            SaveConfigFile();
+            if (string.IsNullOrWhiteSpace(UserDataFolder))
+            {
+                return;
+            }
+            InitializeSettingProvider();
+            try
+            {
+                string? val = value?.ToString();
+                if (
+                    _settingCache!.TryGetValue(key, out object? cacheValue)
+                    && AsString(cacheValue) == val
+                )
+                {
+                    return;
+                }
+                _settingCache[key] = val;
+                SaveConfigFile();
+            }
+            catch { }
         }
-        catch { }
     }
 
     /// <summary>
@@ -917,37 +921,43 @@ public static partial class AppConfig
     /// </summary>
     public static List<string> GetListValue([CallerMemberName] string? key = null)
     {
-        if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(UserDataFolder))
+        lock (SettingGate)
         {
+            if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(UserDataFolder))
+            {
+                return [];
+            }
+            InitializeSettingProvider();
+            if (_settingCache?.TryGetValue(key, out object? value) ?? false)
+            {
+                return value switch
+                {
+                    List<string> list => [.. list],
+                    JsonElement { ValueKind: JsonValueKind.Array } je => je.Deserialize<List<string>>()
+                        ?? [],
+                    _ => [],
+                };
+            }
             return [];
         }
-        InitializeSettingProvider();
-        if (_settingCache?.TryGetValue(key, out object? value) ?? false)
-        {
-            return value switch
-            {
-                List<string> list => list,
-                JsonElement { ValueKind: JsonValueKind.Array } je => je.Deserialize<List<string>>()
-                    ?? [],
-                _ => [],
-            };
-        }
-        return [];
     }
 
     public static void SetListValue(List<string> value, [CallerMemberName] string? key = null)
     {
-        if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(UserDataFolder))
+        lock (SettingGate)
         {
-            return;
+            if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(UserDataFolder))
+            {
+                return;
+            }
+            InitializeSettingProvider();
+            try
+            {
+                _settingCache![key] = new List<string>(value);
+                SaveConfigFile();
+            }
+            catch { }
         }
-        InitializeSettingProvider();
-        try
-        {
-            _settingCache![key] = value;
-            SaveConfigFile();
-        }
-        catch { }
     }
 
     private static string? AsString(object? value)
@@ -962,12 +972,15 @@ public static partial class AppConfig
 
     public static void DeleteAllSettings()
     {
-        try
+        lock (SettingGate)
         {
-            _settingCache = [];
-            SaveConfigFile();
+            try
+            {
+                _settingCache = [];
+                SaveConfigFile();
+            }
+            catch { }
         }
-        catch { }
     }
 
     /// <summary>
@@ -976,25 +989,28 @@ public static partial class AppConfig
     /// </summary>
     public static bool ImportConfigFile(string path)
     {
-        try
+        lock (SettingGate)
         {
-            if (!File.Exists(path))
+            try
+            {
+                if (!File.Exists(path))
+                    return false;
+                var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+                    File.ReadAllText(path)
+                );
+                if (
+                    dict is null
+                    || dict.Any(kv => string.IsNullOrWhiteSpace(kv.Key) || !IsValidValue(kv.Value))
+                )
+                    return false;
+                _settingCache = dict.ToDictionary(kv => kv.Key, kv => (object?)kv.Value);
+                SaveConfigFile();
+                return true;
+            }
+            catch
+            {
                 return false;
-            var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
-                File.ReadAllText(path)
-            );
-            if (
-                dict is null
-                || dict.Any(kv => string.IsNullOrWhiteSpace(kv.Key) || !IsValidValue(kv.Value))
-            )
-                return false;
-            _settingCache = dict.ToDictionary(kv => kv.Key, kv => (object?)kv.Value);
-            SaveConfigFile();
-            return true;
-        }
-        catch
-        {
-            return false;
+            }
         }
     }
 
@@ -1012,7 +1028,7 @@ public static partial class AppConfig
 
     public static void ClearCache()
     {
-        _settingCache = null;
+        lock (SettingGate) _settingCache = null;
     }
 
     #endregion

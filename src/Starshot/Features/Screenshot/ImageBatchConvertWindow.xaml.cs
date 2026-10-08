@@ -682,7 +682,7 @@ public sealed partial class ImageBatchConvertWindow : PageBase
     }
 
     /// <summary>
-    /// avif/jxl → jpg/png：进程内解码（ImageLoader）+ HDR 源过截图同款 TonemapToSdr。
+    /// avif/jxl → jpg/png：进程内解码（ImageLoader）+ HDR 源过 StarshotPerceptual SDR 文件映射。
     /// 取代原 CLI avifdec/djxl 直转——CLI 对 PQ 内容不做色调映射，naive 压 8bit 导致发灰。
     /// 编码分流：JPG 走 ImageSaver.SaveAsJpegAsync（与查看器 SDR JPEG 同一条线）；
     /// PNG 走 ImageSaver.SaveAsPngAsync（截图验证过的管线——WIC 的 PNG 编码器不认 JPEG 参数，混用会 CreateAsync 直接抛异常）。
@@ -710,7 +710,7 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         CanvasRenderTarget rt8;
         if (imageInfo.HDR)
         {
-            rt8 = ScreenCaptureService.TonemapToSdr(
+            rt8 = StarshotPerceptual.Render(
                 imageInfo.CanvasBitmap,
                 AppConfig.SdrWhiteLevel
             );
@@ -740,7 +740,7 @@ public sealed partial class ImageBatchConvertWindow : PageBase
                     ms,
                     ColorPrimaries.BT709,
                     ScreenCaptureService.BuildXMPMetadata(item.SourceFileTime),
-                    false
+                    imageInfo.HDR
                 );
             }
             else

@@ -74,7 +74,7 @@ internal sealed class WebUiBridge : IDisposable
             object? result = await DispatchAsync(method, request.GetProperty("params"), cancellation.Token);
             Reply(new { type = "response", id, ok = true, result });
             if (method is "settings.set" or "settings.pickFolder" or "settings.addFolder" or "settings.removeFolder"
-                or "translation.configure" or "translation.clearKey" or "hotkey.set" or "utility.ocrEngine")
+                or "translation.configure" or "translation.clearKey" or "hotkey.set" or "ocr.models.select" or "ocr.models.delete")
                 MainWindow.BroadcastSettingsChanged();
         }
         catch (OperationCanceledException) { if (id is not null) Reply(new { type = "response", id, ok = false, error = "操作已取消。" }); }
@@ -99,7 +99,7 @@ internal sealed class WebUiBridge : IDisposable
         {
             case "app.bootstrap":
                 return new { version = AppConfig.AppVersion, protocol = ProtocolVersion,
-                    settings = Settings(), hotkeys = Hotkeys(), oneOcrReady = OcrHelper.IsOneOcrReady,
+                    settings = Settings(), hotkeys = Hotkeys(),
                     hasApiKey = OcrTranslationClient.HasApiKey };
             case "app.ready": _window.FrontendReady(); return null;
             case "request.cancel":
@@ -169,11 +169,12 @@ internal sealed class WebUiBridge : IDisposable
             case "library.ocr":
                 if (StaticVideoMetadata.IsVideo(ResolveFile(p))) throw new ArgumentException("请对伴随图片识别文字。");
                 using (var image = await ImageLoader.LoadImageAsync(ResolveFile(p), ct))
-                using (var sdr = ScreenCaptureService.TonemapToSdr(image.CanvasBitmap, 250))
+                using (var sdr = image.CanvasBitmap.Format is DirectXPixelFormat.B8G8R8A8UIntNormalized or DirectXPixelFormat.R8G8B8A8UIntNormalized
+                    ? null : ScreenCaptureService.TonemapToSdr(image.CanvasBitmap, AppConfig.SdrWhiteLevel))
                 {
-                    var prepared = OcrHelper.PreparePixels(sdr);
-                    var lines = await Task.Run(() => OcrHelper.RecognizeAsync(prepared.Pixels, prepared.Width, prepared.Height, prepared.Scale), ct);
-                    if (lines is null) throw new InvalidOperationException("没有可用的 OCR 引擎，请在设置中配置。");
+                    var prepared = OcrHelper.PreparePixels(sdr ?? image.CanvasBitmap);
+                    var lines = await Task.Run(() => OcrHelper.RecognizeAsync(prepared.Pixels, prepared.Width, prepared.Height, prepared.Scale, ct), ct);
+                    if (lines is null) throw new InvalidOperationException("内置 OCR 运行失败，系统回退也缺少语言支持；请查看日志并重试。");
                     if (lines.Count == 0) throw new InvalidOperationException("这张图片中没有识别到文字。");
                     _window.ShowOcr(lines, false);
                 }
@@ -199,10 +200,19 @@ internal sealed class WebUiBridge : IDisposable
             case "clipboard.pin": PinnedCaptureWindow.PinClipboard(); return null;
             case "pin.reopen": PinnedCaptureWindow.ReopenLast(); return null;
             case "settings.get": return Settings();
+            case "ocr.models.status":
+                return await OcrModelStatusAsync(ct, p.TryGetProperty("verify", out var verify) && verify.GetBoolean());
+            case "ocr.models.download": OcrModelStore.Current.StartDownload(); return await OcrModelStatusAsync(ct);
+            case "ocr.models.cancel": OcrModelStore.Current.CancelDownload(); return await OcrModelStatusAsync(ct);
+            case "ocr.models.delete": await OcrModelStore.Current.DeleteAsync(ct); return await OcrModelStatusAsync(ct);
+            case "ocr.models.select": await OcrHelper.SelectModelAsync(Text(p, "model", 8), ct); return await OcrModelStatusAsync(ct);
+            case "ocr.models.source": await Launcher.LaunchUriAsync(new Uri("https://github.com/sdcb/SimdPaddleOCR")); return null;
             case "settings.set":
                 string settingKey = Text(p, "key", 80);
                 if (settingKey == "captureMode")
                     await CaptureModeController.SetModeAsync((ScreenshotCaptureMode)Range(p.GetProperty("value"), 0, 3));
+                else if (settingKey == "ocrModel")
+                    await OcrHelper.SelectModelAsync(p.GetProperty("value").GetString() ?? "", ct);
                 else
                     ApplySetting(settingKey, p.GetProperty("value"));
                 return Settings();
@@ -263,9 +273,6 @@ internal sealed class WebUiBridge : IDisposable
                 var (update, latestTag) = await UpdateService.CheckUpdateAsync(ignoreSkipped: false);
                 if (update is not null) new UpdateWindow().SetRelease(update);
                 return new { available = update is not null, latestTag, currentVersion = AppConfig.AppVersion };
-            case "utility.ocrEngine":
-                await ShowOcrEngineDialogAsync();
-                return new { ready = OcrHelper.IsOneOcrReady, settings = Settings() };
             case "utility.batch":
                 var utility = new Window { Title = "Starshot · 批量转换" };
                 var frame = new Frame(); utility.Content = frame;
@@ -278,29 +285,6 @@ internal sealed class WebUiBridge : IDisposable
             default: throw new ArgumentException("未知操作。");
         }
     }
-    private async Task ShowOcrEngineDialogAsync()
-    {
-        // A transient legacy engine dialog owns its own small XAML host. The
-        // main WebUI HWND never creates a full-window WinUI rendering scene.
-        var root = new Grid();
-        var host = new Window();
-        OcrEngineDialog? dialog = null;
-        bool closed = false;
-        host.Closed += (_, _) => { closed = true; _utilityWindows.Remove(host); dialog?.Hide(); };
-        try
-        {
-            host.Title = "Starshot · 文字识别引擎"; host.Content = root;
-            host.AppWindow.Resize(new Windows.Graphics.SizeInt32((int)(720 * _window.UIScale), (int)(560 * _window.UIScale)));
-            dialog = new OcrEngineDialog();
-            _utilityWindows.Add(host);
-            host.Activate();
-            await Task.Yield();
-            dialog.XamlRoot = root.XamlRoot;
-            await dialog.ShowAsync();
-        }
-        finally { if (!closed) host.Close(); _utilityWindows.Remove(host); }
-    }
-
     private static string Text(JsonElement p, string name, int max)
     {
         string result = p.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString()! : "";
@@ -447,6 +431,19 @@ internal sealed class WebUiBridge : IDisposable
             text = HotkeyInput.GetHotkeyText((uint)info.Modifiers, (uint)info.Key), registered = info.IsRegistered, error = info.Error.Failed };
     }).ToArray();
 
+    private static async Task<object> OcrModelStatusAsync(CancellationToken ct, bool verify = false)
+    {
+        var status = await OcrModelStore.Current.GetStatusAsync(ct, verify);
+        if (!status.Installed && status.State is not ("downloading" or "validating" or "deleting") && AppConfig.OcrModel == "small")
+        {
+            await OcrHelper.SelectModelAsync("tiny", ct);
+            MainWindow.BroadcastSettingsChanged();
+        }
+        return new { selected = AppConfig.OcrModel, state = status.State, installed = status.Installed,
+            downloadedBytes = status.DownloadedBytes, totalBytes = status.TotalBytes, error = status.Error,
+            directory = status.Directory, version = status.Version };
+    }
+
     private static object Settings() => new
     {
         screenshotFolder = AppConfig.ScreenshotFolder,
@@ -459,6 +456,7 @@ internal sealed class WebUiBridge : IDisposable
         regionFilenamePattern = AppConfig.RegionScreenshotFileNamePattern,
         autoCopy = AppConfig.AutoCopyScreenshotToClipboard,
         autoCopyOcr = AppConfig.AutoCopyOcrText,
+        ocrModel = AppConfig.OcrModel,
         ultraHdr = AppConfig.AutoSaveUltraHDRJpeg,
         capacityManual = AppConfig.UhdrCapacityManual,
         capacity = AppConfig.UhdrCapacityValue,
@@ -469,7 +467,6 @@ internal sealed class WebUiBridge : IDisposable
         sdrWhite = AppConfig.SdrWhiteLevelOverride,
         monitorSource = AppConfig.ScreenshotCaptureMonitorSource,
         muteFullscreen = AppConfig.MuteNotificationInFullscreen,
-        ocrEngine = AppConfig.OcrEngine,
         endpoint = AppConfig.TranslationApiUrl, model = AppConfig.TranslationModel,
         targetLanguage = AppConfig.TranslationTargetLanguage,
         theme = AppConfig.Theme,
@@ -499,7 +496,6 @@ internal sealed class WebUiBridge : IDisposable
             case "hdrFormat": AppConfig.ScreenCaptureHDRFormat = Range(value, 0, 1); break;
             case "videoCodec": AppConfig.ScreenshotVideoCodec = Range(value, 0, 1); break;
             case "quality": AppConfig.ScreenCaptureEncodeQuality = Range(value, 0, 2); break;
-            case "ocrEngine": AppConfig.OcrEngine = Range(value, 0, 1); OcrHelper.ResetEngineCache(); break;
             case "colorManagement": AppConfig.EnableScreenshotColorManagement = value.GetBoolean(); break;
             case "deleteSdrHdr": AppConfig.DeleteHDRIfSDRContent = value.GetBoolean(); break;
             case "sdrWhite": AppConfig.SdrWhiteLevelOverride = Range(value, 0, 1000); break;

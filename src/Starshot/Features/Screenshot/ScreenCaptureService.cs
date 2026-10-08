@@ -530,7 +530,7 @@ internal partial class ScreenCaptureService
                         switch (ocrResult)
                         {
                             case OcrResultStatus.NoEngine:
-                                // 成因二义（oneocr 文件未获取 或 系统无 OCR 语言包），
+                                // Tiny 加载/运行异常后，系统回退也缺少 OCR 语言包。
                                 // 两条出路都指：热键场景弹不了配置对话框，文案兼容引导
                                 _infoWindow.CaptureError(
                                     fgHwnd,
@@ -746,7 +746,7 @@ internal partial class ScreenCaptureService
 
         byte[] xmpData = BuildXMPMetadata(frameTime);
 
-        // colorPrimaries / writeColorProfile：HDR 强制 BT2020；deleteHDR 强制 BT709 不写 ICC（tonemap 后即 sRGB）；SDR 看色彩管理开关
+        // HDR 强制 BT2020；deleteHDR 在独立 SDR 编码分支显式写 sRGB 标记；其他 SDR 沿用色彩管理设置。
         ColorPrimaries colorPrimaries;
         bool writeColorProfile;
         if (outputIsHDR)
@@ -816,7 +816,7 @@ internal partial class ScreenCaptureService
         // 重名不覆盖：追加 _2、_3 ...（autoConvertSDR 的 jpg 跟随主文件名 ChangeExtension，自动同序唯一）
         filePath = EnsureUniquePath(filePath);
 
-        // 主文件编码：deleteHDR 走 tonemap→SDR（BT709，不写 ICC）；其余按 colorPrimaries 直存 bitmap
+        // 主文件编码：deleteHDR 走 StarshotPerceptual→sRGB SDR；其余按 colorPrimaries 直存 bitmap。
         using MemoryStream ms = new();
         await _encodeSlim.WaitAsync();
         try
@@ -824,14 +824,19 @@ internal partial class ScreenCaptureService
             if (videoMode) filePath = EnsureVideoPairPath(filePath, autoConvertSDR);
             if (deleteHDR)
             {
-                using CanvasRenderTarget sdrBitmap = TonemapToSdr(bitmap, sdrWhiteLevel);
+                // Ordinary SDR file only. The UHDR base, preview/clipboard/OCR, and
+                // the single-frame video's conversion keep their independent paths.
+                float displayPeak = 0;
+                try { displayPeak = (float)displayInfo.GetAdvancedColorInfo().MaxLuminanceInNits; }
+                catch { /* Absent/stale display metadata is not an exposure estimate. */ }
+                using CanvasRenderTarget sdrBitmap = StarshotPerceptual.Render(bitmap, sdrWhiteLevel, displayPeak);
                 if (extension is "png")
                     await ImageSaver.SaveAsPngAsync(
                         sdrBitmap,
                         ms,
                         ColorPrimaries.BT709,
                         xmpData,
-                        false
+                        true
                     );
                 else if (extension is "avif")
                     await ImageSaver.SaveAsAvifAsync(
@@ -840,7 +845,7 @@ internal partial class ScreenCaptureService
                         ColorPrimaries.BT709,
                         quality,
                         xmpData,
-                        false
+                        true
                     );
                 else
                     await ImageSaver.SaveAsJxlAsync(
@@ -849,7 +854,7 @@ internal partial class ScreenCaptureService
                         ColorPrimaries.BT709,
                         distance,
                         xmpData,
-                        false
+                        true
                     );
             }
             else if (extension is "png")
@@ -985,9 +990,9 @@ internal partial class ScreenCaptureService
     }
 
     /// <summary>
-    /// HDR（R16G16B16A16Float scRGB）→ SDR（R8G8B8A8）色调映射。
+    /// 保留现有预览、剪贴板、OCR 和 SDR 视频的白电平转换。
     /// WhiteLevelAdjustment(80→sdrWhiteLevel) + SrgbGamma(OETF)，与覆盖层显示用 tonemap 同逻辑。
-    /// 批量转换 HDR→SDR 复用同一条线（防两套实现各改各的）。
+    /// 普通 SDR 图片文件导出单独使用 StarshotPerceptual，不改变这些调用方。
     /// </summary>
     public static CanvasRenderTarget TonemapToSdr(CanvasBitmap hdrBitmap, float sdrWhiteLevel)
     {

@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.AppLifecycle;
 using Starshot.Features.ViewHost;
 using Starshot.Features.Screenshot;
+using Starshot.Helpers;
 using Windows.UI;
 
 namespace Starshot;
@@ -118,6 +119,7 @@ public partial class App : Application
 
     public new void Exit()
     {
+        OcrHelper.Dispose();
         ScreenCaptureHelper.DisposeMonitorContexts();
         if (m_MainWindow is not null)
         {
