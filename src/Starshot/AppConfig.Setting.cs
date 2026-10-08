@@ -645,6 +645,20 @@ public static partial class AppConfig
         set => SetValue(value);
     }
 
+    /// <summary>0: GDI SDR, 1: WGC SDR, 2: HDR image, 3: one-frame HDR video plus image.</summary>
+    public static int ScreenCaptureMode
+    {
+        get { int mode = GetValue(2); return mode is >= 0 and <= 3 ? mode : 2; }
+        set => SetValue(value);
+    }
+
+    /// <summary>0: HEVC, 1: AV1. Independent of companion-image quality.</summary>
+    public static int ScreenshotVideoCodec
+    {
+        get { int codec = GetValue(0); return codec is 0 or 1 ? codec : 0; }
+        set => SetValue(value);
+    }
+
     /// <summary>
     /// SDR 截图格式：0: PNG, 1: AVIF, 2: JPEG XL
     /// </summary>

@@ -196,6 +196,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
         _pendingMoveIn = false;
         _redrawQueued = false;
         LogOverlayPhase("Region overlay SetCapture begin", generation);
+        try
+        {
         _vx = User32.GetSystemMetrics((User32.SystemMetric)76);
         _vy = User32.GetSystemMetrics((User32.SystemMetric)77);
         // 显示器布局改变时先在屏外调整 HWND 尺寸；不能把旧内容提前移回桌面。
@@ -281,6 +283,17 @@ public sealed partial class RegionCaptureWindow : WindowEx
         Redraw(); // 屏外先把新冻结帧 Present 上屏（窗口可见，合成照常提交）
         LogOverlayPhase("Region overlay initial Present done", generation);
         ScheduleMoveIn(generation);
+        }
+        catch
+        {
+            StopMoveInTimer(); _pendingMoveIn = false; _isClosed = true;
+            _state = RegionCaptureState.Closed;
+            try { ReleaseSwapChain(); } catch { }
+            if (_ownsDisplayBitmap) { try { _displayBitmap?.Dispose(); } catch { } }
+            _displayBitmap = null!; _canvasOriginal = null!; _displayPixels = null;
+            _ownsDisplayBitmap = false;
+            throw;
+        }
     }
 
     private void ScheduleMoveIn(int generation)
@@ -1438,22 +1451,26 @@ public sealed partial class RegionCaptureWindow : WindowEx
             DirectXPixelFormat.B8G8R8A8UIntNormalized,
             CanvasAlphaMode.Premultiplied
         );
-        using (var ds = rt.CreateDrawingSession())
+        try
         {
-            ds.DrawImage(
-                _displayBitmap,
-                new Windows.Foundation.Rect(0, 0, w, h),
-                srcRect,
-                1f,
-                CanvasImageInterpolation.Linear
-            );
-            if (_annotations.Count > 0)
+            using (var ds = rt.CreateDrawingSession())
             {
-                ds.Transform = AnnotationTransform(srcRect);
-                DrawAnnotations(ds);
+                ds.DrawImage(
+                    _displayBitmap,
+                    new Windows.Foundation.Rect(0, 0, w, h),
+                    srcRect,
+                    1f,
+                    CanvasImageInterpolation.Linear
+                );
+                if (_annotations.Count > 0)
+                {
+                    ds.Transform = AnnotationTransform(srcRect);
+                    DrawAnnotations(ds);
+                }
             }
+            return rt;
         }
-        return rt;
+        catch { rt.Dispose(); throw; }
     }
 
     private void RegionCaptureWindow_Closed(object sender, WindowEventArgs e)

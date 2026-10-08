@@ -1,0 +1,290 @@
+{
+  "CPU overlay + WinUI main (rejected)": {
+    "pid": 2328,
+    "cycles": 20,
+    "phases": {
+      "hidden_startup": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 161.3633
+      },
+      "cpu_library_fixtures_created": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 234.3281
+      },
+      "offscreen_webui_loaded": {
+        "dedicatedResidentMiB": 211.2188,
+        "dedicatedCommittedMiB": 211.2188,
+        "sharedResidentMiB": 5.7969,
+        "privateMiB": 273.8984
+      },
+      "native_library_thumbnails_loaded": {
+        "dedicatedResidentMiB": 211.2188,
+        "dedicatedCommittedMiB": 211.2188,
+        "sharedResidentMiB": 5.7969,
+        "privateMiB": 381.9805
+      },
+      "webui_released5s": {
+        "dedicatedResidentMiB": 211.2188,
+        "dedicatedCommittedMiB": 211.2188,
+        "sharedResidentMiB": 5.7969,
+        "privateMiB": 382.3164
+      },
+      "cpu_encoders_complete": {
+        "dedicatedResidentMiB": 211.2188,
+        "dedicatedCommittedMiB": 211.2188,
+        "sharedResidentMiB": 5.7969,
+        "privateMiB": 385.5664
+      },
+      "offscreen_webui_reopened": {
+        "dedicatedResidentMiB": 211.2188,
+        "dedicatedCommittedMiB": 211.2188,
+        "sharedResidentMiB": 5.9219,
+        "privateMiB": 683.7383
+      },
+      "reopened_webui_released5s": {
+        "dedicatedResidentMiB": 211.2188,
+        "dedicatedCommittedMiB": 211.2188,
+        "sharedResidentMiB": 5.9219,
+        "privateMiB": 684.0234
+      }
+    },
+    "dedicatedResidentMiB": {
+      "first": 211.2188,
+      "last": 211.2188,
+      "minimum": 211.2188,
+      "maximum": 211.2188,
+      "peakActiveOrAfter": 211.2188,
+      "netGrowth": 0.0,
+      "slopePerCycle": 0.0
+    },
+    "dedicatedCommittedMiB": {
+      "first": 211.2188,
+      "last": 211.2188,
+      "minimum": 211.2188,
+      "maximum": 211.2188,
+      "peakActiveOrAfter": 211.2188,
+      "netGrowth": 0.0,
+      "slopePerCycle": 0.0
+    },
+    "privateMiB": {
+      "first": 482.0039,
+      "last": 682.3594,
+      "minimum": 482.0039,
+      "maximum": 684.5273,
+      "peakActiveOrAfter": 684.5352,
+      "netGrowth": 200.35550000000006,
+      "slopePerCycle": 10.70476413533835
+    },
+    "counterQueryFailures": 0,
+    "postCaptureHandles": {
+      "gdiHandles": [
+        43,
+        43
+      ],
+      "userHandles": [
+        49,
+        46
+      ]
+    }
+  },
+  "Windowed host - run 1": {
+    "pid": 24568,
+    "cycles": 20,
+    "phases": {
+      "hidden_startup": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 163.1289
+      },
+      "cpu_library_fixtures_created": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 236.0
+      },
+      "offscreen_webui_loaded": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 267.8945
+      },
+      "native_library_thumbnails_loaded": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 377.0312
+      },
+      "webui_released5s": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 374.1523
+      },
+      "cpu_encoders_complete": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 381.9727
+      },
+      "offscreen_webui_reopened": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 4.2344,
+        "privateMiB": 677.5938
+      },
+      "reopened_webui_released5s": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 4.2344,
+        "privateMiB": 678.5273
+      },
+      "ocr_webui_released5s": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 4.2344,
+        "privateMiB": 678.7266
+      }
+    },
+    "dedicatedResidentMiB": {
+      "first": 45.4297,
+      "last": 45.4297,
+      "minimum": 45.4297,
+      "maximum": 45.4297,
+      "peakActiveOrAfter": 45.4297,
+      "netGrowth": 0.0,
+      "slopePerCycle": 0.0
+    },
+    "dedicatedCommittedMiB": {
+      "first": 45.4297,
+      "last": 45.4297,
+      "minimum": 45.4297,
+      "maximum": 45.4297,
+      "peakActiveOrAfter": 45.4297,
+      "netGrowth": 0.0,
+      "slopePerCycle": 0.0
+    },
+    "privateMiB": {
+      "first": 478.1406,
+      "last": 677.4336,
+      "minimum": 478.1406,
+      "maximum": 678.7617,
+      "peakActiveOrAfter": 678.8125,
+      "netGrowth": 199.29299999999995,
+      "slopePerCycle": 10.666354135338347
+    },
+    "counterQueryFailures": 0,
+    "postCaptureHandles": {
+      "gdiHandles": [
+        15,
+        15
+      ],
+      "userHandles": [
+        46,
+        44
+      ]
+    }
+  },
+  "Windowed host - run 2": {
+    "pid": 3380,
+    "cycles": 20,
+    "phases": {
+      "hidden_startup": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 162.6953
+      },
+      "cpu_library_fixtures_created": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 234.4375
+      },
+      "offscreen_webui_loaded": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 267.2461
+      },
+      "native_library_thumbnails_loaded": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 375.9531
+      },
+      "webui_released5s": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 372.5117
+      },
+      "cpu_encoders_complete": {
+        "dedicatedResidentMiB": 45.4297,
+        "dedicatedCommittedMiB": 45.4297,
+        "sharedResidentMiB": 5.2266,
+        "privateMiB": 379.4727
+      },
+      "offscreen_webui_reopened": {
+        "dedicatedResidentMiB": 43.6641,
+        "dedicatedCommittedMiB": 43.6641,
+        "sharedResidentMiB": 1.3984,
+        "privateMiB": 676.3398
+      },
+      "reopened_webui_released5s": {
+        "dedicatedResidentMiB": 43.6641,
+        "dedicatedCommittedMiB": 43.6641,
+        "sharedResidentMiB": 1.3984,
+        "privateMiB": 676.75
+      },
+      "ocr_webui_released5s": {
+        "dedicatedResidentMiB": 43.6641,
+        "dedicatedCommittedMiB": 43.6641,
+        "sharedResidentMiB": 1.3984,
+        "privateMiB": 677.0781
+      }
+    },
+    "dedicatedResidentMiB": {
+      "first": 45.4297,
+      "last": 43.6641,
+      "minimum": 43.6641,
+      "maximum": 45.4297,
+      "peakActiveOrAfter": 45.4297,
+      "netGrowth": -1.7655999999999992,
+      "slopePerCycle": -0.02522285714285713
+    },
+    "dedicatedCommittedMiB": {
+      "first": 45.4297,
+      "last": 43.6641,
+      "minimum": 43.6641,
+      "maximum": 45.4297,
+      "peakActiveOrAfter": 45.4297,
+      "netGrowth": -1.7655999999999992,
+      "slopePerCycle": -0.02522285714285713
+    },
+    "privateMiB": {
+      "first": 475.4023,
+      "last": 675.1328,
+      "minimum": 475.4023,
+      "maximum": 677.457,
+      "peakActiveOrAfter": 677.4648,
+      "netGrowth": 199.73049999999995,
+      "slopePerCycle": 10.53688954887218
+    },
+    "counterQueryFailures": 0,
+    "postCaptureHandles": {
+      "gdiHandles": [
+        15,
+        15
+      ],
+      "userHandles": [
+        46,
+        44
+      ]
+    }
+  }
+}

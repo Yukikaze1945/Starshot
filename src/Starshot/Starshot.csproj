@@ -153,6 +153,23 @@
   </Target>
 
   <!-- 若先编译了启动器会自动拷到 `build/release/` -->
+  <Target Name="PrepareVideoEncoder" BeforeTargets="PrepareForBuild"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(RuntimeIdentifier)' == 'win-x64'">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\scripts\Restore-VideoEncoder.ps1&quot;" />
+  </Target>
+  <Target Name="CopyVideoEncoderForBuild" AfterTargets="Build" DependsOnTargets="PrepareVideoEncoder"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(RuntimeIdentifier)' == 'win-x64'">
+    <ItemGroup><_VideoBuild Include="$(MSBuildThisFileDirectory)..\..\third_party\ffmpeg\7.1.1\win-x64\*" /></ItemGroup>
+    <Copy SourceFiles="@(_VideoBuild)" DestinationFolder="$(TargetDir)VideoEncoder" SkipUnchangedFiles="true" />
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\scripts\Restore-VideoEncoder.ps1&quot; -VerifyOnly &quot;$(TargetDir)VideoEncoder&quot;" />
+  </Target>
+  <Target Name="CopyVideoEncoderForPublish" AfterTargets="Publish" DependsOnTargets="PrepareVideoEncoder"
+          Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <ItemGroup><_VideoPublish Include="$(MSBuildThisFileDirectory)..\..\third_party\ffmpeg\7.1.1\win-x64\*" /></ItemGroup>
+    <Copy SourceFiles="@(_VideoPublish)" DestinationFolder="$(PublishDir)VideoEncoder" SkipUnchangedFiles="true" />
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\scripts\Restore-VideoEncoder.ps1&quot; -VerifyOnly &quot;$(PublishDir)VideoEncoder&quot;" />
+  </Target>
+
   <Target Name="CopyLauncher" AfterTargets="Publish">
     <PropertyGroup>
       <_ReleaseRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\build\release'))</_ReleaseRoot>

@@ -245,12 +245,11 @@ public sealed partial class HotkeyInput : UserControl
 
     private static string? GetHotkeyText(VirtualKeyModifiers modifiers, VirtualKey key)
     {
-        if (modifiers == 0 && key >= VirtualKey.F1 && key <= VirtualKey.F10)
+        if (key != VirtualKey.None || modifiers > 0)
         {
-            return AvaliableKeyDict.GetValueOrDefault(key)!;
-        }
-        else if (AvaliableKeyDict.TryGetValue(key, out string? name) || modifiers > 0)
-        {
+            string? name = key == VirtualKey.None ? null :
+                AvaliableKeyDict.GetValueOrDefault(key) ??
+                (Enum.IsDefined(key) ? key.ToString() : $"VK 0x{(uint)key:X2}");
             var sb = new StringBuilder();
             if (modifiers.HasFlag(VirtualKeyModifiers.Windows))
             {
@@ -290,22 +289,7 @@ public sealed partial class HotkeyInput : UserControl
 
     private static bool IsHotkeyAvaliable(VirtualKeyModifiers modifiers, VirtualKey key)
     {
-        if (modifiers == 0 && key >= VirtualKey.F1 && key <= VirtualKey.F12)
-        {
-            return true;
-        }
-        else if (
-            (
-                modifiers.HasFlag(VirtualKeyModifiers.Control)
-                || modifiers.HasFlag(VirtualKeyModifiers.Menu)
-                || modifiers.HasFlag(VirtualKeyModifiers.Shift)
-                || modifiers.HasFlag(VirtualKeyModifiers.Windows)
-            ) && AvaliableKeyDict.ContainsKey(key)
-        )
-        {
-            return true;
-        }
-        return false;
+        return (uint)modifiers <= 15 && (uint)key is > 0 and < 255;
     }
 
     public static bool IsHotkeyAvaliable(uint fsModifiers, uint key)
@@ -425,6 +409,19 @@ public sealed partial class HotkeyInput : UserControl
         [VirtualKey.Menu] = "Alt",
         [VirtualKey.LeftWindows] = "Win",
         [VirtualKey.RightWindows] = "Win",
+
+        [VirtualKey.Back] = "Backspace",
+        [VirtualKey.Tab] = "Tab",
+        [VirtualKey.Enter] = "Enter",
+        [VirtualKey.Escape] = "Esc",
+        [VirtualKey.Space] = "Space",
+        [VirtualKey.Insert] = "Insert",
+        [VirtualKey.Delete] = "Delete",
+        [VirtualKey.Snapshot] = "PrintScreen",
+        [VirtualKey.Pause] = "Pause",
+        [VirtualKey.CapitalLock] = "CapsLock",
+        [VirtualKey.NumberKeyLock] = "NumLock",
+        [VirtualKey.Scroll] = "ScrollLock",
 
         [VirtualKey.PageUp] = "PageUp",
         [VirtualKey.PageDown] = "PageDown",

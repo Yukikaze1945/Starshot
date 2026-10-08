@@ -82,6 +82,23 @@
         </StackPanel>
       </Button>
       <MenuFlyoutSeparator />
+      <TextBlock Margin="12,6,12,4" FontSize="12"
+                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="截图模式" />
+      <StackPanel x:Name="CaptureModeButtons" Margin="8,0" Spacing="2">
+        <RadioButton x:Name="LightweightMode" GroupName="ScreenshotMode" Tag="0"
+                     Content="轻量 · GDI / SDR" Click="CaptureMode_Click" />
+        <RadioButton x:Name="StandardMode" GroupName="ScreenshotMode" Tag="1"
+                     Content="标准 · WGC / SDR" Click="CaptureMode_Click" />
+        <RadioButton x:Name="HdrMode" GroupName="ScreenshotMode" Tag="2"
+                     Content="高质量 HDR" Click="CaptureMode_Click" />
+        <RadioButton x:Name="HdrVideoMode" GroupName="ScreenshotMode" Tag="3"
+                     Content="单帧 HDR 视频" Click="CaptureMode_Click" />
+      </StackPanel>
+      <Button Height="32" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+              Content="取消视频生成" Click="CancelVideo_Click" Style="{ThemeResource DateTimePickerFlyoutButtonStyle}" />
+      <TextBlock x:Name="ModeStatus" Margin="12,4,12,4" MaxWidth="260"
+                 FontSize="12" TextWrapping="Wrap" Visibility="Collapsed" />
+      <MenuFlyoutSeparator />
       <Button Height="36" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
               Command="{x:Bind PinFromClipboardCommand}"
               Style="{ThemeResource DateTimePickerFlyoutButtonStyle}">

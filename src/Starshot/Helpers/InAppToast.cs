@@ -12,6 +12,26 @@ namespace Starshot.Helpers;
 public class InAppToast : Behavior<StackPanel>
 {
     private readonly DispatcherQueueTimer _dismissTimer;
+    private Action<InfoBarSeverity, string?, string?, int, string?, Action?, Action?>? _webUi;
+
+    // The main WebUI uses a native HWND host, so it has no XAML toast visual tree.
+    public static IDisposable UseWebUiHost(Action<InfoBarSeverity, string?, string?, int, string?, Action?, Action?> notify)
+    {
+        var owner = new InAppToast { _webUi = notify };
+        MainWindow = owner;
+        return new WebUiLease(owner);
+    }
+
+    private sealed class WebUiLease(InAppToast owner) : IDisposable
+    {
+        public void Dispose()
+        {
+            _pendingToasts.RemoveAll(entry => ReferenceEquals(entry.Owner, owner));
+            if (ReferenceEquals(MainWindow, owner)) MainWindow = null;
+            owner._webUi = null;
+            owner._dismissTimer.Stop();
+        }
+    }
 
     public string Tag
     {
@@ -30,19 +50,19 @@ public class InAppToast : Behavior<StackPanel>
     // 启动期间 splash 盖住窗口，toast 入队；MainWindow Loaded + splash 完成后调 FlushPending 依次显示
     private static bool _deferring = true;
 
-    private static readonly List<Action> _pendingToasts = new();
+    private static readonly List<(InAppToast Owner, Action Show)> _pendingToasts = new();
 
     public InAppToast()
     {
         _dismissTimer = DispatcherQueue.CreateTimer();
         _dismissTimer.Interval = TimeSpan.FromSeconds(30);
         _dismissTimer.IsRepeating = true;
-        _dismissTimer.Tick += _dismissTimer_Tick;
     }
 
     protected override void OnAttached()
     {
         base.OnAttached();
+        _dismissTimer.Tick += _dismissTimer_Tick;
         if (Tag is nameof(MainWindow))
         {
             MainWindow = this;
@@ -51,10 +71,13 @@ public class InAppToast : Behavior<StackPanel>
 
     protected override void OnDetaching()
     {
+        _dismissTimer.Stop();
+        _dismissTimer.Tick -= _dismissTimer_Tick;
+        _pendingToasts.RemoveAll(entry => ReferenceEquals(entry.Owner, this));
         base.OnDetaching();
         if (Tag is nameof(MainWindow))
         {
-            MainWindow = null;
+            if (ReferenceEquals(MainWindow, this)) MainWindow = null;
         }
     }
 
@@ -64,11 +87,12 @@ public class InAppToast : Behavior<StackPanel>
     public static void FlushPending()
     {
         _deferring = false;
-        foreach (var action in _pendingToasts)
-        {
-            action();
-        }
+        var pending = _pendingToasts.ToArray();
         _pendingToasts.Clear();
+        foreach (var entry in pending)
+        {
+            entry.Show();
+        }
     }
 
     private void _dismissTimer_Tick(DispatcherQueueTimer sender, object args)
@@ -127,6 +151,13 @@ public class InAppToast : Behavior<StackPanel>
         string? accentMessage = null
     )
     {
+        if (_webUi is not null)
+        {
+            void deliver() => _webUi?.Invoke(severity, title,
+                string.Join(" ", new[] { message, accentMessage }), duration, null, null, null);
+            if (_deferring) _pendingToasts.Add((this, deliver)); else deliver();
+            return;
+        }
         void core() =>
             DispatcherQueue.TryEnqueue(() =>
             {
@@ -169,7 +200,7 @@ public class InAppToast : Behavior<StackPanel>
                 Show(infoBar, duration);
             });
         if (_deferring)
-            _pendingToasts.Add(core);
+            _pendingToasts.Add((this, core));
         else
             core();
     }
@@ -226,6 +257,7 @@ public class InAppToast : Behavior<StackPanel>
         int duration = 0
     )
     {
+        if (_webUi is { } notify) { notify(severity, title, message, duration, buttonContent, buttonAction, closedAction); return; }
         void core() =>
             DispatcherQueue.TryEnqueue(() =>
             {
@@ -240,7 +272,7 @@ public class InAppToast : Behavior<StackPanel>
                 Show(infoBar, duration);
             });
         if (_deferring)
-            _pendingToasts.Add(core);
+            _pendingToasts.Add((this, core));
         else
             core();
     }

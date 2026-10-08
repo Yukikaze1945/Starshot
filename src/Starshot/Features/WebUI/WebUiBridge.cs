@@ -41,6 +41,8 @@ internal sealed class WebUiBridge : IDisposable
     private readonly SemaphoreSlim _imageGate = new(2);
     private readonly List<Window> _utilityWindows = new();
     private bool _disposed;
+    internal bool HasPendingRequests => _requests.Count > 0;
+    internal bool HasUtilityWindows => _utilityWindows.Count > 0;
     public const int ProtocolVersion = 1;
     public static bool IsTrustedSource(string source) => Uri.TryCreate(source, UriKind.Absolute, out var uri)
         && uri.Scheme == "https" && uri.Host == "starshot.local" && uri.Port == 443;
@@ -105,6 +107,7 @@ internal sealed class WebUiBridge : IDisposable
                 return null;
             case "window.hide": _window.Hide(); return null;
             case "window.close": _window.Close(); return null;
+            case "capture.cancelVideo": StaticVideoJobs.CancelAll(); return null;
             case "capture.begin":
                 string mode = Text(p, "mode", 16);
                 if (mode is not ("region" or "screen" or "ocr" or "copy" or "long" or "gif"))
@@ -124,10 +127,16 @@ internal sealed class WebUiBridge : IDisposable
                 return await ThumbnailAsync(ResolveFile(p), ct);
             case "library.import":
                 var imported = await FileDialogHelper.PickMultipleFilesAsync(_window.WindowHandle,
-                    ("图像", ".png"), ("图像", ".jpg"), ("图像", ".avif"), ("图像", ".jxl"), ("图像", ".webp"), ("图像", ".jxr"), ("动图", ".gif"));
+                    ("图像", ".png"), ("图像", ".jpg"), ("图像", ".avif"), ("图像", ".jxl"), ("图像", ".webp"), ("图像", ".jxr"), ("动图", ".gif"), ("视频", ".mp4"));
                 foreach (string path in imported) _imports.Add(path);
                 return imported.Select(RegisterFile).ToArray();
             case "library.open":
+                if (StaticVideoMetadata.IsVideo(ResolveFile(p)))
+                {
+                    if (!await Launcher.LaunchFileAsync(await StorageFile.GetFileFromPathAsync(ResolveFile(p))))
+                        throw new InvalidOperationException("无法打开视频，请安装支持该编码的播放器。");
+                    return null;
+                }
                 var viewer = new ImageViewWindow();
                 await viewer.ShowWindowAsync(_window.AppWindow.Id, ResolveFile(p), true);
                 return null;
@@ -137,12 +146,18 @@ internal sealed class WebUiBridge : IDisposable
                 var options = new FolderLauncherOptions(); options.ItemsToSelect.Add(file);
                 await Launcher.LaunchFolderAsync(folder, options); return null;
             case "library.copy":
+                if (StaticVideoMetadata.IsVideo(ResolveFile(p)))
+                {
+                    ClipboardHelper.SetFiles(ResolveFile(p));
+                    return null;
+                }
                 using (var image = await ImageLoader.LoadImageAsync(ResolveFile(p), ct))
                 using (var sdr = ScreenCaptureService.TonemapToSdr(image.CanvasBitmap, 250))
                     if (!await ScreenCaptureService.CopyCaptureToClipboardAsync(sdr, true))
                         throw new InvalidOperationException("复制失败，请稍后重试。");
                 return null;
             case "library.pin":
+                if (StaticVideoMetadata.IsVideo(ResolveFile(p))) throw new ArgumentException("请对伴随图片使用贴图。");
                 using (var image = await ImageLoader.LoadImageAsync(ResolveFile(p), ct))
                 using (var sdr = ScreenCaptureService.TonemapToSdr(image.CanvasBitmap, 250))
                 {
@@ -152,6 +167,7 @@ internal sealed class WebUiBridge : IDisposable
                 }
                 return null;
             case "library.ocr":
+                if (StaticVideoMetadata.IsVideo(ResolveFile(p))) throw new ArgumentException("请对伴随图片识别文字。");
                 using (var image = await ImageLoader.LoadImageAsync(ResolveFile(p), ct))
                 using (var sdr = ScreenCaptureService.TonemapToSdr(image.CanvasBitmap, 250))
                 {
@@ -183,7 +199,13 @@ internal sealed class WebUiBridge : IDisposable
             case "clipboard.pin": PinnedCaptureWindow.PinClipboard(); return null;
             case "pin.reopen": PinnedCaptureWindow.ReopenLast(); return null;
             case "settings.get": return Settings();
-            case "settings.set": ApplySetting(Text(p, "key", 80), p.GetProperty("value")); return Settings();
+            case "settings.set":
+                string settingKey = Text(p, "key", 80);
+                if (settingKey == "captureMode")
+                    await CaptureModeController.SetModeAsync((ScreenshotCaptureMode)Range(p.GetProperty("value"), 0, 3));
+                else
+                    ApplySetting(settingKey, p.GetProperty("value"));
+                return Settings();
             case "settings.pickFolder":
                 string? destination = await FileDialogHelper.PickFolderAsync(_window.WindowHandle);
                 if (destination is not null) AppConfig.ScreenshotFolder = destination;
@@ -207,15 +229,16 @@ internal sealed class WebUiBridge : IDisposable
                 int hotkeyId = p.GetProperty("hotkeyId").GetInt32();
                 var info = HotkeyManager.GetHotkeyInfo(hotkeyId) ?? throw new ArgumentException("未知快捷键。");
                 uint modifiers = p.GetProperty("modifiers").GetUInt32(), key = p.GetProperty("key").GetUInt32();
-                if (modifiers > 15 || key > 255 || (key != 0 && modifiers == 0))
-                    throw new ArgumentException("快捷键需要至少一个 Ctrl / Alt / Shift / Win 修饰键。");
+                if (modifiers > 15 || key >= 255 || (key == 0 && modifiers != 0))
+                    throw new ArgumentException("快捷键的按键或修饰键无效。");
                 var oldModifiers = info.Modifiers; var oldKey = info.Key;
                 HotkeyManager.UnregisterHotkey(_window.WindowHandle, hotkeyId);
                 var error = key == 0 ? HotkeyManager.DeleteHotkey(_window.WindowHandle, hotkeyId) :
                     HotkeyManager.RegisterHotkey(_window.WindowHandle, hotkeyId, (Vanara.PInvoke.User32.HotKeyModifiers)modifiers, (Vanara.PInvoke.User32.VK)key);
                 if (error.Failed)
                 {
-                    HotkeyManager.RegisterHotkey(_window.WindowHandle, hotkeyId, oldModifiers, oldKey);
+                    if (oldKey == 0) HotkeyManager.DeleteHotkey(_window.WindowHandle, hotkeyId);
+                    else HotkeyManager.RegisterHotkey(_window.WindowHandle, hotkeyId, oldModifiers, oldKey);
                     throw new InvalidOperationException("快捷键已被占用或无法注册。已恢复原快捷键。");
                 }
                 return Hotkeys();
@@ -241,7 +264,7 @@ internal sealed class WebUiBridge : IDisposable
                 if (update is not null) new UpdateWindow().SetRelease(update);
                 return new { available = update is not null, latestTag, currentVersion = AppConfig.AppVersion };
             case "utility.ocrEngine":
-                await new OcrEngineDialog { XamlRoot = _window.Content.XamlRoot }.ShowAsync();
+                await ShowOcrEngineDialogAsync();
                 return new { ready = OcrHelper.IsOneOcrReady, settings = Settings() };
             case "utility.batch":
                 var utility = new Window { Title = "Starshot · 批量转换" };
@@ -255,6 +278,28 @@ internal sealed class WebUiBridge : IDisposable
             default: throw new ArgumentException("未知操作。");
         }
     }
+    private async Task ShowOcrEngineDialogAsync()
+    {
+        // A transient legacy engine dialog owns its own small XAML host. The
+        // main WebUI HWND never creates a full-window WinUI rendering scene.
+        var root = new Grid();
+        var host = new Window();
+        OcrEngineDialog? dialog = null;
+        bool closed = false;
+        host.Closed += (_, _) => { closed = true; _utilityWindows.Remove(host); dialog?.Hide(); };
+        try
+        {
+            host.Title = "Starshot · 文字识别引擎"; host.Content = root;
+            host.AppWindow.Resize(new Windows.Graphics.SizeInt32((int)(720 * _window.UIScale), (int)(560 * _window.UIScale)));
+            dialog = new OcrEngineDialog();
+            _utilityWindows.Add(host);
+            host.Activate();
+            await Task.Yield();
+            dialog.XamlRoot = root.XamlRoot;
+            await dialog.ShowAsync();
+        }
+        finally { if (!closed) host.Close(); _utilityWindows.Remove(host); }
+    }
 
     private static string Text(JsonElement p, string name, int max)
     {
@@ -264,13 +309,16 @@ internal sealed class WebUiBridge : IDisposable
     }
     private string ResolveFile(JsonElement p) => ResolveId(Text(p, "id", 100));
     private string ResolveId(string id) => _files.TryGetValue(id, out var path) && File.Exists(path) ? path :
-        throw new FileNotFoundException("图片已移动或不存在，请刷新图库。");
+        throw new FileNotFoundException("文件已移动或不存在，请刷新图库。");
     private object RegisterFile(string path)
     {
         string id = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(path))));
         _files[id] = path;
         var info = new FileInfo(path);
+        bool video = StaticVideoMetadata.IsVideo(path);
+        var metadata = video ? StaticVideoMetadata.Read(path) : null;
         return new { id, name = info.Name, format = info.Extension.TrimStart('.').ToUpperInvariant(),
+            kind = video ? "video" : "image", codec = metadata?.Codec, hdr = metadata?.Hdr,
             bytes = info.Length, timestamp = info.CreationTimeUtc.ToString("O") };
     }
     private async Task<object> ListAsync(JsonElement p, CancellationToken ct)
@@ -294,7 +342,7 @@ internal sealed class WebUiBridge : IDisposable
                 {
                     result.AddRange(new DirectoryInfo(root).EnumerateFiles("*", new EnumerationOptions
                         { RecurseSubdirectories = recursive, IgnoreInaccessible = true, AttributesToSkip = System.IO.FileAttributes.ReparsePoint })
-                        .Where(f => (ScreenshotHelper.IsSupportedExtension(f.FullName.ToLowerInvariant()) || f.Extension.Equals(".gif", StringComparison.OrdinalIgnoreCase))
+                        .Where(f => (ScreenshotHelper.IsSupportedExtension(f.FullName.ToLowerInvariant()) || f.Extension.Equals(".gif", StringComparison.OrdinalIgnoreCase) || StaticVideoMetadata.IsVideo(f.FullName))
                             && f.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
                             && (format.Length == 0 || f.Extension.Equals("." + format, StringComparison.OrdinalIgnoreCase))));
                 }
@@ -307,6 +355,13 @@ internal sealed class WebUiBridge : IDisposable
     }
     private async Task<object> ThumbnailAsync(string path, CancellationToken ct)
     {
+        if (StaticVideoMetadata.IsVideo(path))
+        {
+            string? image = StaticVideoMetadata.Read(path).ImagePath;
+            if (image is null)
+                return new { src = "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes("<svg xmlns='http://www.w3.org/2000/svg' width='320' height='180'><rect width='320' height='180' fill='#f2f3ec'/><path d='M140 60L190 90L140 120Z' fill='#859746'/></svg>")), width = 320, height = 180 };
+            path = image;
+        }
         await _imageGate.WaitAsync(ct);
         SoftwareBitmap? thumbnail = null;
         try
@@ -395,6 +450,8 @@ internal sealed class WebUiBridge : IDisposable
     private static object Settings() => new
     {
         screenshotFolder = AppConfig.ScreenshotFolder,
+        captureMode = AppConfig.ScreenCaptureMode,
+        videoCodec = AppConfig.ScreenshotVideoCodec,
         extraFolders = AppConfig.ExtraScreenshotFolders,
         subfolders = AppConfig.ScreenshotSubfolderEnabled,
         subfolderPattern = AppConfig.ScreenshotSubfolderPattern,
@@ -440,6 +497,7 @@ internal sealed class WebUiBridge : IDisposable
             case "capacity": double c = value.GetDouble(); if (!double.IsFinite(c) || c < 2 || c > 32) throw new ArgumentException("容量范围为 2–32×。"); AppConfig.UhdrCapacityValue = c; break;
             case "sdrFormat": AppConfig.ScreenCaptureSDRFormat = Range(value, 0, 2); break;
             case "hdrFormat": AppConfig.ScreenCaptureHDRFormat = Range(value, 0, 1); break;
+            case "videoCodec": AppConfig.ScreenshotVideoCodec = Range(value, 0, 1); break;
             case "quality": AppConfig.ScreenCaptureEncodeQuality = Range(value, 0, 2); break;
             case "ocrEngine": AppConfig.OcrEngine = Range(value, 0, 1); OcrHelper.ResetEngineCache(); break;
             case "colorManagement": AppConfig.EnableScreenshotColorManagement = value.GetBoolean(); break;

@@ -25,7 +25,7 @@ using Windows.Storage;
 
 namespace Starshot.Features.Screenshot;
 
-internal class ScreenCaptureService
+internal partial class ScreenCaptureService
 {
     private static ScreenCaptureService? _instance;
     private static ScreenCaptureService Instance =>
@@ -56,6 +56,7 @@ internal class ScreenCaptureService
     public ScreenCaptureService(ILogger<ScreenCaptureService> logger)
     {
         _logger = logger;
+        CaptureModeController.ModeChanged += ReleaseGpuWindowsForLightweight;
     }
 
     public static void Capture()
@@ -91,8 +92,11 @@ internal class ScreenCaptureService
         string processName = GetProcessNameFromWindowHandle(hwnd);
         string processExeName = GetProcessExeNameFromWindowHandle(hwnd);
         bool captureStarted = false;
+        CaptureModeController.CaptureOperation? captureOperation = null;
         try
         {
+            captureOperation = CaptureModeController.BeginOperation();
+            var captureMode = captureOperation.Mode;
             HMONITOR monitor;
             if (
                 (CaptureMonitorSource)AppConfig.ScreenshotCaptureMonitorSource
@@ -110,15 +114,21 @@ internal class ScreenCaptureService
                 );
             }
             Microsoft.UI.DisplayId displayId = new((ulong)monitor.DangerousGetHandle());
+            if (captureMode == ScreenshotCaptureMode.Lightweight)
+            {
+                await CaptureLightweightScreenAsync(monitor.DangerousGetHandle(), hwnd, () =>
+                {
+                    guardReleased = true;
+                    Interlocked.Exchange(ref _isCapturing, 0);
+                });
+                return;
+            }
             using DisplayInformation displayInfo = DisplayInformation.CreateForDisplayId(displayId);
             DisplayAdvancedColorInfo colorInfo = displayInfo.GetAdvancedColorInfo();
-            // 格式按显示器模式分支（内容真假此时未知，WGC 也无接口预查）：SDR 显示器整条合成就是
-            // 8bit sRGB，RGBA8 无损直拷；HDR 显示器一律 float——SDR 内容经 DWM 合成也被拉到
-            // [0, SDRWhiteLevel/80] 值域（最高 6 倍），走 8bit 通道会被系统截掉，必须 float 抓后自己映射
-            DirectXPixelFormat pixelFormat =
-                colorInfo.CurrentAdvancedColorKind is DisplayAdvancedColorKind.HighDynamicRange
-                    ? DirectXPixelFormat.R16G16B16A16Float
-                    : DirectXPixelFormat.R8G8B8A8UIntNormalized;
+            // 轻量/标准始终 8-bit SDR；高质量 HDR 沿用显示器格式分支。
+            // HDR 显示器抓 float，保留 DWM 合成后的高光值域，再交给原有保存管线。
+            DirectXPixelFormat pixelFormat = CaptureModeController.PixelFormat(captureMode,
+                colorInfo.CurrentAdvancedColorKind is DisplayAdvancedColorKind.HighDynamicRange);
             using CanvasRenderTarget canvasBitmap = await ScreenCaptureHelper.CaptureMonitorBitmapAsync(
                 monitor.DangerousGetHandle(),
                 pixelFormat,
@@ -174,14 +184,17 @@ internal class ScreenCaptureService
                 maxCLL,
                 maxFALL,
                 sdrWhiteLevel,
-                displayId
+                displayId,
+                captureMode: captureMode
             );
             _logger.LogInformation("Screenshot saved");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while capturing the screen.");
-            if (ShouldShowInfoWindow())
+            if (captureOperation?.Mode == ScreenshotCaptureMode.Lightweight)
+                ShowCpuNotice("截图失败", null, hwnd, subtitle: "请重试；详细原因已记录到日志");
+            else if (ShouldShowInfoWindow())
             {
                 _infoWindow ??= new ScreenCaptureInfoWindow();
                 _infoWindow.CaptureError(hwnd, captureStarted);
@@ -189,6 +202,7 @@ internal class ScreenCaptureService
         }
         finally
         {
+            captureOperation?.Dispose();
             if (!guardReleased)
             {
                 Interlocked.Exchange(ref _isCapturing, 0);
@@ -278,10 +292,13 @@ internal class ScreenCaptureService
         CanvasRenderTarget cropped = null;
         CanvasRenderTarget sdrCrop = null; // 覆盖层裁出的 SDR 选区（剪贴板用）
         CanvasRenderTarget annotationLayer = null;
+        CaptureModeController.CaptureOperation? captureOperation = null;
         nint fgHwnd = 0; // try 内赋值，catch 里 CaptureError 要用
         bool captureStarted = false;
         try
         {
+            captureOperation = CaptureModeController.BeginOperation();
+            var captureMode = captureOperation.Mode;
             // 虚拟屏幕边界（物理像素）
             int vx = User32.GetSystemMetrics((User32.SystemMetric)76);
             int vy = User32.GetSystemMetrics((User32.SystemMetric)77);
@@ -289,6 +306,16 @@ internal class ScreenCaptureService
             int vh = User32.GetSystemMetrics((User32.SystemMetric)79);
             if (vw <= 0 || vh <= 0)
                 return;
+
+            if (captureMode == ScreenshotCaptureMode.Lightweight)
+            {
+                await CaptureLightweightRegionAsync(vx, vy, vw, vh, copyOnly, ocrEditor, () =>
+                {
+                    guardReleased = true;
+                    Interlocked.Exchange(ref _isCapturing, 0);
+                });
+                return;
+            }
 
             // 枚举所有显示器（for 循环，不用 foreach 避免 CsWinRT 枚举器 bug）
             var displays = DisplayArea.FindAll();
@@ -302,7 +329,7 @@ internal class ScreenCaptureService
             for (int i = 0; i < displays.Count; i++)
             {
                 using var di = DisplayInformation.CreateForDisplayId(displays[i].DisplayId);
-                if (
+                if (CaptureModeController.UsesHdrCapture(captureMode) && !ScreenCaptureHelper.IsWin10 &&
                     di.GetAdvancedColorInfo().CurrentAdvancedColorKind
                     is DisplayAdvancedColorKind.HighDynamicRange
                 )
@@ -311,99 +338,100 @@ internal class ScreenCaptureService
                     anyHDR = true;
                 }
             }
-            var pixelFormat = anyHDR
-                ? DirectXPixelFormat.R16G16B16A16Float
-                : DirectXPixelFormat.R8G8B8A8UIntNormalized;
+            var pixelFormat = CaptureModeController.PixelFormat(captureMode, anyHDR);
 
             // SDR 白电平（HDR 屏的 SdrWhiteLevelInNits）：SDR 屏帧提亮 + 下游覆盖层/保存 tonemap 共用
             float sdrWhiteLevel = anyHDR ? AppConfig.GetSdrWhiteLevelFromDisplays(displays) : 80;
 
-            // 并行捕获所有显示器（同时启动所有 GraphicsCaptureSession，等全部帧到达）
+            // Lightweight returned above before requesting a graphics device.
+            // Standard/HDR keep the existing parallel WGC composition path.
             var device = CanvasDevice.GetSharedDevice();
-            var captureTasks = new Task<(
-                int ox,
-                int oy,
-                CanvasRenderTarget bmp,
-                bool isHDR
-            )>[displays.Count];
-            for (int i = 0; i < displays.Count; i++)
             {
-                var d = displays[i];
-                var bounds = d.OuterBounds;
-                int ox = bounds.X - vx;
-                int oy = bounds.Y - vy;
-                bool isHDR = isHdrDisplay[i];
-                captureTasks[i] = Task.Run(async () =>
+                var captureTasks = new Task<(
+                    int ox,
+                    int oy,
+                    CanvasRenderTarget bmp,
+                    bool isHDR
+                )>[displays.Count];
+                for (int i = 0; i < displays.Count; i++)
                 {
-                    // Helper returns an independent pixel copy. WGC frames stay in
-                    // the capture context only long enough to make that copy.
-                    var bmp = await ScreenCaptureHelper.CaptureMonitorBitmapAsync(
-                        (nint)d.DisplayId.Value,
-                        pixelFormat,
-                        device,
-                        isHDR
-                    );
-                    return (ox, oy, bmp, isHDR);
-                });
-            }
-            (int ox, int oy, CanvasRenderTarget bmp, bool isHDR)[] results;
-            try
-            {
-                results = await Task.WhenAll(captureTasks);
-            }
-            catch
-            {
-                // 任一屏失败时，回收其余已成功屏的独立位图。
-                foreach (var t in captureTasks)
-                {
-                    if (t.Status == TaskStatus.RanToCompletion)
+                    var d = displays[i];
+                    var bounds = d.OuterBounds;
+                    int ox = bounds.X - vx;
+                    int oy = bounds.Y - vy;
+                    bool isHDR = isHdrDisplay[i];
+                    captureTasks[i] = Task.Run(async () =>
                     {
-                        t.Result.bmp.Dispose();
-                    }
+                        // Helper returns an independent pixel copy. WGC frames stay in
+                        // the capture context only long enough to make that copy.
+                        var bmp = await ScreenCaptureHelper.CaptureMonitorBitmapAsync(
+                            (nint)d.DisplayId.Value,
+                            pixelFormat,
+                            device,
+                            isHDR
+                        );
+                        return (ox, oy, bmp, isHDR);
+                    });
                 }
-                throw;
-            }
+                (int ox, int oy, CanvasRenderTarget bmp, bool isHDR)[] results;
+                try
+                {
+                    results = await Task.WhenAll(captureTasks);
+                }
+                catch
+                {
+                    // 任一屏失败时，回收其余已成功屏的独立位图。
+                    foreach (var t in captureTasks)
+                    {
+                        if (t.Status == TaskStatus.RanToCompletion)
+                        {
+                            t.Result.bmp.Dispose();
+                        }
+                    }
+                    throw;
+                }
 
-            // 合成到虚拟屏幕大小的 CanvasRenderTarget
-            // float 路径下 SDR 屏白=1.0(80nits)、HDR 屏白=SdrWhiteLevel/80；SDR 屏帧先 ×(SdrWhiteLevel/80) 提亮，让 composite 统一为 scene-referred，下游才能共用同一个 sdrWhiteLevel
-            try
-            {
-                composite = new CanvasRenderTarget(
-                    device,
-                    vw,
-                    vh,
-                    96,
-                    pixelFormat,
-                    CanvasAlphaMode.Premultiplied
-                );
-                for (int i = 0; i < results.Length; i++)
+                // 合成到虚拟屏幕大小的 CanvasRenderTarget
+                // float 路径下 SDR 屏白=1.0(80nits)、HDR 屏白=SdrWhiteLevel/80；SDR 屏帧先 ×(SdrWhiteLevel/80) 提亮，让 composite 统一为 scene-referred，下游才能共用同一个 sdrWhiteLevel
+                try
                 {
-                    var r = results[i];
-                    using (var ds = composite.CreateDrawingSession())
+                    composite = new CanvasRenderTarget(
+                        device,
+                        vw,
+                        vh,
+                        96,
+                        pixelFormat,
+                        CanvasAlphaMode.Premultiplied
+                    );
+                    for (int i = 0; i < results.Length; i++)
                     {
-                        if (anyHDR && !r.isHDR && sdrWhiteLevel != 80)
+                        var r = results[i];
+                        using (var ds = composite.CreateDrawingSession())
                         {
-                            var wle = new WhiteLevelAdjustmentEffect
+                            if (anyHDR && !r.isHDR && sdrWhiteLevel != 80)
                             {
-                                Source = r.bmp,
-                                InputWhiteLevel = sdrWhiteLevel,
-                                OutputWhiteLevel = 80,
-                                BufferPrecision = CanvasBufferPrecision.Precision16Float,
-                            };
-                            ds.DrawImage(wle, r.ox, r.oy);
-                        }
-                        else
-                        {
-                            ds.DrawImage(r.bmp, r.ox, r.oy);
+                                var wle = new WhiteLevelAdjustmentEffect
+                                {
+                                    Source = r.bmp,
+                                    InputWhiteLevel = sdrWhiteLevel,
+                                    OutputWhiteLevel = 80,
+                                    BufferPrecision = CanvasBufferPrecision.Precision16Float,
+                                };
+                                ds.DrawImage(wle, r.ox, r.oy);
+                            }
+                            else
+                            {
+                                ds.DrawImage(r.bmp, r.ox, r.oy);
+                            }
                         }
                     }
                 }
-            }
-            finally
-            {
-                foreach (var r in results)
+                finally
                 {
-                    r.bmp.Dispose();
+                    foreach (var r in results)
+                    {
+                        r.bmp.Dispose();
+                    }
                 }
             }
             fgHwnd = (nint)User32.GetForegroundWindow();
@@ -417,7 +445,7 @@ internal class ScreenCaptureService
             var defaultAction = ocrEditor ? RegionCaptureAction.Ocr
                 : copyOnly ? RegionCaptureAction.Copy : RegionCaptureAction.Save;
             RegionCaptureResult result;
-            using (MonitorCaptureContext.PauseBackgroundFrames())
+            using (captureMode == ScreenshotCaptureMode.Lightweight ? null : MonitorCaptureContext.PauseBackgroundFrames())
             {
                 _regionWindow.SetCapture(composite, sdrWhiteLevel, vw, vh, defaultAction);
                 result = await _regionWindow.Completion.Task;
@@ -637,9 +665,11 @@ internal class ScreenCaptureService
                     sdrWhiteLevel,
                     regionDisplayId,
                     true,
-                    copyToClipboard: false
+                    copyToClipboard: captureMode == ScreenshotCaptureMode.HdrVideo,
+                    captureMode: captureMode,
+                    singleVideoDisplay: displays.Count == 1
                 ),
-                CopyCaptureToClipboardAsync(sdrCrop)
+                captureMode == ScreenshotCaptureMode.HdrVideo ? Task.CompletedTask : CopyCaptureToClipboardAsync(sdrCrop)
             );
             _logger.LogInformation("Region screenshot saved");
         }
@@ -647,7 +677,9 @@ internal class ScreenCaptureService
         {
             _logger.LogError(ex, "Region capture failed");
             // 对齐全屏路径：不补 CaptureError 的话计数永差一，信息窗这个会话不再自动隐藏（卡「处理中」）
-            if (ShouldShowInfoWindow())
+            if (captureOperation?.Mode == ScreenshotCaptureMode.Lightweight)
+                ShowCpuNotice("区域截图失败", null, fgHwnd, subtitle: "请重试；详细原因已记录到日志");
+            else if (ShouldShowInfoWindow())
             {
                 _infoWindow ??= new ScreenCaptureInfoWindow();
                 _infoWindow.CaptureError(fgHwnd, captureStarted);
@@ -659,6 +691,7 @@ internal class ScreenCaptureService
             sdrCrop?.Dispose();
             annotationLayer?.Dispose();
             composite?.Dispose();
+            captureOperation?.Dispose();
             if (!guardReleased)
             {
                 Interlocked.Exchange(ref _isCapturing, 0);
@@ -680,9 +713,13 @@ internal class ScreenCaptureService
         float sdrWhiteLevel,
         Microsoft.UI.DisplayId displayId,
         bool isRegion = false,
-        bool copyToClipboard = true
+        bool copyToClipboard = true,
+        ScreenshotCaptureMode captureMode = ScreenshotCaptureMode.HighQualityHdr,
+        bool singleVideoDisplay = true
     )
     {
+        bool videoMode = captureMode == ScreenshotCaptureMode.HdrVideo;
+        var videoCodec = (StaticVideoCodec)AppConfig.ScreenshotVideoCodec;
         bool hdr = bitmap.Format is DirectXPixelFormat.R16G16B16A16Float;
 
         // 内容级判定（第二级；格式已由显示器模式在捕获前定死）：HDR 显示器上 SDR 内容也是 float 帧
@@ -717,10 +754,10 @@ internal class ScreenCaptureService
             colorPrimaries = ColorPrimaries.BT2020;
             writeColorProfile = true;
         }
-        else if (deleteHDR || !AppConfig.EnableScreenshotColorManagement)
+        else if (deleteHDR || !CaptureModeController.UsesHdrCapture(captureMode) || !AppConfig.EnableScreenshotColorManagement)
         {
             colorPrimaries = ColorPrimaries.BT709;
-            writeColorProfile = false;
+            writeColorProfile = !CaptureModeController.UsesHdrCapture(captureMode);
         }
         else
         {
@@ -784,6 +821,7 @@ internal class ScreenCaptureService
         await _encodeSlim.WaitAsync();
         try
         {
+            if (videoMode) filePath = EnsureVideoPairPath(filePath, autoConvertSDR);
             if (deleteHDR)
             {
                 using CanvasRenderTarget sdrBitmap = TonemapToSdr(bitmap, sdrWhiteLevel);
@@ -854,12 +892,28 @@ internal class ScreenCaptureService
             {
                 throw new NotSupportedException($"Unsupported image format: {extension}");
             }
+            if (videoMode)
+            {
+                using var output = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write);
+                try
+                {
+                    ms.Position = 0;
+                    await ms.CopyToAsync(output);
+                }
+                catch
+                {
+                    output.Dispose();
+                    File.Delete(filePath); // Only this call's newly created, incomplete companion.
+                    throw;
+                }
+            }
         }
         finally
         {
             _encodeSlim.Release();
         }
 
+        if (!videoMode)
         using (var fs = File.Create(filePath))
         {
             ms.Seek(0, SeekOrigin.Begin);
@@ -879,16 +933,55 @@ internal class ScreenCaptureService
         }
 
         string finalFile = filePath;
+        StaticVideoSaveResult? videoResult = null;
+        if (videoMode)
+        {
+            using var cancel = new CancellationTokenSource();
+            using var job = StaticVideoJobs.Register(cancel);
+            var area = (Microsoft.UI.Windowing.DisplayArea.GetFromDisplayId(displayId) ?? DisplayArea.Primary).WorkArea;
+            using var progress = ShouldShowInfoWindow() ? new CpuCaptureNotice("正在生成单帧视频", null,
+                new System.Drawing.Rectangle(area.X, area.Y, area.Width, area.Height),
+                subtitle: "点击取消视频编码 · 图片已保留", action: cancel.Cancel, closedAction: cancel.Cancel, duration: 0) : null;
+            VideoMastering? mastering = outputIsHDR ? StaticVideoSaver.ReadMastering(displayInfo, singleVideoDisplay) : null;
+            if (deleteHDR)
+            {
+                using var sdr = TonemapToSdr(bitmap, sdrWhiteLevel);
+                videoResult = await StaticVideoSaver.SaveAsync(sdr, filePath, false, maxCLL, maxFALL, videoCodec, null, cancel.Token);
+            }
+            else videoResult = await StaticVideoSaver.SaveAsync(bitmap, filePath, outputIsHDR, maxCLL, maxFALL, videoCodec, mastering, cancel.Token);
+            if (videoResult.VideoPath is not null) finalFile = videoResult.VideoPath;
+            _logger.LogInformation("Static video result: codec={Codec}; HDR={Hdr}; complete={Complete}; cancelled={Cancelled}; error={Error}; image={Image}; video={Video}",
+                videoCodec, outputIsHDR, videoResult.Complete, videoResult.Cancelled, videoResult.Error, filePath, videoResult.VideoPath);
+        }
 
         if (copyToClipboard && AppConfig.AutoCopyScreenshotToClipboard)
         {
             // 全屏截图：CF_HDROP 放文件。autoConvertSDR 放 Ultra HDR jpg，否则主文件
             string clipFile = autoConvertSDR ? sdrPath! : finalFile;
-            ClipboardHelper.SetFiles(clipFile);
+            if (videoMode)
+                ClipboardHelper.SetFiles(new[] { filePath, videoResult?.VideoPath, sdrPath }.Where(p => p is not null).Select(p => p!).ToArray());
+            else ClipboardHelper.SetFiles(clipFile);
         }
 
         if (ShouldShowInfoWindow())
+        {
             _infoWindow?.CaptureSuccess(displayId, bitmap, finalFile, maxCLL);
+            if (videoResult is not null)
+                _infoWindow?.SetSavedStatus(videoResult.Error is null ? "视频与图片已保存"
+                    : videoResult.Cancelled ? "视频已取消，图片已保留" : "视频未完成，图片已保留");
+        }
+    }
+
+    private static string EnsureVideoPairPath(string image, bool jpeg)
+    {
+        string folder = Path.GetDirectoryName(image)!, name = Path.GetFileNameWithoutExtension(image), extension = Path.GetExtension(image);
+        for (int number = 1; ; number++)
+        {
+            string path = Path.Combine(folder, name + (number == 1 ? "" : "_" + number) + extension);
+            string video = Path.ChangeExtension(path, ".mp4");
+            if (!File.Exists(path) && !File.Exists(video) && !File.Exists(video + ".starshot.json") &&
+                (!jpeg || !File.Exists(Path.ChangeExtension(path, ".jpg")))) return path;
+        }
     }
 
     /// <summary>

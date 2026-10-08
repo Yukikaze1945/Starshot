@@ -163,13 +163,13 @@ internal static class HotkeyManager
             {
                 return Win32Error.ERROR_SUCCESS;
             }
-            User32.RegisterHotKey(
+            bool registered = User32.RegisterHotKey(
                 _registeredHwnd,
                 id,
                 modifiers | User32.HotKeyModifiers.MOD_NOREPEAT,
                 (uint)key
             );
-            Win32Error error = Kernel32.GetLastError();
+            Win32Error error = registered ? Win32Error.ERROR_SUCCESS : Kernel32.GetLastError();
             if (error.Succeeded && (info.Modifiers != modifiers || info.Key != key))
             {
                 AppConfig.SetValue($"{(uint)modifiers}+{(uint)key}", info.ConfigSetting);

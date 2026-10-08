@@ -100,6 +100,7 @@ internal sealed class MonitorCaptureContext : IDisposable
                     throw;
                 }
                 DirectXPixelFormat format = ScreenCaptureHelper.IsWin10
+                    && requestedFormat == DirectXPixelFormat.R16G16B16A16Float
                     ? DirectXPixelFormat.R8G8B8A8UIntNormalized : requestedFormat;
                 if (slot.Context is not null && !slot.Context.IsValid(width, height, format, device, isHdr))
                 {
@@ -168,16 +169,47 @@ internal sealed class MonitorCaptureContext : IDisposable
             _ = Task.Run(() => DisposeSlot(slot));
     }
 
-    private static void DisposeSlot(Slot slot)
+    private static void DisposeSlot(Slot slot, bool strict = false)
     {
         slot.Gate.Wait();
         try
         {
             try { slot.Context?.Dispose(); }
-            catch (Exception ex) { Serilog.Log.Warning(ex, "Failed to dispose WGC context"); }
-            slot.Context = null;
+            catch (Exception ex)
+            {
+                Serilog.Log.Warning(ex, "Failed to dispose WGC context");
+                if (strict) throw;
+            }
         }
-        finally { slot.Gate.Release(); }
+        finally { slot.Context = null; slot.Gate.Release(); }
+    }
+
+    // Unlike DisposeAll this does not shut the cache down permanently. Mode
+    // changes can release every old session and later capture again normally.
+    public static async Task ReleaseContextsAsync()
+    {
+        Slot[] retired;
+        lock (CacheLock)
+        {
+            retired = new Slot[Cache.Count];
+            Cache.Values.CopyTo(retired, 0);
+            Cache.Clear();
+            foreach (Slot slot in retired)
+                slot.Retired = true;
+        }
+        // Waiting for a native frame copy/Close must not block the tray or WebUI
+        // dispatcher. The controller already fences new capture operations.
+        await Task.Run(() =>
+        {
+            var failures = new System.Collections.Generic.List<Exception>();
+            foreach (Slot slot in retired)
+            {
+                try { slot.Context?.Invalidate(); DisposeSlot(slot, strict: true); }
+                catch (Exception ex) { failures.Add(ex); }
+            }
+            if (failures.Count != 0) throw new AggregateException("WGC context retirement did not complete successfully.", failures);
+        });
+        Serilog.Log.Information("WGC contexts released for screenshot mode change: count={Count}", retired.Length);
     }
 
     public static void DisposeAll()
@@ -423,25 +455,30 @@ internal sealed class MonitorCaptureContext : IDisposable
 
     public void Dispose()
     {
+        CanvasRenderTarget? latest;
         lock (_frameLock)
         {
             if (_disposed) return;
             _disposed = true;
             _waiter?.TrySetException(new ObjectDisposedException(nameof(MonitorCaptureContext)));
             _waiter = null;
-            _latest?.Dispose();
+            latest = _latest;
             _latest = null;
         }
         // Do not close the session while holding _frameLock: Close may wait for an
         // in-flight FrameArrived callback, which itself needs that lock.
-        try { _pool.FrameArrived -= OnFrameArrived; }
+        try { latest?.Dispose(); }
         finally
         {
-            try { _session.Dispose(); }
+            try { _pool.FrameArrived -= OnFrameArrived; }
             finally
             {
-                try { _pool.Dispose(); }
-                finally { ((WinRT.IWinRTObject)_item).NativeObject.Dispose(); }
+                try { _session.Dispose(); }
+                finally
+                {
+                    try { _pool.Dispose(); }
+                    finally { ((WinRT.IWinRTObject)_item).NativeObject.Dispose(); }
+                }
             }
         }
         Serilog.Log.Information("WGC context disposed: monitor={Monitor}", _monitor);

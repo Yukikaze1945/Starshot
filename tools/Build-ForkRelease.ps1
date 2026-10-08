@@ -44,6 +44,7 @@ $unexpected = Get-ChildItem -LiteralPath $payloadRoot -Recurse -File | Where-Obj
 }
 if ($unexpected) { throw "User data detected in release payload: $($unexpected.FullName -join ', ')" }
 $uhdrHash = (Get-FileHash -LiteralPath (Join-Path $appRoot 'uhdr.dll') -Algorithm SHA256).Hash
+& (Join-Path $projectRoot 'scripts\Restore-VideoEncoder.ps1') -VerifyOnly (Join-Path $appRoot 'VideoEncoder')
 if ($uhdrHash -ne '415EE12ED6E979D1A96A495AFCB634D54FBACF69E5B9E45C95C38793C737384B') { throw 'Published libultrahdr does not match the verified custom DLL.' }
 $zipPath = Join-Path $releaseRoot "Starshot-$Version-win-x64.zip"
 if (Test-Path -LiteralPath $zipPath) { throw "Release archive already exists: $zipPath. Use a new version or remove that exact staging artifact." }

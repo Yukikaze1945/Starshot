@@ -426,3 +426,11 @@ Screenshots/
 src/Starshot.WebUI/node_modules/
 src/Starshot.WebUI/dist/
 src/Starshot.WebUI/*.tsbuildinfo
+
+# Restored from a versioned archive and canonical SHA-256 manifest at build time.
+third_party/ffmpeg/7.1.1/win-x64/*.exe
+third_party/ffmpeg/7.1.1/win-x64/*.dll
+
+# Local diagnostic browser profiles can contain cookies and other user data.
+**/EBWebView/
+docs/reports/**/webview2/

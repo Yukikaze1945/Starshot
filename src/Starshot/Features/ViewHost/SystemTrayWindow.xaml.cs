@@ -1,9 +1,11 @@
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Starshot.Features.Screenshot;
 using Starshot.Features.Setting;
 using Starshot.Frameworks;
@@ -34,6 +36,8 @@ public sealed partial class SystemTrayWindow : WindowEx
         this.InitializeComponent();
         InitializeWindow();
         SetTrayIcon();
+        UpdateCaptureModeButtons();
+        CaptureModeController.ModeChanged += CaptureModeChanged;
         // 托盘窗口生命周期 = App 生命周期；--hide 启动时它是唯一窗口，必须由它注册热键。
         // 延迟到 DispatcherQueue 下一轮：非隐藏启动时等 MainWindow Loaded 设好 InAppToast.MainWindow，
         // 这样注册失败（被占用）时 toast 才能弹出来；MainWindow 已先注册时 IsRegistered 守卫会跳过。
@@ -156,6 +160,8 @@ public sealed partial class SystemTrayWindow : WindowEx
     [RelayCommand]
     public override void Show()
     {
+        UpdateCaptureModeButtons();
+        ModeStatus.Visibility = Visibility.Collapsed;
         RootGrid.RequestedTheme = ShouldSystemUseDarkMode()
             ? ElementTheme.Dark
             : ElementTheme.Light;
@@ -248,6 +254,54 @@ public sealed partial class SystemTrayWindow : WindowEx
 
     private void WindowEx_Closed(object sender, WindowEventArgs args)
     {
+        CaptureModeController.ModeChanged -= CaptureModeChanged;
         trayIcon?.Dispose();
+    }
+
+    private void CancelVideo_Click(object sender, RoutedEventArgs e)
+    {
+        Starshot.Features.Codec.StaticVideoJobs.CancelAll();
+    }
+
+    private void UpdateCaptureModeButtons()
+    {
+        int mode = AppConfig.ScreenCaptureMode;
+        LightweightMode.IsChecked = mode == 0;
+        StandardMode.IsChecked = mode == 1;
+        HdrMode.IsChecked = mode == 2;
+        HdrVideoMode.IsChecked = mode == 3;
+        trayIcon.ToolTipText = $"Starshot · {CaptureModeController.Label((ScreenshotCaptureMode)mode)}";
+    }
+
+    private void CaptureModeChanged()
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            UpdateCaptureModeButtons();
+            MainWindow.BroadcastSettingsChanged();
+        });
+    }
+
+    private async void CaptureMode_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioButton button || !int.TryParse(button.Tag?.ToString(), out int mode)) return;
+        LightweightMode.IsEnabled = StandardMode.IsEnabled = HdrMode.IsEnabled = HdrVideoMode.IsEnabled = false;
+        ModeStatus.Text = "正在切换…";
+        ModeStatus.Visibility = Visibility.Visible;
+        try
+        {
+            await CaptureModeController.SetModeAsync((ScreenshotCaptureMode)mode);
+            Hide();
+        }
+        catch (Exception ex)
+        {
+            ModeStatus.Text = ex.Message;
+            Serilog.Log.Warning(ex, "Tray screenshot mode switch failed");
+        }
+        finally
+        {
+            LightweightMode.IsEnabled = StandardMode.IsEnabled = HdrMode.IsEnabled = HdrVideoMode.IsEnabled = true;
+            UpdateCaptureModeButtons();
+        }
     }
 }

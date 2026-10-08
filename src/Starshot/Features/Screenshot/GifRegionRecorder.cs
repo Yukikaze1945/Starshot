@@ -25,6 +25,7 @@ internal static class GifRegionRecorder
     internal static async Task<byte[]> CaptureStillAsync(Rect selection, CanvasRenderTarget? annotations,
         int virtualX, int virtualY, int virtualWidth, int virtualHeight, CancellationToken token)
     {
+        using var operation = CaptureModeController.BeginOperation();
         var device = CanvasDevice.GetSharedDevice();
         var displays = DisplayArea.FindAll();
         var monitors = new List<Monitor>(displays.Count);
@@ -32,7 +33,8 @@ internal static class GifRegionRecorder
         for (int i = 0; i < displays.Count; i++)
         {
             using var info = DisplayInformation.CreateForDisplayId(displays[i].DisplayId);
-            bool hdr = info.GetAdvancedColorInfo().CurrentAdvancedColorKind
+            bool hdr = CaptureModeController.UsesHdrCapture(operation.Mode) && !ScreenCaptureHelper.IsWin10
+                && info.GetAdvancedColorInfo().CurrentAdvancedColorKind
                 is DisplayAdvancedColorKind.HighDynamicRange;
             anyHdr |= hdr;
             var bounds = displays[i].OuterBounds;
@@ -40,16 +42,16 @@ internal static class GifRegionRecorder
                 bounds.X - virtualX, bounds.Y - virtualY, hdr));
         }
         float sdrWhite = anyHdr ? AppConfig.GetSdrWhiteLevelFromDisplays(displays) : 80;
-        DirectXPixelFormat format = anyHdr
-            ? DirectXPixelFormat.R16G16B16A16Float : DirectXPixelFormat.R8G8B8A8UIntNormalized;
+        DirectXPixelFormat format = CaptureModeController.PixelFormat(operation.Mode, anyHdr);
         return await CaptureFrameAsync(monitors, device, format, anyHdr, sdrWhite,
-            selection, annotations, virtualWidth, virtualHeight,
+            selection, annotations, virtualX, virtualY, virtualWidth, virtualHeight, operation.Mode,
             (int)selection.Width, (int)selection.Height, token);
     }
 
     public static async Task<string?> RecordAsync(Rect selection, CanvasRenderTarget firstFrame,
         CanvasRenderTarget? annotations, int virtualX, int virtualY, int virtualWidth, int virtualHeight)
     {
+        using var operation = CaptureModeController.BeginOperation();
         int sourceWidth = (int)selection.Width, sourceHeight = (int)selection.Height;
         double resize = Math.Min(1.0, Math.Min(1280.0 / sourceWidth, 720.0 / sourceHeight));
         int width = Math.Max(1, (int)Math.Round(sourceWidth * resize));
@@ -61,7 +63,8 @@ internal static class GifRegionRecorder
         for (int i = 0; i < displays.Count; i++)
         {
             using var info = DisplayInformation.CreateForDisplayId(displays[i].DisplayId);
-            bool hdr = info.GetAdvancedColorInfo().CurrentAdvancedColorKind
+            bool hdr = CaptureModeController.UsesHdrCapture(operation.Mode) && !ScreenCaptureHelper.IsWin10
+                && info.GetAdvancedColorInfo().CurrentAdvancedColorKind
                 is DisplayAdvancedColorKind.HighDynamicRange;
             anyHdr |= hdr;
             var bounds = displays[i].OuterBounds;
@@ -69,8 +72,7 @@ internal static class GifRegionRecorder
                 bounds.X - virtualX, bounds.Y - virtualY, hdr));
         }
         float sdrWhite = anyHdr ? AppConfig.GetSdrWhiteLevelFromDisplays(displays) : 80;
-        DirectXPixelFormat format = anyHdr
-            ? DirectXPixelFormat.R16G16B16A16Float : DirectXPixelFormat.R8G8B8A8UIntNormalized;
+        DirectXPixelFormat format = CaptureModeController.PixelFormat(operation.Mode, anyHdr);
 
         string root = string.IsNullOrWhiteSpace(AppConfig.ScreenshotFolder)
             ? Path.Combine(AppConfig.UserDataFolder, "Screenshots") : AppConfig.ScreenshotFolder;
@@ -109,7 +111,7 @@ internal static class GifRegionRecorder
                 if (await Task.WhenAny(delay, control.Completion) != delay) break;
                 using var frameTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
                 byte[] next = await CaptureFrameAsync(monitors, device, format, anyHdr, sdrWhite,
-                    selection, annotations, virtualWidth, virtualHeight, width, height,
+                    selection, annotations, virtualX, virtualY, virtualWidth, virtualHeight, operation.Mode, width, height,
                     frameTimeout.Token);
                 DateTimeOffset now = DateTimeOffset.UtcNow;
                 ushort centiseconds = (ushort)Math.Clamp(
@@ -154,9 +156,33 @@ internal static class GifRegionRecorder
 
     private static async Task<byte[]> CaptureFrameAsync(IReadOnlyList<Monitor> monitors,
         CanvasDevice device, DirectXPixelFormat format, bool anyHdr, float sdrWhite,
-        Rect selection, CanvasRenderTarget? annotations, int virtualWidth, int virtualHeight,
+        Rect selection, CanvasRenderTarget? annotations, int virtualX, int virtualY,
+        int virtualWidth, int virtualHeight, ScreenshotCaptureMode mode,
         int outputWidth, int outputHeight, CancellationToken token)
     {
+        if (mode == ScreenshotCaptureMode.Lightweight)
+        {
+            // Read only the live selection into RAM. A temporary GPU upload is
+            // needed only for resizing/annotations; no full-desktop WGC cache.
+            using var frame = await Task.Run(() => GdiCaptureFrame.Capture(
+                virtualX + (int)selection.X, virtualY + (int)selection.Y,
+                (int)selection.Width, (int)selection.Height, token), token);
+            if (annotations is null && outputWidth == frame.Width && outputHeight == frame.Height)
+                return frame.Pixels;
+            using var source = GdiCaptureBackend.Upload(frame.Pixels, frame.Width, frame.Height, device);
+            using var output = new CanvasRenderTarget(device, outputWidth, outputHeight, 96,
+                DirectXPixelFormat.B8G8R8A8UIntNormalized, CanvasAlphaMode.Premultiplied);
+            using (var ds = output.CreateDrawingSession())
+            {
+                ds.DrawImage(source, new Rect(0, 0, outputWidth, outputHeight),
+                    new Rect(0, 0, frame.Width, frame.Height));
+                if (annotations is not null)
+                    ds.DrawImage(annotations, new Rect(0, 0, outputWidth, outputHeight),
+                        new Rect(0, 0, selection.Width, selection.Height));
+            }
+            return output.GetPixelBytes();
+        }
+
         var tasks = new Task<CanvasRenderTarget>[monitors.Count];
         for (int i = 0; i < monitors.Count; i++)
         {

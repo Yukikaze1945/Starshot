@@ -107,6 +107,12 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
 
     private string? _lastFile;
 
+    public void SetSavedStatus(string message)
+    {
+        _statusTextOverride = message;
+        ApplyStatusVisual();
+    }
+
     private CanvasImageSource _imageSource;
 
     private CancellationTokenSource? _cancellationTokenSource;
@@ -129,6 +135,7 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
         IsSuccess = true;
         IsError = false;
         _isCopy = false;
+        _statusTextOverride = null;
         _captureImageCount++;
         CropImage(bitmap, User32.GetDpiForWindow(hwnd), maxCLL);
         _cancellationTokenSource?.Cancel();
@@ -150,6 +157,7 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
         IsSuccess = true;
         IsError = false;
         _isCopy = false;
+        _statusTextOverride = null;
         _captureImageCount++;
         CropImage(bitmap, GetDpiForMonitor(displayId), maxCLL);
         _cancellationTokenSource?.Cancel();
@@ -175,6 +183,7 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
             IsSuccess = true;
             IsError = false;
             _isCopy = false;
+        _statusTextOverride = null;
             _lastFile = file;
             _finishedImageCount++;
             _cancellationTokenSource?.Cancel();
@@ -204,6 +213,7 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
             IsSuccess = true;
             IsError = false;
             _isCopy = false;
+        _statusTextOverride = null;
             _lastFile = file;
             _finishedImageCount++;
             _cancellationTokenSource?.Cancel();
@@ -333,7 +343,7 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
         }
         StackPanel_CopyStatus.Visibility = Visibility.Collapsed;
         TextBlock_State.Text = complete
-            ? Lang.ScreenCaptureInfoWindow_ScreenshotSaved
+            ? (_statusTextOverride ?? Lang.ScreenCaptureInfoWindow_ScreenshotSaved)
             : Lang.ScreenCaptureInfoWindow_ProcessingImage;
         ProgressRing_Process.Visibility = complete ? Visibility.Collapsed : Visibility.Visible;
         FontIcon_Complete.Visibility = complete ? Visibility.Visible : Visibility.Collapsed;
@@ -407,6 +417,7 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
 
         if (_imageSource?.Size.Width != targetSize)
         {
+            ThumbnailImage.Source = null;
             _imageSource = new CanvasImageSource(
                 CanvasDevice.GetSharedDevice(),
                 targetSize,
@@ -434,6 +445,7 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
             IsError = true;
             IsSuccess = false;
             _isCopy = false;
+        _statusTextOverride = null;
             if (captureStarted)
             {
                 _finishedImageCount++;
@@ -605,6 +617,8 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
         StartHideAnimation();
         await Task.Delay(600, cancellationToken);
         AppWindow?.Hide();
+        ThumbnailImage.Source = null;
+        _imageSource = null!;
         _logger.LogInformation(
             "InfoWindow counters reset (was total={Total}, finished={Finished})",
             _captureImageCount,
@@ -618,6 +632,14 @@ public sealed partial class ScreenCaptureInfoWindow : WindowEx
     }
 
     private Vector3KeyFrameAnimation _showAnimation;
+
+    internal void ReleaseForLightweight()
+    {
+        _cancellationTokenSource?.Cancel();
+        ThumbnailImage.Source = null;
+        _imageSource = null!;
+        Close();
+    }
 
     private Vector3KeyFrameAnimation _hideAnimation;
 

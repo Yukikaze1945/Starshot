@@ -19,6 +19,13 @@ public abstract partial class WindowEx : Window
 
     public static Microsoft.UI.WindowId MainWindowId { get; protected set; }
 
+    internal static void RegisterMainWindow(Microsoft.UI.WindowId id) => MainWindowId = id;
+
+    internal static void UnregisterMainWindow(Microsoft.UI.WindowId id)
+    {
+        if (MainWindowId == id) MainWindowId = default;
+    }
+
     public WindowEx()
     {
         WindowHandle = (IntPtr)AppWindow.Id.Value;
@@ -47,6 +54,7 @@ public abstract partial class WindowEx : Window
     private readonly ComCtl32.SUBCLASSPROC windowSubclassProc;
 
     private readonly ComCtl32.SUBCLASSPROC inputSiteSubclassProc;
+
 
     protected virtual unsafe IntPtr WindowSubclassProc(
         HWND hWnd,

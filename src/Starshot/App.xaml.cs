@@ -73,7 +73,7 @@ public partial class App : Application
 
     private AppInstance instance;
 
-    private MainWindow m_MainWindow;
+    private MainWindow? m_MainWindow;
 
     /// <summary>
     /// 主窗口引用（供设置页等调用 ApplyTheme）
@@ -93,8 +93,22 @@ public partial class App : Application
     public void EnsureMainWindow()
     {
         m_MainWindow ??= new MainWindow();
-        m_MainWindow.Activate();
         m_MainWindow.Show();
+        m_MainWindow.Activate();
+    }
+
+    internal void ReleaseMainWindow(MainWindow window)
+    {
+        if (!ReferenceEquals(m_MainWindow, window)) return;
+        m_MainWindow = null;
+        window.ForceExit = true;
+        try { window.DetachWebUiForRelease(); }
+        finally { window.Close(); }
+    }
+
+    internal void ForgetMainWindow(MainWindow window)
+    {
+        if (ReferenceEquals(m_MainWindow, window)) m_MainWindow = null;
     }
 
     private void AppInstance_Activated(object? sender, AppActivationArguments e)

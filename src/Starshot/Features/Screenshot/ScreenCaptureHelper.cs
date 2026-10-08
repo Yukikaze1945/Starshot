@@ -15,6 +15,8 @@ namespace Starshot.Features.Screenshot;
 
 internal partial class ScreenCaptureHelper
 {
+    private static readonly IScreenCaptureBackend GdiBackend = new GdiCaptureBackend();
+    private static readonly IScreenCaptureBackend WgcBackend = new WgcCaptureBackend();
     public static readonly bool IsTryCreateFromWindowIdPresent = ApiInformation.IsMethodPresent(
         "Windows.Graphics.Capture.GraphicsCaptureItem",
         "TryCreateFromWindowId"
@@ -81,9 +83,18 @@ internal partial class ScreenCaptureHelper
         CancellationToken cancellationToken = default
     )
     {
-        return await MonitorCaptureContext.CaptureAsync(
-            monitor, pixelFormat, device, cancellationToken, isHdr
-        ).ConfigureAwait(false);
+        using var operation = CaptureModeController.BeginOperation();
+        IScreenCaptureBackend backend = operation.Mode == ScreenshotCaptureMode.Lightweight ? GdiBackend : WgcBackend;
+        if (!CaptureModeController.UsesHdrCapture(operation.Mode))
+        {
+            pixelFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
+            // All SDR entry points must use the same context identity, including
+            // full-screen capture on a physically HDR-enabled monitor.
+            isHdr = false;
+        }
+        Serilog.Log.Information("Capture backend: mode={Mode}, format={Format}", operation.Mode, pixelFormat);
+        return await backend.CaptureMonitorAsync(monitor, pixelFormat, device, isHdr, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public static void DisposeMonitorContexts() => MonitorCaptureContext.DisposeAll();
