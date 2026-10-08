@@ -1,512 +1,252 @@
-> **Starshot Fork**：本仓库公开维护 React/WebView2 界面与原生截图功能。源码、[安装包](https://github.com/Yukikaze1945/Starshot/releases)和更新统一放在本仓库；[发布说明](docs/releasing-fork.md)。基于 loliri/Starshot（MIT）。
-
 <div align="center">
 
-<img src="src/logo.png" width="300" alt="Starshot Logo">
+<img src="docs/assets/readme/hero.svg" width="100%" alt="Starshot — Capture the light. Keep the detail. 深色与荧光黄绿的产品横幅">
 
-# Starshot
+<br><br>
 
-**新一代 Windows 原生 HDR 截图工具**
+**让截图留住高光，让文字继续表达。**
 
-**Next-generation Windows-native HDR Screenshot Tool**
+Windows 原生捕获 × HDR 色彩 × 文字识别与翻译<br>
+一个截图工具，也是一块轻巧的桌面创作台。
 
-16bit 全链路捕获 · 区域截图 · AVIF / JPEG XL / PNGv3 编码 · 色彩管理
+<p>
+<a href="https://github.com/Yukikaze1945/Starshot/releases"><img src="https://img.shields.io/github/v/release/Yukikaze1945/Starshot?include_prereleases&amp;style=for-the-badge&amp;label=RELEASE&amp;labelColor=182019&amp;color=DDF369" alt="最新公开版本，包含预览版"></a>
+<a href="https://github.com/Yukikaze1945/Starshot/releases"><img src="https://img.shields.io/github/downloads/Yukikaze1945/Starshot/total?style=for-the-badge&amp;label=DOWNLOADS&amp;labelColor=182019&amp;color=DDF369" alt="GitHub Release 资源累计下载次数"></a>
+<a href="https://github.com/Yukikaze1945/Starshot/stargazers"><img src="https://img.shields.io/github/stars/Yukikaze1945/Starshot?style=for-the-badge&amp;labelColor=182019&amp;color=DDF369" alt="GitHub Stars"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/SOURCE-MIT-DDF369?style=for-the-badge&amp;labelColor=182019" alt="项目源码 MIT 许可"></a>
+</p>
 
-[![Release](https://img.shields.io/github/v/release/Yukikaze1945/Starshot?include_prereleases&style=flat-square)](../../releases)
-[![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/loliri/Starshot?tab=MIT-1-ov-file)
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6?style=flat-square&logo=windows)](../../releases)
+<p>
+<a href="https://github.com/Yukikaze1945/Starshot/releases/download/2.6.0-preview.8/Starshot-2.6.0-preview.8-setup-x64.exe"><img src="docs/assets/readme/download-installer.svg" width="290" alt="下载 Windows x64 离线安装包"></a> &nbsp; <a href="https://github.com/Yukikaze1945/Starshot/releases/download/2.6.0-preview.8/Starshot-2.6.0-preview.8-win-x64.zip"><img src="docs/assets/readme/download-portable.svg" width="290" alt="下载 Windows x64 便携版"></a>
+</p>
 
-[官网](https://starshot.cialo.site) · [下载](https://github.com/Yukikaze1945/Starshot/releases) · [快速上手](#快速上手) · [功能详解](#功能详解) · [从源码构建](#从源码构建)
+<sub>直达公开版本 2.6.0-preview.8 · Windows x64 · 安装包 / ZIP / SHA-256</sub>
 
-**[English](README.md)** | **简体中文** |
-[繁體中文](docs/README.zh-TW.md) | [日本語](docs/README.ja.md) | [Français](docs/README.fr.md) | [Русский](docs/README.ru.md) | [Español](docs/README.es.md)
+<br><br>
+
+[下载与安装](#下载与安装) · [四档捕获](#四档捕获) · [功能巡礼](#功能巡礼) · [快速上手](#快速上手) · [开发与贡献](#开发与贡献)
+
+**简体中文** · [English](README.en.md)
 
 </div>
 
----
+<br>
 
-## 为什么需要 Starshot
+## 截图，不止按下快门
 
-Windows 自带的截图工具（Snipping Tool、Win+Shift+S）在 HDR 显示器上依然只能截出 8bit SDR 图像——系统合成器把 16bit HDR 帧压缩输出，高光被截断，色域被收窄，导致截图发灰/过曝/色彩映射错误。市面上常见的截图工具同样受限于传统 GDI/BitBlt 截图管线，无法感知 HDR 数据。
+游戏里的火焰、电影里的霓虹、桌面上的一段文字——值得被保留下来的，既有画面，也有信息。
 
-Starshot 使用 [Windows Graphics Capture](https://learn.microsoft.com/windows/uwp/audio-video-camera/screen-capture) (WGC) 捕获游戏窗口的内容，相比于 BitBlt 和 DXGI Duplicate，它具有支持硬件加速、占用 CPU 较小、支持 HDR 内容、可捕获特定窗口等优点。获取到的原始 `R16G16B16A16Float` scRGB 帧缓冲，完整保留了 HDR 亮度信息（可达数千 nit），然后将其编码为 16bit HDR AVIF、JPEG XL 或 PNGv3，色彩空间写入 BT2020 + PQ 传输函数元数据。同时提供 SDR 显示器自动降级、区域截图、多格式批量转换等通用截图工具应有的功能。
+Starshot 保留 C# 原生截图能力，用 React / WebView2 呈现新的工作空间。从低负担的日常截取，到保留原始 HDR 信号，再到 OCR 排版与大模型翻译，按你的场景选择。
 
-**核心特点**
-
-- 🎯 **HDR 全链路无损**——捕获、编码、色彩管理全程 16bit，不做有损色调映射
-- 🧠 **智能 HDR/SDR 判定**——自动区分真实 HDR 内容与 HDR 格式包裹的 SDR 内容，避免无谓占空间
-- ✂️ **区域截图**——冻结帧多显示器覆盖层，窗口检测 + 放大镜精确选点
-- 📋 **剪贴板支持**——截图可自动写入剪贴板，独立页面浏览剪贴板历史图片，预览 / 重新复制 / 删除
-- 🔤 **文字识别（OCR）**——照片应用同款 OneOCR 引擎，查看器内拖选复制，全局快捷键一键取字
-- 🗂️ **多格式支持**——AVIF / JPEG XL / PNGv3 / Ultra HDR JPEG / PNG，含批量转换工具
-- 🖥️ **多显示器**——区域截图可跨屏框选，直接组合截取横跨多屏的图像
-- 🔄 **自动检查更新**——内置更新检查，发现新版可直接差量更新
-
-<div align="center">
 <table>
 <tr>
-<td align="center" width="50%">
+<td width="50%" valign="top">
 
-**其他工具**
+### 01 / 留住光
 
-<img src="https://r2.cialo.site/endfield/3840x2160.dlaa.broken.jpg" width="100%" alt="SDR screenshot showing clipped highlights and washed out colors">
+**HDR 捕获与色彩输出**
+
+FP16 scRGB 原始捕获，支持 HDR AVIF、JPEG XL、PNGv3 与 Ultra HDR JPEG。普通 SDR 输出使用 StarshotPerceptual 色调映射；HDR 保存与 SDR 预览各走对应路径。
+
 </td>
-<td align="center" width="50%">
+<td width="50%" valign="top">
 
-**Starshot（Ultra HDR JPEG）**
+### 02 / 收好画面
 
-<img src="https://r2.cialo.site/endfield/3840x2160.dlaa.uhdr.jpg" width="100%" alt="Starshot Ultra HDR JPEG preserving full highlight detail via gain map">
+**区域选取与桌面工具**
+
+窗口检测、像素放大镜、紧凑分组工具栏、按需标注参数。形状、箭头、画笔、文字、撤销 / 重做，以及贴图、长截图、GIF 录制，都从选区继续。
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 03 / 读懂文字
+
+**OCR → 排版 → 翻译**
+
+内置 PP-OCRv6 Tiny，可选 Small 模型 DLC。识别后打开独立文字窗口，先编辑再复制；可连接兼容 OpenAI 接口的大模型，自动发现模型列表，翻译并保留排版结构。
+
+</td>
+<td width="50%" valign="top">
+
+### 04 / 看见亮度
+
+**HDR 亮度分析仪**
+
+从原始 HDR 选区查看 Cursor、Min、Max、Avg、P99，展开 Waveform，叠加可调透明度的 Heatmap。热力图只用于观察，不写进保存图片。
+
 </td>
 </tr>
 </table>
-<sub>画面来自《明日方舟：终末地》</sub>
-</div>
-</br>
 
-> [!NOTE]
-> 由于 GitHub 平台不支持 AVIF 渲染，因此展示的是 Ultra HDR JPEG。AVIF 原图可以点击 [这里查看](https://r2.cialo.site/endfield/3840x2160.dlaa.avif)，也可以在[官网](https://starshot.cialo.site)拖动分割线直观对比两种效果。
+<br>
 
-SDR 显示器上，Starshot 自动走标准 SDR 截图路径，是一款通用截图工具；HDR 显示器上，它是目前少数能够完整保留 HDR 数据的桌面截图方案。
+## 四档捕获
 
-## 系统要求
+<img src="docs/assets/readme/modes.svg" width="100%" alt="轻量、标准、高质量 HDR、单帧 HDR 视频四档捕获模式">
 
-- Windows 10 / 11, 首选 Windows 11 以获得最佳体验
-- x64 / arm64 架构
-- **HDR 截图功能需要 HDR 显示器**（SDR 显示器上自动走 SDR 路径）
+| 模式 | 捕获与输出 | 适合什么 |
+| :--- | :--- | :--- |
+| **轻量** | CPU / GDI 捕获与选区，原生 SDR | 桌面、文档、日常截图，优先减少图形资源负担 |
+| **标准** | WGC 捕获，SDR 输出 | 通用窗口与屏幕截取 |
+| **高质量 HDR** | HDR 屏幕使用 FP16 scRGB；支持 HDR 图片与 SDR 映射 | 游戏、影视、高光与广色域内容 |
+| **单帧 HDR 视频** | HEVC / AV1 · MP4；一个视频帧停留 3 秒，无音轨，另存同画面图片 | 尝试通过手机的视频 HDR 解码路径分享截图 |
 
-## 下载
+在 **设置 → 截图** 中选择，也可在 **托盘右键** 快速切换。<br>
+HDR 模式遇到 SDR 屏幕会保存对应的 SDR 内容；手机播放兼容性仍取决于具体设备与播放器。
 
-全部安装包可在[官网下载页](https://github.com/Yukikaze1945/Starshot/releases)获取（自动识别 x64 / arm64），也可在 [GitHub Releases](../../releases) 下载。
+<br>
 
-两种分发方式，装哪种就走哪条更新线，互不交叉：
+## 功能巡礼
 
-- **便携版**：下载压缩包，解压后运行根目录的 `Starshot.exe` 启动器。无需安装，解压即用，数据存在解压目录。
-- **安装版**：下载在线安装程序（约 10MB，不含应用文件），安装时从 CDN 在线获取全部内容，需联网。应用装为扁平目录，安装信息存储在注册表，更新由更新器接管，支持差量更新、卸载等功能。
+<details open>
+<summary><b>✦ 冻结画面，慢慢处理</b></summary>
 
-## 软件截图
+- 拖拽选区或点击窗口，跨显示器选取；坐标与尺寸独立显示。
+- 常用操作一步可达，同类工具分组收纳；选中标注工具才显示颜色与线宽参数。
+- 保存、复制、OCR 按截图入口突出；Esc 逐层关闭菜单、编辑状态与截图会话。
+- 贴图支持桌面查看与交互；长截图支持纵向 / 横向拼接，另有 GIF 录制入口。
+- 截图库与剪贴板页面支持预览、复制、管理和批量格式转换。
 
-![Screenshot](docs/Screenshot.jpg)
+</details>
 
-> 更多截图可前往[官网](https://starshot.cialo.site)查看。
+<details>
+<summary><b>✦ HDR 图片、SDR 观感与亮度分析</b></summary>
+
+- 原始 HDR 浮点数据用于 HDR 输出；普通 SDR 图片使用 **StarshotPerceptual**，保护桌面亮度并平滑压缩高光。
+- **Ultra HDR JPEG** 提供 SDR 基础图与 HDR gain map，支持额外保存；可调整 HDR Capacity Max。
+- **HDR 亮度分析**仅在选区拥有原始 HDR FP16 数据时可用。轻量 / SDR 模式不会把 8-bit RGB 冒充绝对 nits。
+- scRGB 亮度为内容信号估计：`max(0, (0.2126R + 0.7152G + 0.0722B) × 80)`，并非显示器实际发光测量。
+- Waveform / Heatmap 默认关闭，主动打开才准备分析数据；大区域可使用标明近似的抽样结果。
+
+[捕获模式说明](docs/capture-modes.md) · [亮度分析与资源验证](docs/reports/hdr-analysis-lifecycle-20261009/REPORT.md)
+
+</details>
+
+<details>
+<summary><b>✦ OCR 本地识别，大模型按需翻译</b></summary>
+
+- **PP-OCRv6 Tiny 内置默认**；Small 在 DLC 页面下载、校验、切换、删除，复用已有 CLS。
+- 模型首次识别时加载；Tiny / Small 不同时常驻。Small 未安装或损坏时回到 Tiny。
+- 识别结果先进入独立的小窗口，支持智能分段、原图断行与编辑；OCR 自动复制可在设置中开启，默认关闭。
+- 文字工作空间也可以直接输入文字使用；提供选区格式编辑与翻译。
+- API 地址、Key、模型可自行配置，支持模型列表发现。Key 使用 Windows DPAPI 加密保存。
+- **OCR 在本机进行**；点击翻译时，文本发送至你配置的 API，可能产生相应服务费用。
+
+[OCR 模型与许可](third_party/simdpaddleocr/README.md)
+
+</details>
+
+<br>
+
+## 下载与安装
+
+| 发行方式 | 下载 | 说明 |
+| :--- | :--- | :--- |
+| **离线安装包** | [下载 EXE ↗](https://github.com/Yukikaze1945/Starshot/releases/download/2.6.0-preview.8/Starshot-2.6.0-preview.8-setup-x64.exe) | 约 **322 MiB**；包含 WebView2 Runtime，缺失时安装；覆盖升级保留配置 |
+| **便携版** | [下载 ZIP ↗](https://github.com/Yukikaze1945/Starshot/releases/download/2.6.0-preview.8/Starshot-2.6.0-preview.8-win-x64.zip) | 约 **165 MiB**；解压后运行根目录 `Starshot.exe`；需要 WebView2 Runtime |
+| **完整性校验** | [SHA256SUMS.txt ↗](https://github.com/Yukikaze1945/Starshot/releases/download/2.6.0-preview.8/SHA256SUMS.txt) | 核对安装包 / ZIP 的 SHA-256 |
+| **全部版本** | [GitHub Releases ↗](https://github.com/Yukikaze1945/Starshot/releases) | 发布说明、历史版本与后续更新 |
+
+> [!IMPORTANT]
+> 当前公开下载为 **Windows x64 预览版**，推荐 Windows 11。HDR 捕获需要 Windows 已开启 HDR 的显示器；普通 SDR 显示器也可使用截图与 OCR。预览版功能与已知限制请查看对应 Release 说明。安装包尚未配置 Starshot 产品签名证书。
+
+安装目录：`%LOCALAPPDATA%\Programs\Starshot Fork`。<br>
+更新检查来自 **本仓库 GitHub Releases**，发现版本先提示；预览版需开启接收预览更新。当前使用全量更新。
+
+<br>
 
 ## 快速上手
 
-| 操作                                           | 默认快捷键 |
-| ---------------------------------------------- | ---------- |
-| 全屏截图                                       | Alt+W      |
-| 区域截图（选区后保存文件 + 复制到剪贴板）      | Alt+Q      |
-| 区域仅复制（选区后只复制到剪贴板，不保存文件） | Alt+A      |
-| 识别文字并复制（选区后 OCR 文本进剪贴板）      | Alt+O      |
+1. 打开 Starshot，在设置或托盘菜单选择捕获模式。
+2. 用快捷键截屏，拖拽选区或点击窗口。
+3. 标注、复制、保存，或把文字送入 OCR 编辑窗口。
 
-所有快捷键均可在设置中自定义。
+| 动作 | 默认快捷键 |
+| :--- | :--- |
+| 全屏截图 | <kbd>Alt</kbd> + <kbd>W</kbd> |
+| 区域截图 | <kbd>Alt</kbd> + <kbd>Q</kbd> |
+| 区域仅复制 | <kbd>Alt</kbd> + <kbd>A</kbd> |
+| 区域 OCR | <kbd>Alt</kbd> + <kbd>O</kbd> |
 
-## 功能详解
+快捷键支持自定义组合键或单键；已修改的配置优先于以上默认值。自动复制行为在设置中单独控制。
 
-### HDR 截图管线
+<details>
+<summary><b>下载与 HDR 的几个小问题</b></summary>
 
-大多数截图工具在 HDR 显示器上也只能截 8bit SDR——系统合成器输出的 16bit 浮点 scRGB 帧被压成 SDR，高光截断、色域收窄。Starshot 截取**原始 HDR 帧缓冲**：
+**为什么版本徽章变了，直达下载按钮还是旧版本？**<br>
+徽章自动读取 GitHub；直达按钮指向已核验的具体发行包。始终可以从「全部版本」获取新的预览版。
 
-1. **HDR 捕获**：显示器报告 HDR 时，请求 `R16G16B16A16Float` 像素格式，获取完整 scRGB 浮点数据（亮度可达数千 nit）
-2. **HDR 保存**：16bit AVIF / JPEG XL / PNGv3，BT2020 色域 + PQ 传输函数。高光不截断，色域不收窄
-3. **maxCLL 计算**：Win2D 直方图效果计算最大内容亮度，用于区分真正 HDR 内容与 HDR 格式的 SDR 内容
-4. **色彩管理**：读取显示器 ICC profile 解析真实色域基色，写入文件的 cICP/ICC chunk。HDR 强制 BT2020；SDR 默认关闭（BT709），可选开启（读 ICC 真实色域）——开启前会检测显示器色彩配置，异常（如虚拟机、无 ICC 设备）则无法开启
+**开启 HDR 后，分析按钮仍然是灰色？**<br>
+需要真实原始 FP16 HDR 选区，混合 SDR 区域不能做绝对 nits 分析。另外，`preview.8` 存在显示器枚举误判，已有修复；修复版安装包目前尚未上传 Releases。
 
-#### SDR 内容处理
+**手机显示 HDR 图片和视频的效果不同？**<br>
+系统、屏幕 headroom 与应用支持会影响效果。Ultra HDR JPEG 和单帧 HDR 视频提供不同分享路径，但不保证所有设备显示一致。
 
-HDR 显示器上，桌面和 SDR 应用也以 HDR 格式（R16G16B16A16Float）捕获，但内容亮度实际是 SDR 级别。对此 Starshot 的处理：
+**软件需要上传截图才能 OCR 吗？**<br>
+不需要。OCR 模型本地运行；大模型翻译是独立、主动触发的 API 操作。
 
-- **默认**：仍以 HDR 格式保存（16bit），**不做 8bit 色调映射**，避免降级偏色
-- **SDR 内容删 HDR 开关**（可选）：启用后检测 maxCLL 阈值，内容不达标则自动转 SDR（遵循用户设置的 SDR 存储格式）并删除 HDR 文件，节省空间
+</details>
 
-#### Ultra HDR JPEG 回退
+<br>
 
-HDR 截图可同时保存一份 Ultra HDR JPEG（SDR 基图 + HDR gain map），在不支持 HDR 的软件中也能正常显示。通过 `Starward.Codec` 的 `UhdrEncoder` 编码。
+## 开发与贡献
 
-#### 区域截图 HDR 权衡
+<p>
+<img src="https://img.shields.io/badge/.NET-10-182019?style=flat-square&amp;logo=dotnet&amp;logoColor=DDF369" alt=".NET 10">
+<img src="https://img.shields.io/badge/React-19-182019?style=flat-square&amp;logo=react&amp;logoColor=DDF369" alt="React 19">
+<img src="https://img.shields.io/badge/TypeScript-182019?style=flat-square&amp;logo=typescript&amp;logoColor=DDF369" alt="TypeScript">
+<img src="https://img.shields.io/badge/WebView2-182019?style=flat-square" alt="WebView2">
+<img src="https://img.shields.io/badge/Vite-182019?style=flat-square&amp;logo=vite&amp;logoColor=DDF369" alt="Vite">
+</p>
 
-区域截图覆盖层将 HDR 帧色调映射成 SDR 显示（为选区预览付全屏 FP16 帧的成本不值）。**保存的文件是完整 HDR**，选区时高光被压只影响预览，不影响输出。
+React / TypeScript / Vite 负责主界面，WebView2 消息桥连接 C# 原生能力。捕获、HDR、快捷键、托盘、剪贴板与 OCR 保留对应原生实现；轻量选区继续走 CPU / GDI。
 
-### 三种截图模式
+<details>
+<summary><b>从源码构建 · Windows x64</b></summary>
 
-| 模式       | 目标                                      | 剪贴板格式          | 文件   |
-| ---------- | ----------------------------------------- | ------------------- | ------ |
-| 全屏截图   | 整块显示器（前台窗口/光标所在屏，可切换） | CF_HDROP（文件）    | 保存   |
-| 区域截图   | 框选 / 单击窗口                           | CF_DIB（BGRA 位图） | 保存   |
-| 区域仅复制 | 框选 / 单击窗口                           | CF_DIB（BGRA 位图） | 不保存 |
+准备 **.NET 10 SDK、Node.js 24、Visual Studio 2026 的 C++ / .NET 桌面工作负载、Windows SDK 10.0.26100**。
 
-三种模式共享 HDR 检测、色彩管理、文件名模板、保存管线、信息浮窗。
-
-### 区域截图覆盖层
-
-- **冻结帧**：先截所有显示器合成一张位图，覆盖层显示冻结帧——选区时画面不动，覆盖层不在截图里
-- **多显示器**：覆盖整个虚拟屏幕，选区可跨屏框选（HDR+SDR 混合屏亮度也准确）；放大镜与坐标框仅限光标所在显示器
-- **窗口检测**：EnumWindows + DWM cloaked/toolwindow 过滤 + DWM 扩展边界去阴影 + Z 序选择，单击窗口直接截（悬停内容区截无标题栏的画面，悬停标题栏截整个窗口）
-- **放大镜**：NearestNeighbor 整数对齐 + 像素网格（15×15 像素，每个 10px），像素清晰可辨
-- **动画蚂蚁线 + 实时坐标**：选区 X/Y/W/H + 光标物理坐标
-- **像素精度**：拖拽框选 +1px，窗口矩形 +0
-- ESC / 右键取消，Enter 确认窗口悬停
-
-### 剪贴板
-
-非打包 WinUI 应用的 WinRT `Clipboard.SetContent` 不可靠（延迟渲染 + Flush 问题，内容经常到不了其它应用）。Starshot 直接用 Win32 原生 API（`OpenClipboard` / `SetClipboardData`）：
-
-- **全屏截图**：CF_HDROP（文件拖放格式），粘贴进资源管理器/聊天软件直接得到文件
-- **区域截图**：CF_DIB（BGRA 位图），从覆盖层裁好的 SDR 位图直接放剪贴板，不读文件、不重编码、不二次色调映射
-- 任意线程可调，10×20ms 重试应对剪贴板被占用
-
-### 保存
-
-- 默认平铺存放 `我的图片\Starshot`，可自定义；可选**按文件夹分类**（开关 + 子文件夹名模板，同文件名模板占位符，如 `{process}` 按应用分类）
-- **SDR 格式**（PNG / AVIF / JPEG XL，默认 PNG）和 **HDR 格式**（AVIF / JPEG XL / PNGv3，默认 AVIF）分开设置
-- 质量：中 / 高 / 无损
-- XMP 元数据（CreatorTool = Starshot）
-- 编码串行化（SemaphoreSlim），避免并发编码冲突
-- **存储统计**：设置页显示截图 / 缩略图缓存 / 壁纸 / 日志 / 备份 / OCR 引擎 各自占用空间，支持刷新与一键清理缓存（顺带清理孤儿壁纸文件）
-- **目录更改历史**：截图 / 日志目录的曾用路径（最多 5 条），可打开 / 删除；恢复默认入口移至历史对话框内
-
-#### 支持的格式
-
-| 格式           | 色深                 | HDR 支持                                      | 用途               |
-| -------------- | -------------------- | --------------------------------------------- | ------------------ |
-| PNG            | 8bit / 16bit         | —                                             | SDR 默认，无损     |
-| AVIF           | 8bit / 10bit / 12bit | 完整 HDR                                      | HDR 默认，高压缩比 |
-| JPEG XL        | 8bit / 16bit         | 完整 HDR                                      | HDR 备选，可逆压缩 |
-| PNGv3          | 16bit                | cICP 标注，浏览器支持（图片查看器普遍不支持） | HDR 备选           |
-| Ultra HDR JPEG | 8bit + gain map      | SDR 兼容 HDR 回退                             | HDR 额外产出       |
-
-### 文件名模板
-
-全屏截图和区域截图使用**独立模板**。
-
-| 占位符                                                    | 含义                            | 示例                |
-| --------------------------------------------------------- | ------------------------------- | ------------------- |
-| `{process}`                                               | 进程名（不带扩展名）            | `explorer`          |
-| `{processPath}`                                           | exe 文件名（带扩展名）          | `explorer.exe`      |
-| `{title}`                                                 | 窗口标题（trim + 可设截断长度） | `Genshin Impact`    |
-| `{timestamp}`                                             | Unix 时间戳                     | `1721234567`        |
-| `{time}`                                                  | yyyyMMdd_HHmmssff               | `20260718_14302512` |
-| `{date}`                                                  | yyyyMMdd                        | `20260718`          |
-| `{width}` `{height}`                                      | 图像尺寸（px）                  | `1920` `1080`       |
-| `{year}` `{month}` `{day}` `{hour}` `{minute}` `{second}` | 时间各分量                      |                     |
-
-非法文件名字符统一替换为 `_`。按文件夹分类的子文件夹名模板使用同款占位符语法。
-
-### 信息浮窗
-
-截图后弹出缩略图 + 状态浮窗（不影响截图——设了 `WDA_EXCLUDEFROMCAPTURE`，其它截图工具捕获不到此窗口）：
-
-- **处理中**（旋转动画）/ **已保存**（带打开按钮）/ **已复制**（绿色勾）/ **失败**
-- 多次连拍计数器（如 2/3）
-- Composition 动画滑入/滑出
-
-### 截图库
-
-- 多文件夹浏览（默认截图目录 + 用户自加文件夹）
-- `FileSystemWatcher` 实时感知新增/删除
-- 按日期分组、缩略图懒加载
-- 右键菜单：打开 / 复制文件 / 复制图像 / 在资源管理器中打开 / 打开方式 / 删除
-- 多选 + 拖出 + 批量转换入口
-
-### 剪贴板历史
-
-- 独立页面浏览 Windows 剪贴板历史（Win+V）中的图片项
-- 读取 `Clipboard.GetHistoryItemsAsync`，按时间倒序平铺
-- **当前剪贴板卡片**：超过系统历史单条目大小上限（约 4MB）的大图能正常放上剪贴板但不进 Win+V——页面顶部实时展示当前剪贴板内容补上这块反馈；与历史第一条逐像素比对，相同则隐藏（小图不重复出现）
-- 剪贴板变化自动刷新（ContentChanged 监听 + 节流）+ 回前台补刷
-- 点击预览（图片查看器，支持上一张/下一张）
-- 右键菜单：信息（格式/尺寸/大小）/ 打开 / 识别文字 / 重新复制 / 从历史删除；多选后删除作用于全部选中项
-- 前提：用户在 Windows 设置中开启剪贴板历史；当前剪贴板卡片不依赖历史开启
-- 未开启时显示提示并提供快捷链接（`ms-settings:clipboard`）；开启但无图片时显示空状态提示
-
-### 图片查看器
-
-- 缩放（滑块 / 按钮 / 鼠标滚轮平滑动画 / 双击适配）、全屏模式（F11）
-- 上一张 / 下一张（方向键、鼠标滚轮、底部缩略图条）
-- 拖入文件直接打开
-- **编辑面板**：HDR / SDR / Auto 显示模式切换、SDR 亮度滑块（100–500 nit）、图像与显示器信息
-- **格式互转（导出）**：HDR 显示模式 → AVIF / JPEG XL；SDR 显示模式 + HDR 源 → SDR JPEG / Ultra HDR JPEG / SDR PNG（均为所见即所得的色调映射输出）；SDR 源 → PNG / AVIF / JPEG XL
-- **色彩管理**：读取显示器 ICC profile 与 AdvancedColorInfo
-- **文字识别**：见下节
-
-### 文字识别（OCR）
-
-- **双引擎**：OneOCR（Windows 照片应用同款引擎，精度高）优先，不可用时降级系统引擎（Windows.Media.Ocr，免下载、精度较低）；设置 → 截图 → 配置引擎中可切换
-- **引擎文件按需获取**：OneOCR 的引擎文件（约 95 MB）不随安装包分发，首次使用时弹配置对话框——可直接从本机的 Windows 截图工具或照片应用复制（免流量），或从 CDN 下载；不用了可在对话框中删除
-- **查看器内识别**：工具栏按钮或图库 / 剪贴板右键「识别文字」进入；聚光灯遮罩标出全部文字区域（与照片应用同款交互），在文字上拖选（Ctrl+A 全选）后 Ctrl+C 复制，中英文混排自动去除字符间多余空格
-- **全局快捷键 Alt+O**：框选区域 → 识别文本直接进剪贴板（不保存文件、图像不进剪贴板）；托盘菜单同款入口；结果反馈显示在屏幕信息浮窗
-
-### 批量格式转换
-
-输出格式：SDR JPG / SDR PNG / AVIF / JPEG XL / Ultra HDR JPG，质量默认 100（无损档）。
-
-| 转换方向                          | 引擎                                                           |
-| --------------------------------- | -------------------------------------------------------------- |
-| JPG / PNG → AVIF / JXL            | avifenc.exe / cjxl.exe（CLI）                                  |
-| AVIF / JXL → JPG / PNG            | 进程内解码 + HDR 过截图同款色调映射（与截图直出 SDR 同一条线） |
-| JXR / WEBP / HEIC 等 → AVIF / JXL | 进程内 ImageSaver（avifEncoderLite）                           |
-| 任意 → Ultra HDR JPG              | 进程内 ImageSaver（UhdrEncoder）                               |
-
-### 个性化外观
-
-- **自定义壁纸**：三种模式
-  - **指定图片**：选一张图，固定显示
-  - **指定视频**：循环静音播放，主窗口隐藏时自动暂停
-  - **文件夹随机**：每次启动从文件夹随机抽一张（图片或视频混选）；可选「视频优先」子开关，开启后优先抽视频
-  - 壁纸源丢失自动检测，清理配置并回退到无壁纸 + toast 提示
-  - 铺满方式为裁剪对齐**左上角**（`UniformToFill`）：窄（竖向）壁纸在宽窗口里显示上半部分
-- **强调色**：
-  - **从壁纸自动取色**（默认开）：采样壁纸主色作为应用强调色（HSV 饱和度提升）；视频仅采样首帧，避免颜色闪烁
-  - **自定义颜色**：手动取色器覆盖自动取色
-- **主题**：跟随系统 / 浅色 / 深色
-- **亚克力效果**：壁纸模式下可选磨砂玻璃隔层或壁纸直接透出
-
-### 启动画面
-
-启动时显示 Logo + 标语，延迟 700ms 后 400ms 淡出。仅首次打开窗口触发，从托盘恢复时不重放。
-
-### 系统托盘
-
-- 左键显示主窗口，右键弹出菜单（截图 / 区域截图 / 仅复制 / 识别文字 / 显示 / 退出）
-- 关闭主窗口最小化到托盘（可开关）
-- `ForceExit` 机制确保托盘"退出"能真正退出
-
-### 开机自启
-
-- 注册表 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`，指向启动器（根目录 `Starshot.exe`；安装版直接指向主程序自身）
-- 可选「高优先级启动」开关：改用计划任务（登录触发），启动时机优先于注册表排队；进程优先级另由「高优先级运行」开关控制（应用自提升）
-- 可选 `--hide` 最小化到托盘启动（需托盘已开启）
-- 开关实时读注册表（不缓存配置）：任务管理器禁用只动 StartupApproved、不删 Run 项，开关仍显示开
-- 启动时检测自启项指向的 exe 是否存在，不存在则自动清除启动项并 toast 提示
-- 启动首页可在设置中选择（截图库 / 剪贴板）
-
-## 已知限制
-
-- 区域截图覆盖层打开瞬间，光标仍**有概率**是系统默认形状，需**移动一次鼠标后**十字光标才出现，已尽最大努力修复，仍有小概率出现此情况，目前无解决方案，原因未知
-- JPEG XL 的 HDR 输出不写入内容亮度元数据（依赖的编码库封装层未暴露该接口），个别浏览器可能因此压暗高光；AVIF 与 PNGv3 已写入，不受影响
-- 视频壁纸启动时可能因 MF 媒体管线竞争初始化失败（间歇，未根治）；加载时先显示视频同目录的随机图片作占位，卡死则保持占位图，不黑屏
-
-## 架构
-
-### 目录结构
-
-```
-根目录/（便携版）
-  Starshot.exe            ← C++ 启动器（读 version.ini 决定启哪个 app 目录）
-  config.sjson            ← 配置文件（JSON，首次启动生成）
-  version.ini             ← 版本号（仅 CI/CD release 有，本地构建无）
-  app-{version}/          ← 主程序目录（CI/CD release 版本化，本地构建为 app/）
-    Starshot.exe          ← 主程序（WinUI 3 / .NET 10）
-    *.dll                 ← 依赖库
-    avifenc.exe 等        ← 编解码工具（来自 Starward.Codec NuGet）
-
-安装目录/（安装版，扁平）
-  Starshot.exe            ← 主程序（无启动器，无版本目录）
-  Starshot.Update.exe     ← kachina 更新器
-  Starshot.Uninst.exe     ← 卸载器
-  *.dll 等                ← 全部依赖平铺
-
-%LOCALAPPDATA%/Starshot/ （共用，可自定义其中部分内容存储位置）
-  config.sjson            ← 配置文件（仅安装版有）
-  log/                    ← 日志
-  bg/                     ← 壁纸
-  thumb/                  ← 缩略图缓存
-  backup/                 ← 配置备份
-```
-
-### 启动器
-
-C++ 原生程序（~400KB）。读 `version.ini` 决定启动 `app-{version}/Starshot.exe`（无 version.ini 则 `app/`，debug/local 构建）。带 `--clean`（或 `--clean=<pid>`）参数启动时遍历 `app-*` 目录删除非当前版本。
-
-### 托盘与后台启动
-
-- `--hide` 自启时不创建 MainWindow，全局热键注册到 SystemTrayWindow 的 hwnd（托盘窗口作为常驻宿主）
-- H.NotifyIcon.WinUI 的 TaskbarIcon 依赖 Window 的一次 Show 触发 `Loaded` 才注册图标；初始化时套 `WS_EX_LAYERED + alpha=0` 让窗口透明地完成这次 Show，避免 `--hide` 自启时可见闪烁
-- C++ 启动器用 `argv[1..]` 重新拼接透传命令
-
-### 技术栈
-
-| 层             | 技术                                                               |
-| -------------- | ------------------------------------------------------------------ |
-| UI 框架        | WinUI 3（Windows App SDK 1.8）                                     |
-| 运行时         | .NET 10                                                            |
-| 图形           | Win2D 1.3（D3D11 互操作、HDR 色调映射、直方图效果）                |
-| 编解码         | Starward.Codec NuGet（libavif / libjxl / Ultra HDR P/Invoke 封装） |
-| 数据存储       | config.sjson（System.Text.Json）                                   |
-| 日志           | Serilog                                                            |
-| 托盘           | H.NotifyIcon.WinUI                                                 |
-| 缩略图         | 自定义 CachedImage（ImageEx 异步加载 + 缩略图缓存）                |
-| 区域截图覆盖层 | Win2D CanvasSwapChainPanel（冻结帧渲染 + 选区绘制）                |
-| 剪贴板         | Win32 原生 API（OpenClipboard / SetClipboardData）                 |
-| 启动器         | C++ 原生（v145 工具集，静态 CRT）                                  |
-
-### 重入保护
-
-`Interlocked.CompareExchange` 全局守卫，全屏/区域/仅复制共用一个 `_isCapturing` 标志——键盘连触或快速连续按热键不会触发多次截图。
-
-### 构建配置
-
-|                    | Debug              | Release                                                           |
-| ------------------ | ------------------ | ----------------------------------------------------------------- |
-| .NET Runtime       | 框架依赖           | 自包含                                                            |
-| 原生库             | 仅 win-x64         | 同 Debug；arm64 需显式 `-r win-arm64`                             |
-| Trim               | 不生效（不裁剪）   | 部分（partial）                                                   |
-| CsWinRT AOT 优化器 | 关（构建快）       | 开，Trim 下保证 WinRT interop 不被裁坏                            |
-| ReadyToRun         | 不生效（标准 JIT） | AOT 预编译                                                        |
-| 输出路径           | `build/app/`       | `build/release/app/`；若先编译了启动器会自动拷到 `build/release/` |
-| 大小               | ~80MB              | ~160MB（Trim）                                                    |
-
-## 从源码构建
-
-### 环境要求
-
-- Visual Studio 2026（含 C++ 桌面开发、.NET 桌面开发）
-- .NET 10 SDK
-- Windows SDK 10.0.26100
-
-### 步骤
-
-```bash
-git clone https://github.com/loliri/Starshot
+```powershell
+git clone https://github.com/Yukikaze1945/Starshot.git
 cd Starshot
-
-# === Debug ===
-# 构建主程序（输出到 build/app/）
 dotnet build src/Starshot/Starshot.csproj -c Debug -p:Platform=x64
-
-# 构建启动器（输出到 build/Starshot.exe，需要 VS 的 MSBuild）
-"C:\Program Files\Microsoft Visual Studio\<版本>\Community\MSBuild\Current\Bin\MSBuild.exe" src/Starshot.Launcher/Starshot.Launcher.vcxproj -p:Configuration=Release -p:Platform=x64
-
-# 运行：build/Starshot.exe（启动器）或 build/app/Starshot.exe（主程序）
-
-# === Release 发布 ===
-# 1. 先构建启动器（输出到 build/Starshot.exe）
-"C:\Program Files\Microsoft Visual Studio\<版本>\Community\MSBuild\Current\Bin\MSBuild.exe" src/Starshot.Launcher/Starshot.Launcher.vcxproj -p:Configuration=Release -p:Platform=x64
-
-# 2. 发布主程序（输出到 build/release/app/，自动拷启动器到 build/release/Starshot.exe + 删 AI 库）
-dotnet publish src/Starshot/Starshot.csproj -c Release -p:Platform=x64
-
-# 完成后的目录结构：
-# build/release/
-#   Starshot.exe        ← 启动器（自动拷贝）
-#   app/
-#     Starshot.exe      ← 主程序（自包含 + trim + R2R）
-#     *.dll / avifenc.exe 等
 ```
 
-## 国际化（i18n）
+项目构建会准备 WebUI 与固定版本编码组件，首次构建需要网络。调试应用位于 `build/app/Starshot.exe`。
 
-翻译基于 `src/Starshot.Language/` 下的 `.resx` 资源文件（`Lang.resx` 为英文默认，`Lang.zh-CN.resx` 等为各语言）。另外还需在 `GeneralSetting` 的语言 ComboBox 加选项 + `LanguageIndex` 映射。
+仅运行前端开发预览：
 
-欢迎贡献翻译：fork 仓库 → 复制 `Lang.resx` 为 `Lang.{你的语言}.resx` → 翻译 → 提交 PR。
+```powershell
+cd src/Starshot.WebUI
+npm ci
+npm run dev
+```
 
-## 开发说明
-
-Starshot 的核心功能与交互体验已趋于完善，进入稳定打磨阶段——这意味着日常使用中遇到的问题会被优先处理，体验细节会持续优化。功能上的新想法同样欢迎：每一份 Issue 反馈都会被认真阅读与评估，它们是 Starshot 持续变好的方向。
-
-欢迎参与：
-
-- 发现 Bug？[提交 Issue](../../issues/new)
-- 有功能建议？[发起讨论](../../issues/new)
-- 想贡献代码？欢迎提交 [Pull Request](../../pulls)
-
-感谢每一位用户的反馈与支持！
-
-## 常见问题
-
-<details>
-<summary><b>区域截图悬停某些窗口时坐标框显示负值（如 -11,-11）？</b></summary>
-
-Windows DWM 报告的窗口边界是包含屏外阴影/边框的扩展边界，负值来自窗口最大化时超出屏幕的预留边。Starshot 如实读取并显示——屏外部分本就不可见，截图结果不受影响。
+浏览器预览不具备桌面原生消息桥。安装包 / 便携包构建需要原生启动器、Inno Setup 和 Microsoft 签名的 WebView2 离线安装程序；具体参见 [发布与更新说明](docs/releasing-fork.md)。
 
 </details>
 
-<details>
-<summary><b>截图库（首页）图片颜色异常 / 乱色</b></summary>
+[报告问题](https://github.com/Yukikaze1945/Starshot/issues/new) · [查看提交](https://github.com/Yukikaze1945/Starshot/commits/fix/uhdr-wide-gamut-red) · [贡献代码](https://github.com/Yukikaze1945/Starshot/pulls) · [发布流程](docs/releasing-fork.md)
 
-这通常是 Windows 系统图像解码器（AVIF / HEIF / JPEG XL 扩展）的问题，不是 Starshot 的 bug。尝试在 Microsoft Store 中搜索并更新以下组件：
+## 致谢与许可
 
-- **AV1 Video Extension**
-- **HEIF Image Extensions**
-- **HEVC Video Extensions**
-- **Webp Image Extensions**
+基于 [loliri / Starshot](https://github.com/loliri/Starshot)，保留原作者与贡献者声明。本仓库源码采用 [MIT License](LICENSE)。
 
-更新后重启 Starshot。如果问题持续，请 [提交 Issue](../../issues/new) 并附上截图。
+感谢 [SimdPaddleOCR](https://github.com/sdcb/SimdPaddleOCR)、libultrahdr、FFmpeg、Win2D 与 WebView2 等项目。**第三方组件保持各自许可**：OCR 模型说明见 [SimdPaddleOCR notices](third_party/simdpaddleocr/README.md)，独立 FFmpeg 编码组件使用 [GPL v3 构建](third_party/ffmpeg/7.1.1/win-x64/README.txt)，发布包携带相应许可与源码来源资料。
 
-</details>
+<br>
 
-<details>
-<summary><b>HDR PNG（PNGv3）在图片查看器里显示偏灰/偏暗？</b></summary>
+<div align="center">
 
-PNGv3（W3C PNG 第三版，2025 年定稿）的 HDR 依靠 cICP 元数据标注 BT.2020 + PQ，是刚落地的标准。目前 Chrome / Edge / Firefox 等浏览器可以正确渲染其 HDR 效果，但绝大多数图片查看器（如 Windows 照片）仍把它当普通 PNG 解码，显示会偏灰/偏暗——这是生态现状，不是文件损坏。**推荐使用 Starshot 内置图片查看器，支持 HDR PNG v3 的正确渲染。**需要广泛兼容请选 AVIF（HDR 分发主流），或开启 Ultra HDR JPEG 回退。
+**CAPTURE THE LIGHT. KEEP THE DETAIL.**
 
-</details>
+<sub>Starshot Fork · 源码、安装包与更新，一个仓库。</sub>
 
-<details>
-<summary><b>为什么从剪贴板拖出的图片无法直接发送到微信和 QQ，但截图库里的图片可以？</b></summary>
+<br><br>
 
-剪贴板历史里的图片是内存位图（与「复制图像」同一条通路，不落盘），拖出时携带的是位图数据；截图库里的图片是磁盘文件，拖出时携带的是文件。微信 / QQ 的拖放接收端只认文件、不认位图拖放——所以截图库的图能直接拖进聊天窗口，剪贴板的图拖不进去。变通：粘贴（Ctrl+V）或右键「重新复制」，微信 / QQ 会把位图自动保存为文件再发送。
+[![Star this project](https://img.shields.io/badge/LIKE%20THE%20VIEW%3F-GIVE%20IT%20A%20STAR-DDF369?style=for-the-badge&labelColor=182019&logo=github&logoColor=DDF369)](https://github.com/Yukikaze1945/Starshot/stargazers)
 
-</details>
-
-<details>
-<summary><b>为什么窗口截图是圆角的？</b></summary>
-
-Windows 11 的窗口圆角由 DWM 在窗口合成层应用。WGC 拿到的帧已带上圆角裁剪——这是该捕获途径的天然限制，无法绕过，同样使用 WGC 的 OBS 窗口捕获也不例外（见下方参考）。
-
-WGC 的两种捕获路径都会带上圆角，区别只在圆角处的像素：显示器捕获截的是最终合成结果，窗口四角是透出的下层内容；窗口捕获拿到的原始帧里圆角处是透明。不过圆角只占窗口四角的少量像素，即使高分屏上对整体画面的影响也可忽略。
-
-参考文献：
-
-- [Apply rounded corners in desktop apps — Microsoft Learn](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/ui/apply-rounded-corners)
-- [Disable the rounded corners in Windows 11（DWM 内部机制分析）](https://valinet.ro/2022/01/21/Disable-the-rounded-corners-in-Windows-11.html)
-- [Greenshot: capturing windows with rounded corners (#373)](https://github.com/greenshot/greenshot/issues/373)
-- [OBS: Remove rounded corners in Window Capture](https://www.reddit.com/r/obs/comments/1n9dgnq/how_do_i_remove_the_rounded_corners_when_using/)
-
-</details>
-
-<details>
-<summary><b>截图保存时闪退（虚拟机 / 部分显示器）</b></summary>
-
-这类环境（虚拟机、无 ICC profile 的设备）的显示器色彩配置异常，色彩管理开启时编码器（lcms2）处理畸形色域数据会崩溃。保持色彩管理关闭（默认）即可规避；HDR 截图不受影响。
-
-</details>
-
-<details>
-<summary><b>截图颜色和屏幕上看到的不一样</b></summary>
-
-如果你使用的是 HDR 显示器，请确认 Windows HDR 开关已打开（设置 → 系统 → 显示 → HDR）。HDR 截图功能仅在 HDR 模式下生效。
-
-</details>
-
-<details>
-<summary><b>截图后剪贴板粘贴不出来</b></summary>
-
-Starshot 使用 Win32 原生剪贴板 API 写入，理论上比 WinRT 更可靠。如果仍粘贴失败，可能是目标应用不支持对应的剪贴板格式（CF_HDROP 文件 / CF_DIB 位图）。尝试粘贴到资源管理器（文件）或画图（位图）验证。
-
-</details>
-
-<details>
-<summary><b>Windows 10 截图是 SDR 的，HDR 功能在哪？</b></summary>
-
-Windows 10 的 WGC 不支持 HDR 像素格式捕获，系统合成器只能提供 8bit SDR 帧。因此在 Windows 10 上无论全屏还是区域截图都只能得到 SDR 图像；HDR 截图需要 Windows 11。
-
-</details>
-
-## 致谢
-
-- [Starward](https://github.com/Scighost/Starward) — 截图核心、编解码引擎、窗口框架均源自 Starward，由 [@Scighost](https://github.com/Scighost) 开发
-- [ShareX](https://github.com/ShareX/ShareX) — 区域截图覆盖层的窗口检测和交互设计参考
-- [kachina-installer](https://github.com/YuehaiTeam/kachina-installer) — 安装版线的安装器与更新器（在线安装、文件级差分、逐文件校验）
-
-**和所有用到的第三方库**：
-
-- [CommunityToolkit](https://github.com/CommunityToolkit) — MVVM 框架 + WinUI 控件（Segmented / Behaviors / Helpers）
-- [SharpCompress](https://github.com/adamhathcock/sharpcompress) — 流式解压
-- [H.NotifyIcon.WinUI](https://github.com/HavenDV/H.NotifyIcon) — 系统托盘
-- [Vanara.PInvoke](https://github.com/dahall/Vanara) — Win32 API 封装（DwmApi / Ole / Shell32）
-- [ComputeSharp.D2D1](https://github.com/Sergio0694/ComputeSharp) — GPU 计算效果
-- [Serilog](https://github.com/serilog/serilog) — 结构化日志
-
-## License
-
-MIT
+</div>
