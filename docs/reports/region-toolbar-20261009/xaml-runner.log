@@ -1,0 +1,12 @@
+WinRT init begin
+WinRT init done; Application.Start begin
+Application.Start callback
+Test launch callback
+WinRT init begin
+WinRT init done; Application.Start begin
+Application.Start callback
+Test launch callback
+WinRT init begin
+WinRT init done; Application.Start begin
+Application.Start callback
+Test launch callback

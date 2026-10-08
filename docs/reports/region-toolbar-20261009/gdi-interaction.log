@@ -1,0 +1,2 @@
+Failed to destroy CPU capture window: error={Error}
+PASS: 107 raster/geometry/window/toolbar/ownership checks; no desktop input, screenshot, clipboard or image files.

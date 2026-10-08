@@ -24,8 +24,6 @@ using Windows.UI;
 
 namespace Starshot.Features.Screenshot;
 
-public enum RegionCaptureAction { Cancel, Save, Copy, Ocr, Translate, Pin, RecordGif, LongCapture }
-
 public sealed record RegionCaptureResult(
     RegionCaptureAction Action,
     Rect SelectionRect,
@@ -110,6 +108,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
     public RegionCaptureWindow()
     {
         InitializeComponent();
+        InitializeToolbarInteraction();
         this.Closed += RegionCaptureWindow_Closed;
 
         // 窗口设置（单例，只一次）
@@ -228,6 +227,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
         // 更新帧（旧的已在 CloseWindow 释放并清引用）
         _canvasOriginal = canvas;
+        PrepareHdrAnalysisMetadata(sdrWhiteLevel);
         _displayBitmap = CreateDisplayBitmap(canvas, physW, physH, sdrWhiteLevel);
         _ownsDisplayBitmap = !ReferenceEquals(_displayBitmap, canvas);
         try { _displayPixels = _displayBitmap.GetPixelBytes(); }
@@ -241,11 +241,6 @@ public sealed partial class RegionCaptureWindow : WindowEx
         SelectionRect = default;
         _state = RegionCaptureState.Selecting;
         _defaultAction = defaultAction;
-        var accent = new Microsoft.UI.Xaml.Media.SolidColorBrush(Color.FromArgb(255, 221, 243, 105));
-        var clear = new Microsoft.UI.Xaml.Media.SolidColorBrush(Colors.Transparent);
-        ToolbarSaveButton.Background = defaultAction == RegionCaptureAction.Save ? accent : clear;
-        ToolbarCopyButton.Background = defaultAction == RegionCaptureAction.Copy ? accent : clear;
-        ToolbarOcrButton.Background = defaultAction == RegionCaptureAction.Ocr ? accent : clear;
         _positionOnClick = default;
         _dragMode = DragMode.None;
         _activeHandle = ResizeHandle.None;
@@ -271,6 +266,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         _cleanedUp = false;
         Completion = new TaskCompletionSource<RegionCaptureResult>();
         SelectionToolbar.Visibility = Visibility.Collapsed;
+        HideToolbarAuxiliary();
         SelectionMetrics.Visibility = Visibility.Collapsed;
         _prevForeground = (nint)User32.GetForegroundWindow();
 
@@ -685,6 +681,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
                     );
                 }
 
+                DrawHdrAnalysisHeatmap(ds);
                 if (_state == RegionCaptureState.Selected)
                     DrawAnnotations(ds);
                 ds.DrawRectangle(rect, Color.FromArgb(180, 2, 10, 24), 4);
@@ -911,7 +908,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         if (!visible)
             return;
         var physical = ComputePhysicalRect(rect, _dragMode == DragMode.Creating);
-        SelectionMetricsText.Text = $"{(int)physical.X},{(int)physical.Y}  {(int)physical.Width} × {(int)physical.Height} px";
+        SelectionMetricsText.Text = $"{(int)physical.X + _vx},{(int)physical.Y + _vy}  {(int)physical.Width} × {(int)physical.Height} px";
         double labelWidth = Math.Max(SelectionMetrics.ActualWidth, 230);
         double x = Math.Clamp(rect.Left, 0, Math.Max(0, _lockedW - labelWidth));
         double y = rect.Top >= 40 ? rect.Top - 38 : Math.Min(_lockedH - 32, rect.Top + 5);
@@ -927,6 +924,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
             return;
         var pt = e.GetCurrentPoint(Canvas);
         _currentMousePos = pt.Position;
+        if (ConsumeToolbarCanvasPress(pt.Position)) { _toolbarDismissedPointer = true; e.Handled = true; return; }
         if (pt.Properties.IsLeftButtonPressed)
         {
             if (StartAnnotation(pt.Position))
@@ -989,6 +987,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
             }
         }
         _currentMousePos = pos;
+        UpdateHdrAnalysisCursor(pos);
 
         if (_draftAnnotation is not null)
         {
@@ -1023,6 +1022,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
     private void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
+        if (_toolbarDismissedPointer) { _toolbarDismissedPointer = false; e.Handled = true; return; }
         var pt = e.GetCurrentPoint(Canvas);
         Serilog.Log.Information("Region overlay pointer release: generation={Generation}, state={State}, drag={Drag}, pos={X},{Y}",
             _captureGeneration, _state, _dragMode, pt.Position.X, pt.Position.Y);
@@ -1171,6 +1171,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         _dragMode = DragMode.None;
         SelectionRect = default;
         SelectionToolbar.Visibility = Visibility.Collapsed;
+        HideToolbarAuxiliary();
         UpdateHover(_currentMousePos);
         RequestRedraw();
     }
@@ -1179,47 +1180,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
     {
         if (_state != RegionCaptureState.Selected)
             return;
-        double barWidth = SelectionToolbar.Width, barHeight = SelectionToolbar.Height;
-        const double gap = 8;
-        GetActiveMonitorDip(
-            (float)(SelectionRect.Left + SelectionRect.Width / 2),
-            (float)(SelectionRect.Top + SelectionRect.Height / 2),
-            out float ml, out float mt, out float mr, out float mb);
-        // 跨屏选区以覆盖面积最大的显示器放工具栏；FindAll 的 WinRT vector
-        // 使用索引访问，避免此环境中 foreach 枚举器的 CsWinRT 接口异常。
-        try
-        {
-            Rect physical = GetPhysicalSourceRect();
-            double bestArea = 0;
-            var displays = DisplayArea.FindAll();
-            for (int i = 0; i < displays.Count; i++)
-            {
-                var bounds = displays[i].OuterBounds;
-                double left = Math.Max(physical.Left + _vx, bounds.X);
-                double top = Math.Max(physical.Top + _vy, bounds.Y);
-                double right = Math.Min(physical.Right + _vx, bounds.X + bounds.Width);
-                double bottom = Math.Min(physical.Bottom + _vy, bounds.Y + bounds.Height);
-                double area = Math.Max(0, right - left) * Math.Max(0, bottom - top);
-                if (area <= bestArea)
-                    continue;
-                bestArea = area;
-                ml = (bounds.X - _vx) / _scale;
-                mt = (bounds.Y - _vy) / _scale;
-                mr = (bounds.X + bounds.Width - _vx) / _scale;
-                mb = (bounds.Y + bounds.Height - _vy) / _scale;
-            }
-        }
-        catch (Exception ex)
-        {
-            Serilog.Log.Warning(ex, "Failed to locate primary monitor for region toolbar");
-        }
-        double x = Math.Clamp(SelectionRect.Right - barWidth,
-            ml, Math.Max(ml, mr - barWidth));
-        double y = SelectionRect.Bottom + gap + barHeight + 16 <= mb
-            ? SelectionRect.Bottom + gap : SelectionRect.Top - gap - barHeight;
-        y = Math.Clamp(y, mt, Math.Max(mt, mb - barHeight));
-        Microsoft.UI.Xaml.Controls.Canvas.SetLeft(SelectionToolbar, x);
-        Microsoft.UI.Xaml.Controls.Canvas.SetTop(SelectionToolbar, y);
+        RefreshToolbar();
     }
 
     private void UpdateHover(Point pos)
@@ -1280,6 +1241,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         ++_captureGeneration;
         StopMoveInTimer();
         SelectionToolbar.Visibility = Visibility.Collapsed;
+        HideToolbarAuxiliary();
         AnnotationTextEditor.Visibility = Visibility.Collapsed;
         ReleaseCaptureCursor();
         _isClosed = true;
@@ -1341,15 +1303,6 @@ public sealed partial class RegionCaptureWindow : WindowEx
         catch (Exception ex) { Serilog.Log.Warning(ex, "Failed to dispose region swap chain"); }
     }
 
-    private void Toolbar_Copy_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.Copy);
-    private void Toolbar_Save_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.Save);
-    private void Toolbar_Ocr_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.Ocr);
-    private void Toolbar_Translate_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.Translate);
-    private void Toolbar_Pin_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.Pin);
-    private void Toolbar_RecordGif_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.RecordGif);
-    private void Toolbar_LongCapture_Click(object sender, RoutedEventArgs e) => CompleteCapture(RegionCaptureAction.LongCapture);
-    private void Toolbar_Cancel_Click(object sender, RoutedEventArgs e) => CancelCapture();
-    private void Toolbar_Reselect_Click(object sender, RoutedEventArgs e) => ReturnToSelectingState();
 
     /// <summary>首帧已 Present 后，由当前会话的一次性 timer 移回虚拟屏幕。</summary>
     private void MoveOnscreen(int generation)
@@ -1492,6 +1445,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         if (_cleanedUp)
             return;
         _cleanedUp = true;
+        CloseHdrAnalysis();
         ReleaseCaptureCursor();
         ++_captureGeneration;
         _pendingMoveIn = false;
@@ -1524,6 +1478,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
     {
         if (_isClosed)
             return false;
+        if (HandleToolbarPopupKey(key)) return true;
+        if (IsHdrAnalysisControlFocused()) return false;
         if (AnnotationTextEditor.Visibility == Visibility.Visible)
         {
             if (key == Windows.System.VirtualKey.Escape)
@@ -1543,14 +1499,10 @@ public sealed partial class RegionCaptureWindow : WindowEx
             .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
         bool shift = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
             .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
-        if (control && key == Windows.System.VirtualKey.Z && _state == RegionCaptureState.Selected)
+        var toolbarShortcut = RegionToolbarCatalog.Shortcut((int)key, control, shift);
+        if ((_state == RegionCaptureState.Selected || key == Windows.System.VirtualKey.F1) && toolbarShortcut.HasValue)
         {
-            if (shift) RedoAnnotation(); else UndoAnnotation();
-            return true;
-        }
-        if (control && key == Windows.System.VirtualKey.Y && _state == RegionCaptureState.Selected)
-        {
-            RedoAnnotation();
+            InvokeToolbar(toolbarShortcut.Value);
             return true;
         }
         if (key == Windows.System.VirtualKey.C)
@@ -1568,16 +1520,6 @@ public sealed partial class RegionCaptureWindow : WindowEx
                 }
                 catch (Exception ex) { Serilog.Log.Warning(ex, "Failed to copy region pixel color"); }
             }
-            return true;
-        }
-        if (control && key == Windows.System.VirtualKey.S && _state == RegionCaptureState.Selected)
-        {
-            CompleteCapture(RegionCaptureAction.Save);
-            return true;
-        }
-        if (control && key == Windows.System.VirtualKey.Q && _state == RegionCaptureState.Selected)
-        {
-            CompleteCapture(RegionCaptureAction.Translate);
             return true;
         }
         if (key == Windows.System.VirtualKey.Escape)
@@ -1602,6 +1544,16 @@ public sealed partial class RegionCaptureWindow : WindowEx
                 EnterSelectedState();
                 return true;
             }
+        }
+        var cursorDelta = RegionToolbarCatalog.CursorDelta((int)key);
+        if (cursorDelta != System.Drawing.Point.Empty && _canvasOriginal is not null && User32.GetCursorPos(out var cursor))
+        {
+            int x = Math.Clamp(cursor.x + cursorDelta.X, _vx, _vx + (int)_canvasOriginal.SizeInPixels.Width - 1);
+            int y = Math.Clamp(cursor.y + cursorDelta.Y, _vy, _vy + (int)_canvasOriginal.SizeInPixels.Height - 1);
+            User32.SetCursorPos(x, y);
+            _currentMousePos = new Point((x - _vx) / _scale, (y - _vy) / _scale);
+            RequestRedraw();
+            return true;
         }
         return _state == RegionCaptureState.Selected && TryAdjustWithArrow(key);
     }
@@ -1660,6 +1612,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
     private void HandleRightClick()
     {
+        if (DismissToolbarOutsidePress()) return;
         if (_state == RegionCaptureState.Selected)
             ReturnToSelectingState();
         else if (_state == RegionCaptureState.Selecting && _dragMode != DragMode.None)
@@ -1683,6 +1636,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
     {
         if (uMsg == (uint)User32.WindowMessage.WM_RBUTTONUP)
         {
+            if (_toolbarDismissedPointer) { _toolbarDismissedPointer = false; return 0; }
             HandleRightClick();
             return 0;
         }

@@ -1,0 +1,210 @@
+{
+  "dispatcher_delay:host_control": {
+    "count": 174,
+    "sum_ms": 23.3923,
+    "p50_ms": 0.061,
+    "p95_ms": 0.2685,
+    "p99_ms": 2.1952,
+    "max_ms": 4.9796
+  },
+  "heartbeat_gap:host_control": {
+    "count": 174,
+    "sum_ms": 1342.7638,
+    "p50_ms": 5.2996,
+    "p95_ms": 12.4507,
+    "p99_ms": 72.4332,
+    "max_ms": 230.0647
+  },
+  "dispatcher_delay:memory_sampling": {
+    "count": 231,
+    "sum_ms": 25482.2114,
+    "p50_ms": 38.9258,
+    "p95_ms": 402.031,
+    "p99_ms": 450.2637,
+    "max_ms": 460.8552
+  },
+  "heartbeat_gap:memory_sampling": {
+    "count": 12,
+    "sum_ms": 536.4864,
+    "p50_ms": 5.7097,
+    "p95_ms": 466.2304,
+    "p99_ms": 466.2304,
+    "max_ms": 466.2304
+  },
+  "dispatcher_delay:analysis": {
+    "count": 1334,
+    "sum_ms": 1632.5084999999995,
+    "p50_ms": 0.0804,
+    "p95_ms": 1.33,
+    "p99_ms": 22.7806,
+    "max_ms": 180.8944
+  },
+  "readback": {
+    "count": 1105,
+    "sum_ms": 496.82999999999987,
+    "p50_ms": 0.2801,
+    "p95_ms": 0.4498,
+    "p99_ms": 0.6587,
+    "max_ms": 167.4464
+  },
+  "heartbeat_gap:analysis": {
+    "count": 1243,
+    "sum_ms": 7446.851499999999,
+    "p50_ms": 5.3573,
+    "p95_ms": 6.3638,
+    "p99_ms": 18.6264,
+    "max_ms": 189.8618
+  },
+  "append_cpu": {
+    "count": 1105,
+    "sum_ms": 1259.1196000000011,
+    "p50_ms": 1.0653,
+    "p95_ms": 1.688,
+    "p99_ms": 2.1564,
+    "max_ms": 4.9762
+  },
+  "p99_clone": {
+    "count": 17,
+    "sum_ms": 93.86,
+    "p50_ms": 5.4314,
+    "p95_ms": 6.0724,
+    "p99_ms": 6.0724,
+    "max_ms": 6.0724
+  },
+  "p99_sort": {
+    "count": 17,
+    "sum_ms": 4375.4463,
+    "p50_ms": 207.2476,
+    "p95_ms": 1047.2426,
+    "p99_ms": 1047.2426,
+    "max_ms": 1047.2426
+  },
+  "statistics_cpu": {
+    "count": 17,
+    "sum_ms": 4757.7461,
+    "p50_ms": 229.2686,
+    "p95_ms": 1073.5016,
+    "p99_ms": 1073.5016,
+    "max_ms": 1073.5016
+  },
+  "waveform_total": {
+    "count": 18,
+    "sum_ms": 55.665699999999994,
+    "p50_ms": 0.0209,
+    "p95_ms": 54.8199,
+    "p99_ms": 54.8199,
+    "max_ms": 54.8199
+  },
+  "analysis_total": {
+    "count": 21,
+    "sum_ms": 8116.2846,
+    "p50_ms": 396.5337,
+    "p95_ms": 572.8015,
+    "p99_ms": 1334.0138,
+    "max_ms": 1334.0138
+  },
+  "dispatcher_delay:close": {
+    "count": 45,
+    "sum_ms": 313.80620000000005,
+    "p50_ms": 0.1396,
+    "p95_ms": 42.3644,
+    "p99_ms": 47.6306,
+    "max_ms": 47.6306
+  },
+  "heartbeat_gap:close": {
+    "count": 33,
+    "sum_ms": 352.2905999999999,
+    "p50_ms": 5.3659,
+    "p95_ms": 23.7642,
+    "p99_ms": 42.4764,
+    "max_ms": 42.4764
+  },
+  "dispatcher_delay:diagnostic_gc": {
+    "count": 1,
+    "sum_ms": 15.7615,
+    "p50_ms": 15.7615,
+    "p95_ms": 15.7615,
+    "p99_ms": 15.7615,
+    "max_ms": 15.7615
+  },
+  "dispatcher_delay:cancel": {
+    "count": 19,
+    "sum_ms": 42.06280000000001,
+    "p50_ms": 0.6448,
+    "p95_ms": 10.808,
+    "p99_ms": 10.808,
+    "max_ms": 10.808
+  },
+  "heartbeat_gap:cancel": {
+    "count": 15,
+    "sum_ms": 225.39980000000003,
+    "p50_ms": 5.323,
+    "p95_ms": 130.7458,
+    "p99_ms": 130.7458,
+    "max_ms": 130.7458
+  },
+  "dispatcher_delay:rapid_reopen": {
+    "count": 83,
+    "sum_ms": 56.5403,
+    "p50_ms": 0.1187,
+    "p95_ms": 4.0487,
+    "p99_ms": 11.3571,
+    "max_ms": 11.3571
+  },
+  "heartbeat_gap:rapid_reopen": {
+    "count": 74,
+    "sum_ms": 437.92360000000014,
+    "p50_ms": 5.4281,
+    "p95_ms": 7.6065,
+    "p99_ms": 26.7217,
+    "max_ms": 26.7217
+  },
+  "dispatcher_delay:optional_views": {
+    "count": 276,
+    "sum_ms": 82476.17480000002,
+    "p50_ms": 190.8744,
+    "p95_ms": 870.0289,
+    "p99_ms": 928.8439,
+    "max_ms": 939.8395
+  },
+  "heartbeat_gap:optional_views": {
+    "count": 78,
+    "sum_ms": 538.9264000000001,
+    "p50_ms": 5.2697,
+    "p95_ms": 10.0339,
+    "p99_ms": 66.0681,
+    "max_ms": 66.0681
+  },
+  "heatmap_cpu": {
+    "count": 1,
+    "sum_ms": 16.463,
+    "p50_ms": 16.463,
+    "p95_ms": 16.463,
+    "p99_ms": 16.463,
+    "max_ms": 16.463
+  },
+  "heatmap_upload": {
+    "count": 1,
+    "sum_ms": 2.1212,
+    "p50_ms": 2.1212,
+    "p95_ms": 2.1212,
+    "p99_ms": 2.1212,
+    "max_ms": 2.1212
+  },
+  "heatmap_total": {
+    "count": 2,
+    "sum_ms": 39.9962,
+    "p50_ms": 0.45,
+    "p95_ms": 39.5462,
+    "p99_ms": 39.5462,
+    "max_ms": 39.5462
+  },
+  "waveform_cpu": {
+    "count": 1,
+    "sum_ms": 49.5011,
+    "p50_ms": 49.5011,
+    "p95_ms": 49.5011,
+    "p99_ms": 49.5011,
+    "max_ms": 49.5011
+  }
+}

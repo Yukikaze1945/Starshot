@@ -1,0 +1,7 @@
+{
+  "runtime": "10.0.12",
+  "serverGc": false,
+  "processors": 16,
+  "os": "Microsoft Windows NT 10.0.26220.0",
+  "note": "Heap/LOH/committed/fragmentation columns reflect the most recent GC (index/generation recorded), not live heap telemetry. WeakReference counters never own buffers. No forced GC until all 15 cycles finish."
+}

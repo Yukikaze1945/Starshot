@@ -44,98 +44,32 @@
           Text="0,0  0 × 0 px"
         />
       </Border>
-      <Border
-        x:Name="SelectionToolbar"
-        Width="880"
-        Height="50"
-        Background="#FAF9FAF3"
-        BorderBrush="#DDF369"
-        BorderThickness="1"
-        CornerRadius="12"
-        Visibility="Collapsed"
-      >
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal" Spacing="0">
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolSelect" Tag="Select" Width="30" Height="36" Padding="0" Background="#DDF369" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="选择/调整选区"><Viewbox Width="17" Height="17"><Path Width="16" Height="16" Data="M2,6 L2,2 L6,2 M10,2 L14,2 L14,6 M14,10 L14,14 L10,14 M6,14 L2,14 L2,10" Stroke="#242B24" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Viewbox></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolRectangle" Tag="Rectangle" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="矩形标注" AutomationProperties.Name="矩形标注"><Viewbox Width="17" Height="17"><Path Width="16" Height="16" Data="M2,3 L14,3 L14,13 L2,13 Z" Stroke="#242B24" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Viewbox></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolEllipse" Tag="Ellipse" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="椭圆标注"><Viewbox Width="17" Height="17"><Path Width="16" Height="16" Data="M8,2 A6,6 0 1 1 7.99,2" Stroke="#242B24" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Viewbox></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolLine" Tag="Line" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="直线"><Viewbox Width="17" Height="17"><Path Width="16" Height="16" Data="M3,13 L13,3" Stroke="#242B24" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Viewbox></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolArrow" Tag="Arrow" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="箭头"><Viewbox Width="17" Height="17"><Path Width="16" Height="16" Data="M3,13 L13,3 M5,3 L13,3 L13,11" Stroke="#242B24" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Viewbox></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolNumber" Tag="Number" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="序号"><TextBlock Text="①" FontSize="19" Foreground="#242B24" /></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolPen" Tag="Pen" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="画笔"><Viewbox Width="17" Height="17"><Path Width="16" Height="16" Data="M3,11 L11,3 L14,6 L6,14 L2,14 Z M9,5 L12,8" Stroke="#242B24" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Viewbox></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolHighlighter" Tag="Highlighter" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="荧光笔"><Viewbox Width="17" Height="17"><Path Width="16" Height="16" Data="M3,10 L9,2 L14,6 L8,13 Z M2,14 L10,14" Stroke="#242B24" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Viewbox></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolMosaic" Tag="Mosaic" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="马赛克"><Viewbox Width="17" Height="17"><Path Width="16" Height="16" Data="M2,2 L14,2 L14,14 L2,14 Z M6,2 L6,14 M10,2 L10,14 M2,6 L14,6 M2,10 L14,10" Stroke="#242B24" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Viewbox></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolBlur" Tag="Blur" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="模糊"><Viewbox Width="17" Height="17"><Path Width="16" Height="16" Data="M8,2 A6,6 0 1 1 7.99,2 M8,5 A3,3 0 1 1 7.99,5" Stroke="#242B24" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Viewbox></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolText" Tag="Text" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="文字"><TextBlock Text="T" FontSize="18" FontWeight="Bold" Foreground="#242B24" /></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="ToolEraser" Tag="Eraser" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Tool_Click" ToolTipService.ToolTip="擦除标注"><Viewbox Width="17" Height="17"><Path Width="16" Height="16" Data="M2,10 L9,3 L14,8 L8,14 L5,14 Z M6,6 L11,11 M8,14 L14,14" Stroke="#242B24" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Viewbox></Button>
-          <Rectangle Width="1" Height="22" Fill="#D7DDCE" VerticalAlignment="Center" />
-          <Button Style="{StaticResource RegionToolButton}" x:Name="AnnotationColorButton" Width="30" Height="36" Padding="3" Background="Transparent" BorderThickness="0" Click="Toolbar_Color_Click" ToolTipService.ToolTip="切换标注颜色"><Ellipse Fill="#FFFF404D" Width="19" Height="19" Stroke="White" StrokeThickness="1" /></Button>
-          <Button Style="{StaticResource RegionToolButton}" x:Name="AnnotationWidthButton" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Width_Click" ToolTipService.ToolTip="切换线宽"><TextBlock x:Name="AnnotationWidthText" Text="3" FontSize="16" Foreground="#242B24" /></Button>
-          <Rectangle Width="1" Height="22" Fill="#D7DDCE" VerticalAlignment="Center" />
-          <Button Style="{StaticResource RegionToolButton}" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Undo_Click" ToolTipService.ToolTip="撤销 (Ctrl+Z)"><TextBlock Text="↶" FontSize="22" Foreground="#242B24" /></Button>
-          <Button Style="{StaticResource RegionToolButton}" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Redo_Click" ToolTipService.ToolTip="重做 (Ctrl+Y)"><TextBlock Text="↷" FontSize="22" Foreground="#242B24" /></Button>
-          <Rectangle Width="1" Height="22" Fill="#D7DDCE" VerticalAlignment="Center" />
-          <Button Style="{StaticResource RegionToolButton}" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_Pin_Click" ToolTipService.ToolTip="钉在屏幕上" AutomationProperties.Name="钉图"><FontIcon Glyph="&#xE718;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#242B24" /></Button>
-          <Button Style="{StaticResource RegionToolButton}" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_RecordGif_Click" ToolTipService.ToolTip="录制 GIF（最长 30 秒）" AutomationProperties.Name="录制 GIF"><TextBlock Text="GIF" FontSize="10" FontWeight="Bold" Foreground="#242B24" /></Button>
-          <Button Style="{StaticResource RegionToolButton}" Width="30" Height="36" Padding="0" Background="Transparent" BorderThickness="0" Click="Toolbar_LongCapture_Click" ToolTipService.ToolTip="长截图：滚动时自动拼接" AutomationProperties.Name="长截图"><TextBlock Text="⇵" FontSize="20" Foreground="#242B24" /></Button>
-          <Button Style="{StaticResource RegionToolButton}"
-            Width="40" Height="36" Padding="0" Background="Transparent" BorderThickness="0"
-            Click="Toolbar_Reselect_Click" ToolTipService.ToolTip="重新选择区域"
-            AutomationProperties.Name="重新选择区域"
-          >
-            <FontIcon Glyph="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="17" Foreground="#242B24" />
-          </Button>
-          <Button Style="{StaticResource RegionToolButton}"
-            x:Name="ToolbarCopyButton"
-            Width="40" Height="36" Padding="0" Background="Transparent" BorderThickness="0"
-            Click="Toolbar_Copy_Click" ToolTipService.ToolTip="{x:Bind lang:Lang.ImageViewWindow_CopyImage}"
-            AutomationProperties.Name="{x:Bind lang:Lang.ImageViewWindow_CopyImage}"
-          >
-            <FontIcon Glyph="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="17" Foreground="#242B24" />
-          </Button>
-          <Button Style="{StaticResource RegionToolButton}"
-            x:Name="ToolbarSaveButton"
-            Width="40" Height="36" Padding="0" Background="#DDF369" BorderThickness="0"
-            Click="Toolbar_Save_Click" ToolTipService.ToolTip="{x:Bind lang:Lang.Common_Save}"
-            AutomationProperties.Name="{x:Bind lang:Lang.Common_Save}"
-          >
-            <FontIcon Glyph="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="17" Foreground="#242B24" />
-          </Button>
-          <Button Style="{StaticResource RegionToolButton}"
-            x:Name="ToolbarOcrButton"
-            Width="40" Height="36" Padding="0" Background="Transparent" BorderThickness="0"
-            Click="Toolbar_Ocr_Click" ToolTipService.ToolTip="{x:Bind lang:Lang.ImageViewWindow_Ocr}"
-            AutomationProperties.Name="{x:Bind lang:Lang.ImageViewWindow_Ocr}"
-          >
-            <TextBlock Text="OCR" FontSize="11" FontWeight="SemiBold" Foreground="#242B24" />
-          </Button>
-          <Button Style="{StaticResource RegionToolButton}" Width="40" Height="36" Padding="0" Background="Transparent" BorderThickness="0"
-                  Click="Toolbar_Translate_Click" ToolTipService.ToolTip="OCR 后翻译 (Ctrl+Q)"
-                  AutomationProperties.Name="OCR 翻译">
-            <TextBlock Text="译" FontSize="17" Foreground="#242B24" />
-          </Button>
-          <Rectangle Width="1" Height="22" Fill="#D7DDCE" VerticalAlignment="Center" />
-          <Button Style="{StaticResource RegionToolButton}"
-            Width="40" Height="36" Padding="0" Background="Transparent" BorderThickness="0"
-            Click="Toolbar_Cancel_Click" ToolTipService.ToolTip="{x:Bind lang:Lang.Common_Cancel}"
-            AutomationProperties.Name="{x:Bind lang:Lang.Common_Cancel}"
-          >
-            <FontIcon Glyph="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="17" Foreground="#242B24" />
-          </Button>
-        </StackPanel>
+      <Border x:Name="SelectionToolbar" Visibility="Collapsed" Background="#FFF9FAF3"
+              BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="10">
+        <Canvas x:Name="ToolbarButtons" />
+      </Border>
+      <Border x:Name="ToolbarParameters" Visibility="Collapsed" Background="#FFF9FAF3"
+              BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="10">
+        <Canvas x:Name="ToolbarParameterButtons" />
+      </Border>
+      <Border x:Name="ToolbarPopup" Visibility="Collapsed" Background="#FFF9FAF3"
+              BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="10">
+        <Canvas x:Name="ToolbarPopupButtons" />
+      </Border>
+      <Border x:Name="ShortcutHint" Visibility="Collapsed" Background="#FFF9FAF3"
+              BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="10" Padding="14">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <TextBlock x:Name="ShortcutHintText" Foreground="#242B24" FontSize="12" TextWrapping="Wrap" />
+        </ScrollViewer>
+      </Border>
+      <Border x:Name="HdrAnalysisPanel" Visibility="Collapsed" Background="#FFF9FAF3"
+              BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="12">
+        <ScrollViewer x:Name="HdrAnalysisScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" />
       </Border>
       <TextBox x:Name="AnnotationTextEditor" Width="240" MinHeight="36" Visibility="Collapsed"
                Background="#FAF9FAF3" Foreground="#242B24" BorderBrush="#DDF369"
                PlaceholderText="输入文字，Enter 完成" AcceptsReturn="False"
                KeyDown="AnnotationTextEditor_KeyDown" LostFocus="AnnotationTextEditor_LostFocus" />
     </Canvas>
-    <Border x:Name="ShortcutHint" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-            Margin="12,0,0,12" Padding="10,8" Background="#F5F9FAF3"
-            BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="10">
-      <StackPanel Spacing="2">
-        <TextBlock Text="方向键  移动    Shift+方向键  缩小    Ctrl+方向键  扩大" Foreground="#242B24" FontSize="12" />
-        <TextBlock Text="C  复制颜色    Shift  RGB / HEX    Shift+C  识别文字" Foreground="#242B24" FontSize="12" />
-        <TextBlock Text="Ctrl+Z / Y  撤销 / 重做    Ctrl+C  复制    Ctrl+Q  翻译    Ctrl+S  保存    Esc  取消" Foreground="#242B24" FontSize="12" />
-      </StackPanel>
-    </Border>
   </Grid>
 </sf:WindowEx>

@@ -115,6 +115,159 @@ internal static class Program
         retry.Dispose();
         Check(!IsWindow(retryHandle) && Handle(retry) == 0, "A failed DestroyWindow must allow the creating thread to retry disposal");
     }
+    private static object Call(CpuRegionCaptureWindow window, string method, params object?[] args) =>
+        typeof(CpuRegionCaptureWindow).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, args)!;
+    private static RegionToolbarLayout Layout(CpuRegionCaptureWindow window) => (RegionToolbarLayout)Call(window, "ToolbarLayout");
+    private static RegionToolbarState State(CpuRegionCaptureWindow window) => (RegionToolbarState)Field("_toolbarState").GetValue(window)!;
+    private static Rectangle Selection => new(100, 120, 240, 180);
+    private static void SetMouse(CpuRegionCaptureWindow window, PointF screen)
+    {
+        int x = (int)typeof(CpuRegionCaptureWindow).GetField("_virtualX", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window)!;
+        int y = (int)typeof(CpuRegionCaptureWindow).GetField("_virtualY", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(window)!;
+        Field("_mouse").SetValue(window, new Point((int)screen.X - x, (int)screen.Y - y));
+    }
+    private static void PressToolbar(CpuRegionCaptureWindow window, PointF screen)
+    {
+        SetMouse(window, screen);
+        Call(window, "ToolbarPointerDown");
+        Call(window, "ToolbarPointerUp");
+    }
+    private static void Paint(CpuRegionCaptureWindow window)
+    {
+        var hwnd = Handle(window);
+        CpuCaptureNative.InvalidateRect(hwnd, 0, false);
+        CpuCaptureNative.UpdateWindow(hwnd);
+    }
+    private static void ToolbarInteractionChecks()
+    {
+        using var source = Pattern(800, 600);
+        CpuRegionCaptureWindow? toolbarWindow = null;
+        using (var window = new CpuRegionCaptureWindow(source, 0, 0, RegionCaptureAction.Save, moveOnscreen: false))
+        {
+            toolbarWindow = window;
+            Field("_selected").SetValue(window, true); Field("_selection").SetValue(window, Selection);
+            var layout = Layout(window);
+            Check((nint)Field("_toolbarGlyphFont").GetValue(window)! != 0 && (nint)Field("_toolbarLabelFont").GetValue(window)! != 0,
+                "Monitor-scaled toolbar fonts are created for rendering");
+            Check(State(window).Tool == RegionToolbarCommand.Select, "Toolbar state starts in selection mode");
+
+            var shape = layout.Slots.Single(s => s.Command == RegionToolbarCommand.Shapes);
+            PressToolbar(window, new(shape.Chevron.Left + shape.Chevron.Width / 2, shape.Chevron.Top + shape.Chevron.Height / 2));
+            Check(State(window).Popup == RegionToolbarCommand.Shapes, "Shape chevron opens the split group menu");
+            layout = Layout(window);
+            var shapeMenu = RegionToolbarGeometry.Menu(layout, State(window));
+            var ellipse = shapeMenu.Slots.Single(s => s.Command == RegionToolbarCommand.Ellipse);
+            PressToolbar(window, new(ellipse.Bounds.Left + 4, ellipse.Bounds.Top + 4));
+            Check((CpuAnnotationTool)Field("_tool").GetValue(window)! == CpuAnnotationTool.Ellipse, "Popup member dispatch selects the exact annotation tool");
+            layout = Layout(window); shape = layout.Slots.Single(s => s.Command == RegionToolbarCommand.Shapes);
+            PressToolbar(window, new(shape.Bounds.Left + shape.Bounds.Width / 3, shape.Bounds.Top + shape.Bounds.Height / 2));
+            Check((CpuAnnotationTool)Field("_tool").GetValue(window)! == CpuAnnotationTool.Ellipse, "Split group main click resolves its remembered member");
+
+            var toolMap = new Dictionary<RegionToolbarCommand, CpuAnnotationTool>
+            {
+                [RegionToolbarCommand.Select] = CpuAnnotationTool.Select, [RegionToolbarCommand.Rectangle] = CpuAnnotationTool.Rectangle,
+                [RegionToolbarCommand.Ellipse] = CpuAnnotationTool.Ellipse, [RegionToolbarCommand.Line] = CpuAnnotationTool.Line,
+                [RegionToolbarCommand.Arrow] = CpuAnnotationTool.Arrow, [RegionToolbarCommand.Number] = CpuAnnotationTool.Number,
+                [RegionToolbarCommand.Pen] = CpuAnnotationTool.Pen, [RegionToolbarCommand.Highlighter] = CpuAnnotationTool.Highlighter,
+                [RegionToolbarCommand.Mosaic] = CpuAnnotationTool.Mosaic, [RegionToolbarCommand.Blur] = CpuAnnotationTool.Blur,
+                [RegionToolbarCommand.Text] = CpuAnnotationTool.Text, [RegionToolbarCommand.Eraser] = CpuAnnotationTool.Eraser
+            };
+            foreach (var pair in toolMap)
+            {
+                Call(window, "InvokeToolbar", pair.Key, false);
+                Check((CpuAnnotationTool)Field("_tool").GetValue(window)! == pair.Value, $"{pair.Key} dispatch maps to {pair.Value}");
+            }
+            var annotations = (List<CpuAnnotation>)Field("_annotations").GetValue(window)!;
+            Call(window, "Undo", false); Call(window, "Undo", true);
+            Check(annotations.Count == 0, "Disabled undo and redo leave annotation history unchanged");
+
+            Call(window, "InvokeToolbar", RegionToolbarCommand.Pen, false);
+            layout = Layout(window);
+            var color = layout.Choices.Single(c => c.Color && c.Value == RegionToolbarCatalog.Colors[2]);
+            PressToolbar(window, new(color.Bounds.Left + 2, color.Bounds.Top + 2));
+            layout = Layout(window);
+            var width = layout.Choices.Single(c => !c.Color && c.Value == 8);
+            PressToolbar(window, new(width.Bounds.Left + 2, width.Bounds.Top + 2));
+            Check(State(window).Color == RegionToolbarCatalog.Colors[2] && State(window).Width == 8, "Color and width presets update explicit toolbar parameters");
+            SetMouse(window, new(140, 150)); Call(window, "PointerDown"); Call(window, "PointerUp");
+            Check(annotations.Count == 1 && annotations[0].Color.ToArgb() == RegionToolbarCatalog.Colors[2]
+                && annotations[0].Width == (int)Call(window, "Dip", 8f), "A new annotation draft uses the selected ARGB color and DPI-scaled width");
+
+            nint beforeHdrCommandHwnd = Handle(window);
+            Call(window, "InvokeToolbar", RegionToolbarCommand.HdrAnalysis, false);
+            Check(Handle(window) == beforeHdrCommandHwnd && !window.Completion.Task.IsCompleted
+                && (bool)Field("_selected").GetValue(window)! && annotations.Count == 1,
+                "Disabled CPU HDR analysis command is a no-op and does not complete or mutate the capture");
+
+            var beforeSelection = (Rectangle)Field("_selection").GetValue(window)!;
+            int beforeCount = annotations.Count;
+            Call(window, "InvokeToolbar", RegionToolbarCommand.More, false);
+            layout = Layout(window); var menu = RegionToolbarGeometry.Menu(layout, State(window));
+            Check(menu.Bounds.Left >= layout.Monitor.WorkArea.Left && menu.Bounds.Right <= layout.Monitor.WorkArea.Right
+                && menu.Bounds.Top >= layout.Monitor.WorkArea.Top && menu.Bounds.Bottom <= layout.Monitor.WorkArea.Bottom
+                && RectangleF.Intersect(menu.Bounds, layout.Main).IsEmpty
+                && (layout.Parameters.IsEmpty || RectangleF.Intersect(menu.Bounds, layout.Parameters).IsEmpty), "Popup fits available monitor space without covering toolbar or presets");
+            Check((bool)Call(window, "Key", (int)'A')! && State(window).Popup == RegionToolbarCommand.More,
+                "Modal popup consumes unrelated keyboard input");
+            Paint(window);
+            PressToolbar(window, new(5, 590));
+            Check(State(window).Popup is null && (bool)Call(window, "PopupConsumesPointer")!, "Outside press closes popup and consumes the following double-click message");
+            Call(window, "ToolbarPointerUp");
+            Check((bool)Field("_selected").GetValue(window)! && (Rectangle)Field("_selection").GetValue(window)! == beforeSelection
+                && annotations.Count == beforeCount, "Outside popup gesture cannot reselect or add an annotation");
+
+            Call(window, "InvokeToolbar", RegionToolbarCommand.Help, false);
+            layout = Layout(window); var help = (RectangleF)Call(window, "HelpBounds", layout);
+            string[] helpLines = RegionToolbarCatalog.Help.Split('\n');
+            Check(helpLines.Length == 11 && help.Height >= (8 + helpLines.Length * 25 + 8) * layout.Monitor.Scale,
+                "On-demand help panel has one visible row for all eleven shortcuts");
+            Check(help.Left >= layout.Monitor.WorkArea.Left && help.Right <= layout.Monitor.WorkArea.Right
+                && help.Top >= layout.Monitor.WorkArea.Top && help.Bottom <= layout.Monitor.WorkArea.Bottom, "Help panel is clamped to monitor work area");
+            // Exercise the layout at 200% even when the test host's active monitor uses another scale.
+            var monitor200 = layout.Monitor with { Scale = 2 };
+            var layout200 = layout with { Monitor = monitor200 };
+            var help200 = (RectangleF)Call(window, "HelpBounds", layout200);
+            Check(help200.Height >= 2 * (8 + helpLines.Length * 25 + 8), "All help rows fit the bounded panel at 200% DPI");
+            Call(window, "EnsureToolbarFonts", 2f);
+            Check((float)Field("_toolbarFontScale").GetValue(window)! == 2f, "Toolbar fonts follow the monitor scale");
+            Paint(window);
+
+            Call(window, "InvokeToolbar", RegionToolbarCommand.More, false);
+            Check((bool)Call(window, "Key", 27)! && State(window).Popup is null && (bool)Field("_selected").GetValue(window)!, "Escape closes a popup before the selection");
+            Call(window, "InvokeToolbar", RegionToolbarCommand.Text, false);
+            SetMouse(window, new(140, 150)); Call(window, "StartText");
+            nint edit = (nint)Field("_textEdit").GetValue(window)!;
+            Check(edit != 0, "Text editor opens in the same offscreen HWND");
+            CpuCaptureNative.SetWindowTextW(edit, "discard this draft"); CpuCaptureNative.SendMessageW(edit, 0x100, 27, 0);
+            Check((nint)Field("_textEdit").GetValue(window)! == 0 && (bool)Field("_selected").GetValue(window)!
+                && annotations.Count == beforeCount, "Escape discards the active text editor before affecting the selection");
+            Check((bool)Call(window, "Key", 27)! && !(bool)Field("_selected").GetValue(window)! && !window.Completion.Task.IsCompleted,
+                "Escape reselects after popup and editor are closed");
+            Check((bool)Call(window, "Key", 27)! && window.Completion.Task.GetAwaiter().GetResult().Action == RegionCaptureAction.Cancel,
+                "The next Escape cancels the capture");
+        }
+        Check(toolbarWindow is not null && (nint)Field("_toolbarGlyphFont").GetValue(toolbarWindow)! == 0
+            && (nint)Field("_toolbarLabelFont").GetValue(toolbarWindow)! == 0
+            && (nint)Field("_font").GetValue(toolbarWindow)! == 0
+            && (nint)Field("_smallFont").GetValue(toolbarWindow)! == 0
+            && (nint)Field("_iconFont").GetValue(toolbarWindow)! == 0, "Toolbar and original UI font handles are deleted during window cleanup");
+
+        foreach (var pair in new Dictionary<RegionToolbarCommand, RegionCaptureAction>
+        {
+            [RegionToolbarCommand.Ocr] = RegionCaptureAction.Ocr, [RegionToolbarCommand.Pin] = RegionCaptureAction.Pin,
+            [RegionToolbarCommand.Copy] = RegionCaptureAction.Copy, [RegionToolbarCommand.Save] = RegionCaptureAction.Save,
+            [RegionToolbarCommand.Cancel] = RegionCaptureAction.Cancel, [RegionToolbarCommand.Translate] = RegionCaptureAction.Translate,
+            [RegionToolbarCommand.RecordGif] = RegionCaptureAction.RecordGif, [RegionToolbarCommand.LongCapture] = RegionCaptureAction.LongCapture
+        })
+        {
+            using var window = new CpuRegionCaptureWindow(source, 0, 0, RegionCaptureAction.Save, moveOnscreen: false);
+            Field("_selected").SetValue(window, true); Field("_selection").SetValue(window, new Rectangle(20, 20, 80, 60));
+            Call(window, "InvokeToolbar", pair.Key, false);
+            var result = window.Completion.Task.GetAwaiter().GetResult();
+            Check(result.Action == pair.Value, $"{pair.Key} dispatch completes with {pair.Value}");
+            result.Image?.Dispose(); result.AnnotationLayer?.Dispose();
+        }
+    }
     [STAThread]
     private static int Main(string[] args)
     {
@@ -124,8 +277,8 @@ internal static class Program
             if (native is not null) NativeLibrary.SetDllImportResolver(typeof(Program).Assembly,
                 (name, _, _) => name == "GpuMemory" ? NativeLibrary.Load(native) : 0);
             if (args.Length == 2 && args[0] == "--pid") { Console.WriteLine(JsonSerializer.Serialize(Read(int.Parse(args[1])), new JsonSerializerOptions { IncludeFields = true })); return 0; }
-            RasterChecks(); WindowChecks();
-            Console.WriteLine($"PASS: {_checks} raster/geometry/window/ownership checks; no desktop input, screenshot, clipboard or image files.");
+            RasterChecks(); WindowChecks(); ToolbarInteractionChecks();
+            Console.WriteLine($"PASS: {_checks} raster/geometry/window/toolbar/ownership checks; no desktop input, screenshot, clipboard or image files.");
             if (args.Length == 2 && args[0] == "--memory") MemoryChecks(args[1]);
             return 0;
         }

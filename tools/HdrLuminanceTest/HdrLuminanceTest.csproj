@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/Starshot/Features/Screenshot/HdrLuminanceAnalysis.cs" Link="HdrLuminanceAnalysis.cs" />
+    <Compile Include="../../src/Starshot/Features/Screenshot/HdrAnalysisDiagnostics.cs" Link="HdrAnalysisDiagnostics.cs" />
+  </ItemGroup>
+</Project>

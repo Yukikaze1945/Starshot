@@ -1,7 +1,3 @@
-namespace Starshot.Features.Screenshot
-{
-    public enum RegionCaptureAction { Cancel, Save, Copy, Ocr, Translate, Pin, RecordGif, LongCapture }
-}
 namespace Starshot.Helpers
 {
     internal static class ClipboardHelper { internal static void SetText(string text) => throw new InvalidOperationException("Tests must not touch the user's clipboard"); }

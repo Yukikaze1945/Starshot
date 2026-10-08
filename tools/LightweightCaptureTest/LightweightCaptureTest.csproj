@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/Starshot/Features/Screenshot/CpuCapture*.cs" Link="%(Filename)%(Extension)" />
-    <Compile Include="../../src/Starshot/Features/Screenshot/CpuRegionCaptureWindow.cs" Link="CpuRegionCaptureWindow.cs" />
+    <Compile Include="../../src/Starshot/Features/Screenshot/CpuRegionCaptureWindow*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../../src/Starshot/Features/Screenshot/RegionToolbar*.cs" Link="%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

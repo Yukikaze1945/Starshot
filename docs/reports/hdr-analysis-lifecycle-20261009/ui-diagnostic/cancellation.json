@@ -1,0 +1,22 @@
+[
+  {
+    "scenario": "cancel_0",
+    "stop_ms": 12.8596,
+    "active": 0
+  },
+  {
+    "scenario": "cancel_1",
+    "stop_ms": 10.7603,
+    "active": 0
+  },
+  {
+    "scenario": "cancel_2",
+    "stop_ms": 11.8521,
+    "active": 0
+  },
+  {
+    "scenario": "cancel_during_sort",
+    "stop_ms": 231.1637,
+    "active": 0
+  }
+]

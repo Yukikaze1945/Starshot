@@ -1,0 +1,298 @@
+{
+  "dispatcher_delay:host_control": {
+    "count": 176,
+    "sum_ms": 34.97600000000003,
+    "p50_ms": 0.0627,
+    "p95_ms": 0.3643,
+    "p99_ms": 4.6276,
+    "max_ms": 9.6629
+  },
+  "heartbeat_gap:host_control": {
+    "count": 174,
+    "sum_ms": 1049.9134999999999,
+    "p50_ms": 5.3224,
+    "p95_ms": 11.4483,
+    "p99_ms": 15.4383,
+    "max_ms": 31.2017
+  },
+  "dispatcher_delay:memory_sampling": {
+    "count": 117,
+    "sum_ms": 1191.0548,
+    "p50_ms": 6.2247,
+    "p95_ms": 38.5916,
+    "p99_ms": 51.4386,
+    "max_ms": 203.5863
+  },
+  "dispatcher_delay:fixture_setup": {
+    "count": 47,
+    "sum_ms": 3734.322799999999,
+    "p50_ms": 73.5753,
+    "p95_ms": 186.8349,
+    "p99_ms": 198.4243,
+    "max_ms": 198.4243
+  },
+  "heartbeat_gap:fixture_setup": {
+    "count": 9,
+    "sum_ms": 47.3634,
+    "p50_ms": 5.2819,
+    "p95_ms": 5.6353,
+    "p99_ms": 5.6353,
+    "max_ms": 5.6353
+  },
+  "dispatcher_delay:analysis": {
+    "count": 1241,
+    "sum_ms": 1112.3522999999984,
+    "p50_ms": 0.0991,
+    "p95_ms": 5.1585,
+    "p99_ms": 15.649,
+    "max_ms": 41.0569
+  },
+  "readback": {
+    "count": 1232,
+    "sum_ms": 674.3028999999996,
+    "p50_ms": 0.3091,
+    "p95_ms": 0.6536,
+    "p99_ms": 6.681,
+    "max_ms": 90.4706
+  },
+  "append_cpu": {
+    "count": 1231,
+    "sum_ms": 1350.7545999999995,
+    "p50_ms": 1.0726,
+    "p95_ms": 1.5482,
+    "p99_ms": 1.8253,
+    "max_ms": 7.202
+  },
+  "heartbeat_gap:analysis": {
+    "count": 1112,
+    "sum_ms": 6448.610700000003,
+    "p50_ms": 5.3459,
+    "p95_ms": 7.0393,
+    "p99_ms": 17.1167,
+    "max_ms": 46.4082
+  },
+  "p99_clone": {
+    "count": 19,
+    "sum_ms": 116.9873,
+    "p50_ms": 6.0827,
+    "p95_ms": 8.3006,
+    "p99_ms": 8.3006,
+    "max_ms": 8.3006
+  },
+  "p99_sort": {
+    "count": 19,
+    "sum_ms": 3993.832,
+    "p50_ms": 197.6499,
+    "p95_ms": 434.1241,
+    "p99_ms": 434.1241,
+    "max_ms": 434.1241
+  },
+  "statistics_cpu": {
+    "count": 19,
+    "sum_ms": 4450.4769,
+    "p50_ms": 223.5514,
+    "p95_ms": 456.787,
+    "p99_ms": 456.787,
+    "max_ms": 456.787
+  },
+  "waveform_total": {
+    "count": 20,
+    "sum_ms": 51.668,
+    "p50_ms": 0.0206,
+    "p95_ms": 0.3856,
+    "p99_ms": 50.9016,
+    "max_ms": 50.9016
+  },
+  "analysis_total": {
+    "count": 26,
+    "sum_ms": 8510.634999999998,
+    "p50_ms": 409.9535,
+    "p95_ms": 495.4167,
+    "p99_ms": 695.4714,
+    "max_ms": 695.4714
+  },
+  "dispatcher_delay:close": {
+    "count": 38,
+    "sum_ms": 16.656800000000004,
+    "p50_ms": 0.1611,
+    "p95_ms": 2.0427,
+    "p99_ms": 3.3611,
+    "max_ms": 3.3611
+  },
+  "heartbeat_gap:close": {
+    "count": 18,
+    "sum_ms": 92.5658,
+    "p50_ms": 5.1119,
+    "p95_ms": 5.7494,
+    "p99_ms": 5.7494,
+    "max_ms": 5.7494
+  },
+  "heartbeat_gap:memory_sampling": {
+    "count": 20,
+    "sum_ms": 107.43059999999997,
+    "p50_ms": 5.2544,
+    "p95_ms": 5.758,
+    "p99_ms": 5.8605,
+    "max_ms": 5.8605
+  },
+  "dispatcher_delay:cancel": {
+    "count": 19,
+    "sum_ms": 60.19710000000001,
+    "p50_ms": 0.768,
+    "p95_ms": 16.6612,
+    "p99_ms": 16.6612,
+    "max_ms": 16.6612
+  },
+  "heartbeat_gap:cancel": {
+    "count": 12,
+    "sum_ms": 91.87740000000001,
+    "p50_ms": 5.1978,
+    "p95_ms": 27.5188,
+    "p99_ms": 27.5188,
+    "max_ms": 27.5188
+  },
+  "dispatcher_delay:rapid_reopen": {
+    "count": 80,
+    "sum_ms": 49.00940000000001,
+    "p50_ms": 0.1635,
+    "p95_ms": 3.4069,
+    "p99_ms": 10.565,
+    "max_ms": 10.565
+  },
+  "heartbeat_gap:rapid_reopen": {
+    "count": 72,
+    "sum_ms": 417.11190000000016,
+    "p50_ms": 5.397,
+    "p95_ms": 7.406,
+    "p99_ms": 17.4244,
+    "max_ms": 17.4244
+  },
+  "dispatcher_delay:cancel_sort": {
+    "count": 82,
+    "sum_ms": 28.043099999999992,
+    "p50_ms": 0.0795,
+    "p95_ms": 0.8079,
+    "p99_ms": 8.6925,
+    "max_ms": 8.6925
+  },
+  "heartbeat_gap:cancel_sort": {
+    "count": 76,
+    "sum_ms": 421.0707000000001,
+    "p50_ms": 5.2975,
+    "p95_ms": 6.3833,
+    "p99_ms": 14.1651,
+    "max_ms": 14.1651
+  },
+  "dispatcher_delay:selection_change": {
+    "count": 7,
+    "sum_ms": 50.037,
+    "p50_ms": 5.2717,
+    "p95_ms": 16.0765,
+    "p99_ms": 16.0765,
+    "max_ms": 16.0765
+  },
+  "dispatcher_delay:readback_exception": {
+    "count": 52,
+    "sum_ms": 2176.8796000000007,
+    "p50_ms": 39.0961,
+    "p95_ms": 92.9497,
+    "p99_ms": 99.3501,
+    "max_ms": 99.3501
+  },
+  "heartbeat_gap:readback_exception": {
+    "count": 4,
+    "sum_ms": 176.14589999999998,
+    "p50_ms": 5.3421,
+    "p95_ms": 103.7346,
+    "p99_ms": 103.7346,
+    "max_ms": 103.7346
+  },
+  "dispatcher_delay:optional_views": {
+    "count": 94,
+    "sum_ms": 159.53910000000005,
+    "p50_ms": 0.094,
+    "p95_ms": 14.1625,
+    "p99_ms": 28.2724,
+    "max_ms": 28.2724
+  },
+  "heartbeat_gap:optional_views": {
+    "count": 79,
+    "sum_ms": 477.20650000000006,
+    "p50_ms": 5.3156,
+    "p95_ms": 6.9678,
+    "p99_ms": 46.261,
+    "max_ms": 46.261
+  },
+  "heatmap_cpu": {
+    "count": 2,
+    "sum_ms": 28.0582,
+    "p50_ms": 13.8802,
+    "p95_ms": 14.178,
+    "p99_ms": 14.178,
+    "max_ms": 14.178
+  },
+  "heatmap_upload": {
+    "count": 1,
+    "sum_ms": 2.3917,
+    "p50_ms": 2.3917,
+    "p95_ms": 2.3917,
+    "p99_ms": 2.3917,
+    "max_ms": 2.3917
+  },
+  "heatmap_total": {
+    "count": 3,
+    "sum_ms": 55.9841,
+    "p50_ms": 17.7763,
+    "p95_ms": 38.1508,
+    "p99_ms": 38.1508,
+    "max_ms": 38.1508
+  },
+  "waveform_cpu": {
+    "count": 1,
+    "sum_ms": 46.1051,
+    "p50_ms": 46.1051,
+    "p95_ms": 46.1051,
+    "p99_ms": 46.1051,
+    "max_ms": 46.1051
+  },
+  "dispatcher_delay:close_optional_workers": {
+    "count": 84,
+    "sum_ms": 42.053299999999986,
+    "p50_ms": 0.1945,
+    "p95_ms": 1.2879,
+    "p99_ms": 9.9609,
+    "max_ms": 9.9609
+  },
+  "heartbeat_gap:close_optional_workers": {
+    "count": 75,
+    "sum_ms": 426.19390000000004,
+    "p50_ms": 5.3494,
+    "p95_ms": 7.2816,
+    "p99_ms": 8.6797,
+    "max_ms": 8.6797
+  },
+  "dispatcher_delay:capture_close_pending": {
+    "count": 15,
+    "sum_ms": 107.687,
+    "p50_ms": 3.087,
+    "p95_ms": 27.0802,
+    "p99_ms": 27.0802,
+    "max_ms": 27.0802
+  },
+  "heartbeat_gap:capture_close_pending": {
+    "count": 5,
+    "sum_ms": 71.7147,
+    "p50_ms": 5.9267,
+    "p95_ms": 31.9528,
+    "p99_ms": 31.9528,
+    "max_ms": 31.9528
+  },
+  "dispatcher_delay:diagnostic_gc": {
+    "count": 1,
+    "sum_ms": 32.1754,
+    "p50_ms": 32.1754,
+    "p95_ms": 32.1754,
+    "p99_ms": 32.1754,
+    "max_ms": 32.1754
+  }
+}

@@ -1,0 +1,2824 @@
+[
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:12.2657415Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      0,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:12.2657514Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:12.2664163Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      1,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:12.2678731Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:12.2681136Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      1,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:12.2681184Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:12.2686063Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:12.2689063Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:12.9781453Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      1,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:12.9781585Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:12.9791444Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      2,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:12.9792734Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:12.9796036Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:12.9796076Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:12.9799624Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:12.9820858Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      2,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:13.1536249Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:13.1536372Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:13.1545663Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      3,
+      2,
+      1,
+      0,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:13.195917Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      3,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:13.1959417Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:13.9151151Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      3,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:13.915119Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:13.9162474Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      4,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:13.9209925Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:13.9216002Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      4,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:13.9216036Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:13.9221808Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:13.9248301Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      4,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:14.3921843Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      4,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:14.3922033Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:14.3933716Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      5,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:14.3935021Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:14.3944661Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      5,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:14.3954307Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:14.3963948Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:14.4002736Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      5,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:14.8826129Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      5,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:14.8826209Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:14.8846652Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      6,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:14.8850314Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:14.8899829Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      6,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:14.8899898Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:14.8908944Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:14.8978536Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:15.3965556Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      6,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:15.3965686Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:15.3977928Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      7,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:15.3979236Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:15.3996554Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      7,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:15.3998466Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:15.4005103Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:15.4048258Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      7,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:15.8966658Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      7,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:15.8966804Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:15.8977313Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      8,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:15.8978711Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:15.8995392Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      8,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:15.8998153Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:15.9003031Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:15.9037725Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      8,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:16.3167516Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      8,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:16.3167631Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:16.3176496Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      9,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:16.3177611Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:16.3194568Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      9,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:16.3196314Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:16.3202791Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:16.323217Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      9,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:16.7628752Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      9,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:16.7628885Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:16.7639247Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      10,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:16.7689137Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:16.7709372Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      10,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:16.7710507Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:16.7717736Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:16.7751341Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:17.2086775Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      10,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:17.2086889Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:17.2102306Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      11,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:17.2103773Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:17.2125124Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      11,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:17.21252Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:17.2132285Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:17.2169023Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      11,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:17.6715411Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      11,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:17.6715527Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:17.6727163Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      12,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:17.6728305Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:17.6746266Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      12,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:17.6746386Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:17.6751464Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:17.678245Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      12,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:18.0975217Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      12,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:18.097534Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:18.0985897Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      13,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:18.09871Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:18.1003049Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      13,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:18.1006148Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:18.1010833Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:18.1042453Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      13,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:18.524658Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      13,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:18.5246735Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:18.5255821Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      14,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:18.525687Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:18.5269059Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      14,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:18.5275589Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:18.5281198Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:18.5316844Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      14,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:18.9471294Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      14,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:18.9471413Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:18.9481727Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      15,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:18.9483325Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:18.9497999Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      15,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:18.9504051Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:18.9508898Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:18.9539562Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      15,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:19.4176021Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      15,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:19.4176149Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:19.4188916Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      16,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:19.4190145Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:19.4209339Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      16,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:19.4209575Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:19.4218871Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:19.4247856Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      16,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:19.4597698Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      16,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:19.4597758Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:19.4606321Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      17,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:19.4607532Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:19.4614393Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      17,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:19.4614461Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:19.4619985Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:19.4624523Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      17,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:19.5065125Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      17,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:19.5065223Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:19.5074387Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      18,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:19.5075603Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:19.5082195Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      18,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:19.5082531Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:19.5087058Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:19.5096427Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      18,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:19.5268281Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      18,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:19.5268342Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:19.5275712Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      19,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:19.5276821Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:19.5286378Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      19,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:19.5286726Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:19.5292054Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:19.5298311Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      19,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:19.9302541Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      19,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:19.9302661Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:19.9310011Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      20,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:19.9310912Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:19.9330204Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      20,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:19.9330244Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:19.9334585Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:19.9359163Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      20,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:20.3735707Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      20,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:20.3735862Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:20.3753149Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      21,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:20.3754975Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:20.3771929Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      21,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:20.3774265Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:20.3781503Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:20.3822413Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      21,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:20.5008955Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      21,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:20.5009056Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:20.5018923Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      22,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:20.5020189Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:20.5027731Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      22,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:20.5027794Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:20.5033442Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:20.5038881Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      22,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:20.6834976Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      22,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:20.6835102Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:20.684702Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      23,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:20.6848618Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:20.6857226Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      23,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:20.6857589Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:20.6863061Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:20.6870379Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      23,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:20.8119031Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      23,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:20.8119157Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:20.8129039Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      24,
+      2,
+      1,
+      0,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:20.8151265Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      24,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:20.8151344Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:21.617258Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      24,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:21.617263Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:21.6192441Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      25,
+      2,
+      4,
+      1,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:21.6241477Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:21.6252936Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      6,
+      25,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:21.6253284Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:21.6258572Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:21.6296043Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      25,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:21.7120143Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      25,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:21.7120236Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:21.7133776Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      26,
+      2,
+      1,
+      0,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:21.7153212Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      26,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:21.7153286Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEBegin_V1",
+    "id": 9,
+    "timestamp_utc": "2026-10-08T18:42:21.7159925Z",
+    "payload_names": [
+      "Reason",
+      "Count",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      1,
+      26,
+      10
+    ]
+  },
+  {
+    "name": "GCSuspendEEEnd_V1",
+    "id": 8,
+    "timestamp_utc": "2026-10-08T18:42:21.7159962Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  },
+  {
+    "name": "GCStart_V2",
+    "id": 1,
+    "timestamp_utc": "2026-10-08T18:42:21.7166676Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "Reason",
+      "Type",
+      "ClrInstanceID",
+      "ClientSequenceNumber"
+    ],
+    "payload": [
+      27,
+      2,
+      1,
+      0,
+      10,
+      0
+    ]
+  },
+  {
+    "name": "GCEnd_V1",
+    "id": 2,
+    "timestamp_utc": "2026-10-08T18:42:21.7180697Z",
+    "payload_names": [
+      "Count",
+      "Depth",
+      "ClrInstanceID"
+    ],
+    "payload": [
+      27,
+      2,
+      10
+    ]
+  },
+  {
+    "name": "GCRestartEEEnd_V1",
+    "id": 3,
+    "timestamp_utc": "2026-10-08T18:42:21.7180724Z",
+    "payload_names": [
+      "ClrInstanceID"
+    ],
+    "payload": [
+      10
+    ]
+  }
+]

@@ -36,13 +36,6 @@ public sealed partial class RegionCaptureWindow
     private Point _textStart;
     private Color _annotationColor = Color.FromArgb(255, 255, 64, 77);
     private int _annotationWidth = 3;
-    private int _colorIndex;
-    private static readonly Color[] AnnotationColors =
-    [
-        Color.FromArgb(255, 255, 64, 77), Color.FromArgb(255, 49, 137, 255),
-        Color.FromArgb(255, 255, 225, 25), Colors.White, Colors.Black,
-    ];
-
     private static Vector2 V(Point p) => new((float)p.X, (float)p.Y);
 
     private void ResetAnnotations()
@@ -58,35 +51,8 @@ public sealed partial class RegionCaptureWindow
     private void SetAnnotationTool(AnnotationTool tool)
     {
         _annotationTool = tool;
-        var active = new Microsoft.UI.Xaml.Media.SolidColorBrush(Color.FromArgb(255, 221, 243, 105));
-        var idle = new Microsoft.UI.Xaml.Media.SolidColorBrush(Colors.Transparent);
-        foreach (Button button in new[] { ToolSelect, ToolRectangle, ToolEllipse, ToolLine, ToolArrow,
-                     ToolNumber, ToolPen, ToolHighlighter, ToolMosaic, ToolBlur, ToolText, ToolEraser })
-            button.Background = (string)button.Tag == tool.ToString() ? active : idle;
-    }
-
-    private void Toolbar_Tool_Click(object sender, RoutedEventArgs e)
-    {
-        CommitAnnotationText();
-        if (sender is Button button && Enum.TryParse((string)button.Tag, out AnnotationTool tool))
-            SetAnnotationTool(tool);
-    }
-
-    private void Toolbar_Undo_Click(object sender, RoutedEventArgs e) => UndoAnnotation();
-    private void Toolbar_Redo_Click(object sender, RoutedEventArgs e) => RedoAnnotation();
-
-    private void Toolbar_Color_Click(object sender, RoutedEventArgs e)
-    {
-        _colorIndex = (_colorIndex + 1) % AnnotationColors.Length;
-        _annotationColor = AnnotationColors[_colorIndex];
-        if (AnnotationColorButton.Content is Microsoft.UI.Xaml.Shapes.Ellipse ellipse)
-            ellipse.Fill = new Microsoft.UI.Xaml.Media.SolidColorBrush(_annotationColor);
-    }
-
-    private void Toolbar_Width_Click(object sender, RoutedEventArgs e)
-    {
-        _annotationWidth = _annotationWidth switch { 3 => 5, 5 => 8, _ => 3 };
-        AnnotationWidthText.Text = _annotationWidth.ToString();
+        _toolbarState.Select(Enum.Parse<RegionToolbarCommand>(tool.ToString()));
+        if (_state == RegionCaptureState.Selected) RefreshToolbar();
     }
 
     private void UndoAnnotation()
@@ -97,6 +63,7 @@ public sealed partial class RegionCaptureWindow
         if (edit.added) _annotations.Remove(edit.annotation);
         else _annotations.Insert(Math.Min(edit.index, _annotations.Count), edit.annotation);
         _redoEdits.Push(edit);
+        RefreshToolbarAvailability();
         RequestRedraw();
     }
 
@@ -107,6 +74,7 @@ public sealed partial class RegionCaptureWindow
         if (edit.added) _annotations.Insert(Math.Min(edit.index, _annotations.Count), edit.annotation);
         else _annotations.Remove(edit.annotation);
         _undoEdits.Push(edit);
+        RefreshToolbarAvailability();
         RequestRedraw();
     }
 
@@ -123,6 +91,7 @@ public sealed partial class RegionCaptureWindow
                 _annotations.RemoveAt(i);
                 _undoEdits.Push((erased, i, false));
                 _redoEdits.Clear();
+                RefreshToolbarAvailability();
                 RequestRedraw();
                 break;
             }
@@ -187,6 +156,7 @@ public sealed partial class RegionCaptureWindow
             _redoEdits.Clear();
         }
         _draftAnnotation = null;
+        RefreshToolbarAvailability();
         RequestRedraw();
     }
 
@@ -218,6 +188,7 @@ public sealed partial class RegionCaptureWindow
         _undoEdits.Push((annotation, _annotations.Count, true));
         _annotations.Add(annotation);
         _redoEdits.Clear();
+        RefreshToolbarAvailability();
         RequestRedraw();
     }
 
