@@ -1836,6 +1836,7 @@ public sealed partial class ImageViewWindow : Window
                     Content.XamlRoot,
                     name,
                     ("AVIF", ".avif"),
+                    ("HEIC", ".heic"),
                     ("JPEG XL", ".jxl")
                 );
                 if (string.IsNullOrWhiteSpace(path))
@@ -1844,6 +1845,7 @@ public sealed partial class ImageViewWindow : Window
                 }
                 encodeTask = Path.GetExtension(path).ToLowerInvariant() switch
                 {
+                    ".heic" => ImageSaver.SaveAsHeicAsync(bitmap, ms, colorPrimaries, 100, null, true, MaxCLL, MaxFALL),
                     ".avif" => ImageSaver.SaveAsAvifAsync(
                         bitmap,
                         ms,
@@ -1875,6 +1877,7 @@ public sealed partial class ImageViewWindow : Window
                     name,
                     ("PNG", ".png"),
                     ("AVIF", ".avif"),
+                    ("HEIC", ".heic"),
                     ("JPEG XL", ".jxl")
                 );
                 if (string.IsNullOrWhiteSpace(path))
@@ -1883,6 +1886,7 @@ public sealed partial class ImageViewWindow : Window
                 }
                 encodeTask = Path.GetExtension(path).ToLowerInvariant() switch
                 {
+                    ".heic" => ImageSaver.SaveAsHeicAsync(bitmap, ms, colorPrimaries, 100, null, writeColorProfile),
                     ".png" => ImageSaver.SaveAsPngAsync(
                         bitmap,
                         ms,
@@ -1920,7 +1924,9 @@ public sealed partial class ImageViewWindow : Window
                     name,
                     ("SDR JPEG", ".jpg"),
                     ("Ultra HDR JPEG", ".jpg"),
-                    ("SDR PNG", ".png")
+                    ("SDR PNG", ".png"),
+                    ("SDR HEIC", ".heic"),
+                    ("HDR HEIC", ".heic")
                 );
                 if (picked is null)
                 {
@@ -1943,9 +1949,10 @@ public sealed partial class ImageViewWindow : Window
                         null,
                         colorPrimaries.TryGetDefinedPrimaries(out int id) && id == 1
                     ),
-                    _ => throw new ArgumentOutOfRangeException(
-                        $"Unknown filter index {filterIndex}."
-                    ),
+                    3 => ImageSaver.SaveAsHeicAsync(sdr8 = RenderOrdinarySdr8bit(output, bitmap, outputNits),
+                        ms, ColorPrimaries.BT709, 100),
+                    4 => ImageSaver.SaveAsHeicAsync(bitmap, ms, colorPrimaries, 100, null, true, MaxCLL, MaxFALL),
+                    _ => throw new ArgumentOutOfRangeException($"Unknown filter index {filterIndex}."),
                 };
             }
             try

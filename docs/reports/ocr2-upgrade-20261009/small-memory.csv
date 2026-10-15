@@ -1,0 +1,8 @@
+case,elapsed_ms,model_init_ms,init_count,loaded_model,private_bytes,private_delta_bytes,lines
+small-cold,932,262,1,small,394440704,183889920,3
+small-warm-1,398,262,1,small,394731520,184180736,3
+small-warm-2,340,262,1,small,394874880,184324096,3
+small-concurrent,349,262,1,,339369984,128819200,3
+tiny-after-switch,173,38,2,tiny,340668416,130117632,3
+corrupt-small-tiny-fallback,153,28,3,tiny,365649920,155099136,3
+missing-small-tiny-fallback,81,28,3,tiny,365645824,155095040,3

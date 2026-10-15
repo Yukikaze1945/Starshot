@@ -68,9 +68,11 @@ internal static class StaticVideoPixels
     private static void Write16(byte[] output, int d, ushort v) { output[d] = (byte)v; output[d + 1] = (byte)(v >> 8); }
 }
 
-/// <summary>One process, one input frame, one MP4 sample. Never searches PATH or uses GPU encoders.</summary>
+/// <summary>One process and one frozen input image, repeated into MP4 samples. Never searches PATH or uses GPU encoders.</summary>
 internal static class StaticVideoEncoder
 {
+    internal const int DurationMs = 3000;
+    internal const int DefaultFrameRate = 5;
     private static readonly SemaphoreSlim Gate = new(1);
     private static readonly SemaphoreSlim VerificationGate = new(1);
     private static string? _verifiedDirectory;
@@ -99,14 +101,23 @@ internal static class StaticVideoEncoder
         finally { VerificationGate.Release(); }
     }
 
+    internal static int FrameCountForRate(int frameRate)
+    {
+        if (frameRate == 0) return 1; // One-sample comparator matching the original encoder timeline.
+        if (frameRate is < 1 or > 30 || DurationMs * frameRate % 1000 != 0)
+            throw new ArgumentOutOfRangeException(nameof(frameRate));
+        return DurationMs * frameRate / 1000;
+    }
+
     internal static IReadOnlyList<string> Arguments(StaticVideoFrame frame, StaticVideoCodec codec,
-        string output, float maxCll, float maxFall, VideoMastering? mastering)
+        string output, float maxCll, float maxFall, VideoMastering? mastering, int frameRate = DefaultFrameRate)
     {
         if (!Enum.IsDefined(codec)) throw new ArgumentOutOfRangeException(nameof(codec));
+        int frameCount = FrameCountForRate(frameRate);
         string matrix = frame.Hdr ? "bt2020" : "bt709";
         var args = new List<string> { "-hide_banner", "-loglevel", "error", "-nostdin", "-y",
             "-f", "rawvideo", "-pixel_format", "gbrp16le", "-video_size", $"{frame.Width}x{frame.Height}",
-            "-framerate", "1/3", "-i", "pipe:0", "-an", "-frames:v", "1", "-fps_mode", "passthrough",
+            "-framerate", (frameRate == 0 ? "1/3" : frameRate.ToString(CultureInfo.InvariantCulture)), "-i", "pipe:0", "-an", "-frames:v", frameCount.ToString(CultureInfo.InvariantCulture), "-fps_mode", "passthrough",
             "-vf", $"scale=in_range=full:out_range=tv:out_color_matrix={matrix},format=yuv420p10le",
             "-color_range", "tv", "-color_primaries", frame.Hdr ? "bt2020" : "bt709",
             "-color_trc", frame.Hdr ? "smpte2084" : "bt709", "-colorspace", frame.Hdr ? "bt2020nc" : "bt709" };
@@ -134,13 +145,14 @@ internal static class StaticVideoEncoder
             }
             args.AddRange(new[] { "-c:v", "libsvtav1", "-preset", "8", "-crf", "20", "-tag:v", "av01", "-svtav1-params", options });
         }
-        args.AddRange(new[] { "-bsf:v", "setts=pts=0:dts=0:duration=3/TB", "-movflags", "+faststart+write_colr", "-video_track_timescale", "90000", "-f", "mp4", output });
+        args.AddRange(new[] { "-metadata", "comment=starshot-hdr-still-video", "-movflags", "+faststart+write_colr", "-video_track_timescale", "90000", "-f", "mp4", output });
         return args;
     }
     private static int Light(float value) => float.IsFinite(value) && value > 0 ? (int)Math.Clamp(Math.Round(value), 1, ushort.MaxValue) : 0;
 
     public static async Task EncodeAsync(StaticVideoFrame frame, StaticVideoCodec codec, string output,
-        float maxCll, float maxFall, VideoMastering? mastering, CancellationToken ct, string? directory = null)
+        float maxCll, float maxFall, VideoMastering? mastering, CancellationToken ct, string? directory = null,
+        int frameRate = DefaultFrameRate)
     {
         await Gate.WaitAsync(ct);
         string partial = output + "." + Guid.NewGuid().ToString("N") + ".partial";
@@ -150,19 +162,21 @@ internal static class StaticVideoEncoder
             await VerifyComponentsAsync(directory, ct);
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeout.CancelAfter(TimeSpan.FromMinutes(3));
-            using var process = NewProcess(Path.Combine(directory, "ffmpeg.exe"), Arguments(frame, codec, partial, maxCll, maxFall, mastering), true);
+            int frameCount = FrameCountForRate(frameRate);
+            using var process = NewProcess(Path.Combine(directory, "ffmpeg.exe"), Arguments(frame, codec, partial, maxCll, maxFall, mastering, frameRate), true);
             process.Start();
             using var registration = timeout.Token.Register(() => Kill(process));
             Task<string> errors = process.StandardError.ReadToEndAsync();
             try
             {
-                await process.StandardInput.BaseStream.WriteAsync(frame.Pixels, timeout.Token);
+                for (int i = 0; i < frameCount; i++)
+                    await process.StandardInput.BaseStream.WriteAsync(frame.Pixels, timeout.Token);
                 process.StandardInput.Close();
                 await process.WaitForExitAsync(timeout.Token);
                 string error = await errors;
                 if (process.ExitCode != 0) throw new InvalidOperationException("视频编码失败：" + error[^Math.Min(2000, error.Length)..]);
                 timeout.Token.ThrowIfCancellationRequested();
-                await ValidateAsync(partial, frame, codec, maxCll, maxFall, mastering, directory, timeout.Token);
+                await ValidateAsync(partial, frame, codec, maxCll, maxFall, mastering, directory, frameRate, timeout.Token);
                 File.Move(partial, output, overwrite: false);
             }
             finally
@@ -180,15 +194,16 @@ internal static class StaticVideoEncoder
     }
 
     private static async Task ValidateAsync(string path, StaticVideoFrame frame, StaticVideoCodec codec,
-        float maxCll, float maxFall, VideoMastering? mastering, string directory, CancellationToken ct)
+        float maxCll, float maxFall, VideoMastering? mastering, string directory, int frameRate, CancellationToken ct)
     {
+        int frameCount = FrameCountForRate(frameRate);
         string json = await RunTextAsync(Path.Combine(directory, "ffprobe.exe"), new[] { "-v", "error", "-count_frames", "-show_streams", "-show_frames", "-show_format", "-of", "json", path }, ct);
         using var document = JsonDocument.Parse(json);
         var streams = document.RootElement.GetProperty("streams");
         if (streams.GetArrayLength() != 1) throw new InvalidDataException("单帧视频包含额外轨道。");
         var video = streams[0];
         bool valid = video.GetProperty("codec_name").GetString() == (codec == StaticVideoCodec.Hevc ? "hevc" : "av1")
-            && video.GetProperty("nb_read_frames").GetString() == "1"
+            && video.GetProperty("nb_read_frames").GetString() == frameCount.ToString(CultureInfo.InvariantCulture)
             && video.GetProperty("width").GetInt32() == frame.Width && video.GetProperty("height").GetInt32() == frame.Height
             && video.GetProperty("pix_fmt").GetString() == "yuv420p10le"
             && video.GetProperty("color_transfer").GetString() == (frame.Hdr ? "smpte2084" : "bt709")
@@ -198,7 +213,7 @@ internal static class StaticVideoEncoder
             && Math.Abs(double.Parse(video.GetProperty("duration").GetString()!, CultureInfo.InvariantCulture) - 3) < .001;
         if (codec == StaticVideoCodec.Hevc) valid &= video.GetProperty("profile").GetString() == "Main 10";
         var frames = document.RootElement.GetProperty("frames");
-        valid &= frames.GetArrayLength() == 1;
+        valid &= frames.GetArrayLength() == frameCount;
         if (valid && frame.Hdr)
         {
             var data = frames[0].TryGetProperty("side_data_list", out var sideData) ? sideData.EnumerateArray().ToArray() : Array.Empty<JsonElement>();
@@ -208,7 +223,7 @@ internal static class StaticVideoEncoder
             if (mastering?.IsValid == true)
                 valid &= data.Any(d => d.GetProperty("side_data_type").GetString() == "Mastering display metadata");
         }
-        if (!valid) throw new InvalidDataException("单帧视频的帧数、时长或 HDR／色彩数据验证失败。");
+        if (!valid) throw new InvalidDataException("静态视频的帧数、时长或 HDR／色彩数据验证失败。");
     }
 
     internal static Process NewProcess(string executable, IEnumerable<string> arguments, bool input = false)

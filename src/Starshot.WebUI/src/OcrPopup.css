@@ -1,0 +1,26 @@
+.ocr-popup{height:100dvh;min-width:0;padding:4px;background:var(--paper);overflow:hidden}
+.ocr-popup .compact-ocr{height:100%;min-height:0;padding:0;gap:3px}
+.ocr-popup .compact-ocr .editor-shell{min-height:0;border:0;border-radius:4px;background:var(--surface);box-shadow:none}
+.ocr-popup .compact-ocr .editor-top{height:36px;min-height:36px;padding:0 10px;gap:8px}
+.ocr-popup .compact-ocr .editor-tabs{gap:16px}
+.ocr-popup .compact-ocr .editor-tabs button{padding:0 3px;font-size:12px}
+.ocr-popup .compact-ocr .format-actions{gap:9px}
+.ocr-popup .compact-ocr .format-actions button{font-size:11px;white-space:nowrap}
+.ocr-popup .compact-ocr .editor-body{height:auto;min-height:0;overflow:auto;flex:1}
+.ocr-popup .compact-ocr .rich-editor-host{width:100%;min-height:100%}
+.ocr-popup .compact-ocr .rich-editor .tiptap{min-height:100%;padding:10px 12px;font-size:14px;line-height:1.6}
+.ocr-popup .compact-ocr .rich-placeholder{top:10px;left:12px;right:12px;font-size:14px;line-height:1.6}
+.ocr-popup .compact-ocr .editor-bottom{min-height:36px;padding:4px 8px;gap:6px}
+.ocr-popup .compact-ocr .editor-bottom>span{min-width:0;gap:8px;font-size:10px;flex-wrap:wrap}
+.ocr-popup .compact-ocr .auto-copy-toggle{font-size:10px}
+.ocr-popup .compact-ocr .auto-copy-toggle input{padding:0}
+.ocr-popup .compact-ocr .editor-bottom .button{min-height:30px;padding:6px 10px;font-size:10px}
+.ocr-popup .compact-ocr .translation-bar{min-height:32px;gap:6px;padding:0 4px;flex-wrap:nowrap}
+.ocr-popup .compact-ocr .translation-bar label{margin-left:auto}
+.ocr-popup .compact-ocr .translation-bar select{padding:6px 22px 6px 9px;font-size:10px}
+.ocr-popup .compact-ocr .translation-bar .button{padding:7px 10px;font-size:10px}
+.ocr-popup .compact-ocr .translation-bar .icon-button{width:30px;height:30px}
+.scrim:has(.popup-settings){justify-content:center;align-items:center}
+.scrim .popup-settings{width:min(720px,calc(100% - 24px));max-width:720px;height:calc(100% - 24px);border-radius:10px;box-shadow:0 16px 48px #111c1930}
+.scrim .popup-settings .settings-content{padding:22px}
+@media(max-width:480px){.ocr-popup .compact-ocr .editor-top{padding:0 8px}.ocr-popup .compact-ocr .editor-tabs{gap:12px}.ocr-popup .compact-ocr .format-actions{gap:7px}.ocr-popup .compact-ocr .editor-bottom>span{max-width:65%}.ocr-popup .compact-ocr .translation-bar select{max-width:112px}.ocr-popup .compact-ocr .translation-bar .button{padding:6px 9px}}

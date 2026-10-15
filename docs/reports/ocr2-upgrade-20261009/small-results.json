@@ -1,0 +1,47 @@
+[
+  {
+    "name": "official NuGet 1.0.0 embedded resource identity",
+    "ok": true,
+    "elapsedMs": 709
+  },
+  {
+    "name": "actual official download / progress / exact hashes / atomic publication / lazy",
+    "ok": true,
+    "elapsedMs": 7245
+  },
+  {
+    "name": "offline failure, invalid length/hash, cancellation and stage cleanup",
+    "ok": true,
+    "elapsedMs": 78
+  },
+  {
+    "name": "selection is lazy, queued cancellation, publish gate and status deadlock protection",
+    "ok": true,
+    "elapsedMs": 345
+  },
+  {
+    "name": "Small Chinese / English / Japanese, BGRA unchanged; warm reuse",
+    "ok": true,
+    "elapsedMs": 1780
+  },
+  {
+    "name": "restart keeps Small and lazy loads on first OCR",
+    "ok": true,
+    "elapsedMs": 1339
+  },
+  {
+    "name": "real concurrent OCR and switch retire only when inference finishes",
+    "ok": true,
+    "elapsedMs": 526
+  },
+  {
+    "name": "on-disk corruption (unchanged size/timestamp) safely falls back to Tiny",
+    "ok": true,
+    "elapsedMs": 278
+  },
+  {
+    "name": "delete cancels operations, removes only Small, missing model safe fallback",
+    "ok": true,
+    "elapsedMs": 90
+  }
+]

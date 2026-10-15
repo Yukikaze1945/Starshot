@@ -1,0 +1,128 @@
+{
+  "ok": true,
+  "report": [
+    {
+      "width": 584,
+      "height": 391,
+      "scale": 2,
+      "theme": "light",
+      "resultBeforeReady": true,
+      "firstVisibleEditorMs": 289,
+      "initialJsDecodedBytes": 641150,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BdkPDapL.js",
+          "bytes": 641150
+        }
+      ],
+      "settingsMeasure": {
+        "width": 560,
+        "height": 367,
+        "scrollWidth": 560,
+        "contentWidth": 560,
+        "contentScrollWidth": 560,
+        "left": 12,
+        "right": 572,
+        "top": 12,
+        "bottom": 379,
+        "viewport": 584,
+        "viewportHeight": 391
+      },
+      "calls": [
+        "app.bootstrap",
+        "app.ready",
+        "clipboard.copyRichText",
+        "settings.set",
+        "translation.formatted",
+        "ocr.models.status",
+        "settings.set"
+      ]
+    },
+    {
+      "width": 464,
+      "height": 301,
+      "scale": 2,
+      "theme": "dark",
+      "resultBeforeReady": true,
+      "firstVisibleEditorMs": 187,
+      "initialJsDecodedBytes": 641150,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BdkPDapL.js",
+          "bytes": 641150
+        }
+      ],
+      "settingsMeasure": {
+        "width": 440,
+        "height": 277,
+        "scrollWidth": 440,
+        "contentWidth": 440,
+        "contentScrollWidth": 440,
+        "left": 12,
+        "right": 452,
+        "top": 12,
+        "bottom": 289,
+        "viewport": 464,
+        "viewportHeight": 301
+      },
+      "calls": [
+        "app.bootstrap",
+        "app.ready",
+        "clipboard.copyRichText",
+        "settings.set",
+        "translation.formatted",
+        "ocr.models.status",
+        "settings.set"
+      ]
+    }
+  ],
+  "benchmarkOrder": [
+    "current/previous",
+    "previous/current",
+    "current/previous"
+  ],
+  "benchmark": {
+    "current": {
+      "samples": 3,
+      "firstVisibleEditorMs": [
+        196,
+        180,
+        169
+      ],
+      "medianFirstVisibleEditorMs": 180,
+      "initialJsDecodedBytes": [
+        641150,
+        641150,
+        641150
+      ],
+      "medianInitialJsDecodedBytes": 641150,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BdkPDapL.js",
+          "bytes": 641150
+        }
+      ]
+    },
+    "previous": {
+      "samples": 3,
+      "firstVisibleEditorMs": [
+        190,
+        201,
+        195
+      ],
+      "medianFirstVisibleEditorMs": 195,
+      "initialJsDecodedBytes": [
+        693820,
+        693820,
+        693820
+      ],
+      "medianInitialJsDecodedBytes": 693820,
+      "initialJsResources": [
+        {
+          "name": "/previous/assets/index-CK-jL-98.js",
+          "bytes": 693820
+        }
+      ]
+    }
+  }
+}

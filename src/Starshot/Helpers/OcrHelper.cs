@@ -28,13 +28,16 @@ public sealed record OcrLine(string Text, Rect Rect, List<OcrWord> Words)
     public int Rotation { get; init; }
 }
 
-/// <summary>One lazy CPU engine: bundled Tiny or optional verified Small. Windows is a final exception fallback.</summary>
+/// <summary>One lazy engine: bundled Tiny or optional verified Small. Windows is a final exception fallback.</summary>
 public static class OcrHelper
 {
     public const string EngineName = "SimdPaddleOCR-Tiny";
     private static readonly SemaphoreSlim EngineGate = new(1);
     private static PaddleOcrAll? _engine;
     private static string? _engineModel;
+    private static bool _engineGpuRequested;
+    private static OcrBackend _engineBackend = OcrBackend.Cpu;
+    internal static OcrBackend LoadedBackend => _engineBackend;
     private static bool _stopping;
     private static int _initializations, _fallbacks;
     internal static int ModelInitializationCount => Volatile.Read(ref _initializations);
@@ -142,6 +145,19 @@ public static class OcrHelper
         finally { EngineGate.Release(); }
     }
 
+    public static async Task SelectAccelerationAsync(bool enabled, CancellationToken ct = default)
+    {
+        await EngineGate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            ct.ThrowIfCancellationRequested();
+            ObjectDisposedException.ThrowIf(_stopping, typeof(OcrHelper));
+            if (AppConfig.OcrGpuAcceleration != enabled) RetireEngine();
+            AppConfig.OcrGpuAcceleration = enabled;
+        }
+        finally { EngineGate.Release(); }
+    }
+
     internal static async Task MutateSmallFilesAsync(Action mutation, CancellationToken ct)
     {
         await EngineGate.WaitAsync(ct).ConfigureAwait(false);
@@ -159,29 +175,62 @@ public static class OcrHelper
     private static async Task<List<OcrLine>> RunAsync(string model, PaddleOcrModelBundle bundle,
         byte[] bgra, int width, int height, int stride, double scale, CancellationToken ct)
     {
-        if (_engineModel != model) RetireEngine();
+        bool gpuRequested = AppConfig.OcrGpuAcceleration;
+        if (_engineModel != model || _engineGpuRequested != gpuRequested) RetireEngine();
+        bool tryGpu = gpuRequested && (_engine is null || _engineBackend != OcrBackend.Cpu);
+        try
+        {
+            return await RunCoreAsync(model, bundle, tryGpu ? OcrBackend.Auto : OcrBackend.Cpu,
+                gpuRequested, bgra, width, height, stride, scale, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (tryGpu && ex is not OperationCanceledException)
+        {
+            RetireEngine();
+            Log.Warning(ex, "[OCR] Automatic GPU backend failed; retrying the same model on CPU");
+            return await RunCoreAsync(model, bundle, OcrBackend.Cpu,
+                gpuRequested, bgra, width, height, stride, scale, ct).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task<List<OcrLine>> RunCoreAsync(string model, PaddleOcrModelBundle bundle,
+        OcrBackend backend, bool gpuRequested, byte[] bgra, int width, int height, int stride, double scale, CancellationToken ct)
+    {
         if (_engine is null)
         {
             var init = Stopwatch.StartNew();
-            _engine = await PaddleOcrAll.LoadAsync(bundle, new PaddleOcrOptions
+            // 2.0's default high-priority Vulkan queue crashes vkCreateDevice on
+            // the tested Windows driver. Ordinary priority is adequate for an
+            // interactive screenshot tool; restore the environment after init.
+            string? previousPriority = Environment.GetEnvironmentVariable("SIMD_OCR_VK_PRIORITY");
+            try
             {
-                LineWorkerCount = 2, DetIntraOpThreads = 2,
-                Detector = new() { MaxPooledSessions = 1, LimitSideLength = 2048 },
-                Classifier = new() { MaxPooledSessions = 2 },
-                Recognizer = new() { MaxPooledSessions = 2 },
-            }, ct).ConfigureAwait(false);
+                if (backend != OcrBackend.Cpu) Environment.SetEnvironmentVariable("SIMD_OCR_VK_PRIORITY", "off");
+                _engine = await PaddleOcrAll.LoadAsync(bundle, new PaddleOcrOptions
+                {
+                    LineWorkerCount = 2, DetIntraOpThreads = 2,
+                    Detector = new() { Backend = backend, MaxPooledSessions = 1, LimitSideLength = 2048 },
+                    Classifier = new() { Backend = backend, MaxPooledSessions = 2 },
+                    Recognizer = new() { Backend = backend, MaxPooledSessions = 2 },
+                }, ct).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (backend != OcrBackend.Cpu) Environment.SetEnvironmentVariable("SIMD_OCR_VK_PRIORITY", previousPriority);
+            }
             _engineModel = model;
+            _engineGpuRequested = gpuRequested;
+            _engineBackend = backend;
             ModelInitializationMilliseconds = init.ElapsedMilliseconds;
             Interlocked.Increment(ref _initializations);
-            Log.Information("[OCR] engine={Engine} model init={Elapsed} ms; workers=2; detThreads=2; detLimit=2048", EngineLabel(model), init.ElapsedMilliseconds);
+            Log.Information("[OCR] engine={Engine} model init={Elapsed} ms; requested_backend={Backend}; workers=2; detThreads=2; detLimit=2048", EngineLabel(model), init.ElapsedMilliseconds, backend);
         }
         ct.ThrowIfCancellationRequested();
         var run = Stopwatch.StartNew();
         var result = _engine.Run(bgra, width, height, sourceStride: stride, format: ImagePixelFormat.Bgra32);
         ct.ThrowIfCancellationRequested();
         var lines = result.Lines.Select(line => Adapt(line, 1.0 / scale)).ToList();
-        Log.Information("[OCR] engine={Engine} input={Width}x{Height} lines={Lines} elapsed={Elapsed} ms; det={DetWidth}x{DetHeight}",
-            EngineLabel(model), width, height, lines.Count, run.ElapsedMilliseconds, result.DetectorResizedWidth, result.DetectorResizedHeight);
+        Log.Information("[OCR] engine={Engine} input={Width}x{Height} lines={Lines} elapsed={Elapsed} ms; requested_backend={Backend}; det={DetWidth}x{DetHeight}",
+            EngineLabel(model), width, height, lines.Count, run.ElapsedMilliseconds, _engineBackend, result.DetectorResizedWidth, result.DetectorResizedHeight);
         return lines;
     }
 
@@ -190,14 +239,14 @@ public static class OcrHelper
     {
         try { _engine?.Dispose(); }
         catch (Exception ex) { Log.Warning(ex, "[OCR] Engine disposal failed"); }
-        finally { _engine = null; _engineModel = null; }
+        finally { _engine = null; _engineModel = null; _engineGpuRequested = false; _engineBackend = OcrBackend.Cpu; }
     }
 
     internal static OcrLine Adapt(PaddleOcrLine line, double restore)
     {
         var box = line.Box;
         var rect = QuadToRect(box.X1, box.Y1, box.X2, box.Y2, box.X3, box.Y3, box.X4, box.Y4, restore);
-        // The pinned NuGet 1.4.2 API exposes line quads, not CTC character alignment.
+        // Keep line quads; optional 2.0 CTC alignment is unnecessary for the existing line editor.
         // Keep the existing result/selection model with one selectable word per line.
         var words = string.IsNullOrEmpty(line.Text) ? new List<OcrWord>() : new List<OcrWord> { new(line.Text, rect) };
         return new(line.Text, rect, words) { RecognitionScore = line.RecognitionScore, Rotation = line.AppliedRotationDegrees };

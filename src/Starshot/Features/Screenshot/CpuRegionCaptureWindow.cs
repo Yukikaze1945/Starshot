@@ -35,6 +35,7 @@ internal sealed partial class CpuRegionCaptureWindow : CpuCaptureNativeWindow
     private readonly Stack<List<CpuAnnotation>> _undo = new(), _redo = new();
     private CpuAnnotation? _draft;
     private CpuCaptureSurface? _preview;
+    private CpuCaptureSurface? _backBuffer;
     private bool _previewDirty = true, _selected, _dragging, _pendingMoveIn, _closed;
     private Point _mouse, _dragStart;
     private Rectangle _selection, _dragRect;
@@ -136,10 +137,14 @@ internal sealed partial class CpuRegionCaptureWindow : CpuCaptureNativeWindow
 
     private void Paint()
     {
-        nint dc = CpuCaptureNative.BeginPaint(Hwnd, out var paint);
+        nint targetDc = CpuCaptureNative.BeginPaint(Hwnd, out var paint);
         try
         {
             if (_source is null || _dark is null || _closed) return;
+            // Compose the entire frame in a CPU DIB. Drawing the dark backdrop,
+            // selection and toolbar directly to the window exposes partial frames.
+            _backBuffer ??= new CpuCaptureSurface(_desktop.Width, _desktop.Height);
+            nint dc = _backBuffer.Dc;
             var full = new Rectangle(0, 0, _desktop.Width, _desktop.Height);
             CpuCaptureGdi.Blit(dc, _dark, _desktop.Width, _desktop.Height, full, full);
             Rectangle r = _selected || _dragging ? _selection : HoverRectangle();
@@ -167,6 +172,8 @@ internal sealed partial class CpuRegionCaptureWindow : CpuCaptureNativeWindow
             CpuCaptureGdi.Fill(dc, hints, Paper, Dip(10));
             CpuCaptureGdi.Text(dc, "方向键 移动 · Shift 缩小 · Ctrl 扩大 · C 复制颜色", new(hints.X + Dip(12), hints.Y + Dip(7), hints.Width - Dip(24), Dip(23)), _smallFont, Ink);
             CpuCaptureGdi.Text(dc, "Ctrl+Z/Y 撤销/重做 · Ctrl+C/S 复制/保存 · Ctrl+Q 翻译 · Esc 退出 · F1 快捷键", new(hints.X + Dip(12), hints.Y + Dip(32), hints.Width - Dip(24), Dip(23)), _smallFont, Ink);
+            if (!CpuCaptureGdi.BitBlt(targetDc, 0, 0, _desktop.Width, _desktop.Height, dc, 0, 0, CpuCaptureGdi.Copy))
+                throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
         }
         finally { CpuCaptureNative.EndPaint(Hwnd, ref paint); }
     }
@@ -395,6 +402,7 @@ internal sealed partial class CpuRegionCaptureWindow : CpuCaptureNativeWindow
     {
         _closed = true; _pendingMoveIn = false;
         _preview?.Dispose(); _preview = null; _dark = null; _source = null;
+        _backBuffer?.Dispose(); _backBuffer = null;
         if (_font != 0) CpuCaptureGdi.DeleteObject(_font);
         DisposeToolbarFonts();
         if (_smallFont != 0) CpuCaptureGdi.DeleteObject(_smallFont);

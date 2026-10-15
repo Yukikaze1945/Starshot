@@ -156,6 +156,7 @@ public sealed partial class ToolbarTestApp : Starshot.App
         Set(window, "_lockedW", 32f); Set(window, "_lockedH", 24f);
         WindowType.GetProperty("SelectionRect")!.SetValue(window, new Rect(0, 0, 32, 24));
         State(window, "Selected");
+        ValidateActualHdrMetadata(window);
         AnalysisMonitors(window, (new Rect(0, 0, 64, 48), false, 80, 0));
         Check(!(bool)Call(window, "CanAnalyzeHdr")!, "SDR monitor region cannot masquerade as absolute HDR in a float composite");
         AnalysisMonitors(window, (new Rect(0, 0, 32, 48), true, 203, 1000), (new Rect(32, 0, 32, 48), false, 80, 0));
@@ -204,6 +205,33 @@ public sealed partial class ToolbarTestApp : Starshot.App
         Call(window, "CancelCapture");
         Check(Field(window, "_hdrAnalysis") is null && Field(window, "_analysisHeatmap") is null && Field(window, "_canvasOriginal") is null,
             "Capture close releases all analyzer references");
+    }
+
+    private void ValidateActualHdrMetadata(RegionCaptureWindow window)
+    {
+        // Exercise production metadata discovery, including CsWinRT projections in
+        // the trimmed publish. Synthetic injected monitor lists missed this path.
+        // Only display metadata is queried: no WGC, screenshot or desktop input.
+        var areas = Microsoft.UI.Windowing.DisplayArea.FindAll();
+        Check(areas.Count > 0, "Real display metadata is available for qualification regression");
+        var bounds = areas[0].OuterBounds;
+        using var info = Microsoft.Graphics.Display.DisplayInformation.CreateForDisplayId(areas[0].DisplayId);
+        bool expectedHdr = info.GetAdvancedColorInfo().CurrentAdvancedColorKind ==
+            Microsoft.Graphics.Display.DisplayAdvancedColorKind.HighDynamicRange;
+        Set(window, "_vx", bounds.X); Set(window, "_vy", bounds.Y);
+        Set(window, "_analysisMonitors", null);
+        bool enabled = (bool)Call(window, "CanAnalyzeHdr")!;
+        File.WriteAllText(Path.Combine(Environment.GetEnvironmentVariable("STARSHOT_TOOLBAR_UI_REPORT")!, "hdr-display-eligibility.log"),
+            $"display_count={areas.Count}; discovered={((IList)Field(window, "_analysisMonitors")!).Count}; actual_hdr={expectedHdr}; fp16_analysis_enabled={enabled}\n");
+        Check(((IList)Field(window, "_analysisMonitors")!).Count == areas.Count,
+            "Production discovery reads every actual display without enumerator cast failure");
+        Check(enabled == expectedHdr, "FP16 analysis eligibility matches actual display HDR state");
+        Call(window, "RefreshToolbar"); Call(window, "OpenToolbarMenu", Command("More"));
+        Check(((Canvas)Field(window, "ToolbarPopupButtons")!).Children.OfType<Button>()
+            .Single(b => b.Tag?.ToString() == "HdrAnalysis").IsEnabled == expectedHdr,
+            "Actual display metadata controls the HDR analyzer menu button");
+        Call(window, "DismissToolbarOutsidePress");
+        Set(window, "_vx", 0); Set(window, "_vy", 0);
     }
 
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]

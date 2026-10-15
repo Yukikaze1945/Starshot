@@ -25,6 +25,41 @@ namespace Starshot.Features.Codec;
 
 internal static class ImageSaver
 {
+    public static async Task SaveAsHeicAsync(CanvasBitmap bitmap, Stream stream, ColorPrimaries primaries,
+        int quality, byte[]? xmpData = null, bool writeColorProfile = true, float? maxCLL = null, float? maxFALL = null)
+    {
+        bool hdr = bitmap.Format is DirectXPixelFormat.R16G16B16A16Float or DirectXPixelFormat.R32G32B32A32Float;
+        if (hdr)
+        {
+            using var pq = new CanvasRenderTarget(bitmap.Device, bitmap.SizeInPixels.Width, bitmap.SizeInPixels.Height,
+                96, DirectXPixelFormat.R16G16B16A16UIntNormalized, CanvasAlphaMode.Premultiplied);
+            using var effect = new ScRGBToHDR10Effect { Source = bitmap, BufferPrecision = CanvasBufferPrecision.Precision16Float };
+            using (var ds = pq.CreateDrawingSession())
+                ds.DrawImage(effect);
+            await SaveAsHeicAsync(stream, pq.SizeInPixels.Width, pq.SizeInPixels.Height, pq.Format,
+                pq.GetPixelBytes(), ColorPrimaries.BT2020, quality, xmpData, true, maxCLL, maxFALL);
+        }
+        else await SaveAsHeicAsync(stream, bitmap.SizeInPixels.Width, bitmap.SizeInPixels.Height, bitmap.Format,
+            bitmap.GetPixelBytes(), primaries, quality, xmpData, false);
+    }
+
+    public static async Task SaveAsHeicAsync(Stream stream, uint width, uint height, DirectXPixelFormat format,
+        byte[] pixels, ColorPrimaries primaries, int quality, byte[]? xmpData = null, bool hdr = false,
+        float? maxCLL = null, float? maxFALL = null)
+    {
+        string packing = format switch
+        {
+            DirectXPixelFormat.B8G8R8A8UIntNormalized => "bgra8",
+            DirectXPixelFormat.R8G8B8A8UIntNormalized => "rgba8",
+            DirectXPixelFormat.R16G16B16A16UIntNormalized => "rgba16",
+            _ => throw new NotSupportedException($"{format} is not supported for HEIC encoding")
+        };
+        primaries.TryGetDefinedPrimaries(out int id);
+        byte[] encoded = await HeicCodec.EncodeAsync(pixels, checked((int)width), checked((int)height), packing,
+            quality, hdr, xmpData, maxCLL, maxFALL, id);
+        await stream.WriteAsync(encoded);
+    }
+
     private static int GetSuggestedThreads()
     {
         int threads = Environment.ProcessorCount;
@@ -918,7 +953,7 @@ internal static class ImageSaver
 
             // base 只有在没有 ICC 时才会被 libultrahdr 按声明色域补一份 ICC；
             // gain map 带 ICC 会被当成增益自身所在色域，use_base_cg=1 下再乘一道转换就把增益压灰。
-            byte[] baseArray = RemoveJpegIccSegments(ms_base.ToArray());
+            byte[] baseArray = UhdrReferenceWhite.AttachToBaseJpeg(RemoveJpegIccSegments(ms_base.ToArray()),sdrWhiteLevel);
             byte[] gainArray = RemoveJpegIccSegments(ms_gainmap.ToArray());
 
             using var encoder = new UhdrEncoder();

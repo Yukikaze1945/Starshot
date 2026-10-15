@@ -207,15 +207,17 @@ React / TypeScript / Vite 负责主界面，WebView2 消息桥连接 C# 原生�
 <details>
 <summary><b>从源码构建 · Windows x64</b></summary>
 
-准备 **.NET 10 SDK、Node.js 24、Visual Studio 2026 的 C++ / .NET 桌面工作负载、Windows SDK 10.0.26100**。
+准备 **.NET 10 SDK、Node.js 22.12 或更新的 LTS、Visual Studio 的 C++ / .NET 桌面工作负载、Windows SDK 10.0.26100**。
 
 ```powershell
 git clone https://github.com/Yukikaze1945/Starshot.git
 cd Starshot
-dotnet build src/Starshot/Starshot.csproj -c Debug -p:Platform=x64
+.\Run-Starshot.cmd
 ```
 
-项目构建会准备 WebUI 与固定版本编码组件，首次构建需要网络。调试应用位于 `build/app/Starshot.exe`。
+也可以直接双击根目录的 **Run-Starshot.cmd**。脚本自动寻找 .NET 10、检查 Node.js、准备 WebUI 和固定版本编码组件，增量构建 Debug 版后启动，不制作安装包。首次构建需要网络。
+
+源码版程序位于 `build/source-run/app/Starshot.exe`，独立配置保存在 `build/source-run/config.sjson`。再次运行前请从托盘退出 Starshot，避免旧进程接管启动。修改源码后再次运行脚本即可。仅检查构建可运行 `Run-Starshot.cmd -BuildOnly`；自定义 SDK 可使用 `-DotnetPath "路径\dotnet.exe"`。脚本也支持将 SDK 放在仓库的 `.dotnet` 目录，或设置 `DOTNET10_ROOT`。
 
 仅运行前端开发预览：
 

@@ -53,6 +53,7 @@ internal static class Program
             Check(StaticVideoMetadata.IsVideo(video), $"{label} MP4 not recognized");
             var descriptor = StaticVideoMetadata.Read(video);
             Check(descriptor.ImagePath == image && descriptor.Hdr == true && descriptor.Codec == label.ToUpperInvariant(), $"{label} descriptor values");
+            Check(descriptor.DurationMs == 3000 && descriptor.FrameCount == 15 && descriptor.FrameRate == "5/1", $"{label} descriptor cadence");
             await VerifyVideo(video, codec);
             await VerifyDecodedHighlights(video, device, codec);
 
@@ -140,9 +141,9 @@ internal static class Program
         JsonElement[] records = root.GetProperty("packets_and_frames").EnumerateArray().ToArray();
         JsonElement[] frames = records.Where(x => x.GetProperty("type").GetString() == "frame").ToArray();
         JsonElement[] packets = records.Where(x => x.GetProperty("type").GetString() == "packet").ToArray();
-        Check(frames.Length == 1, $"expected 1 decoded frame, got {frames.Length}");
-        Check(packets.Length == 1, $"expected 1 packet, got {packets.Length}");
-        Check(Math.Abs(double.Parse(packets[0].GetProperty("duration_time").GetString()!, CultureInfo.InvariantCulture) - 3) < .001, "packet duration is not 3s");
+        Check(frames.Length == 15, $"expected 15 decoded frames, got {frames.Length}");
+        Check(packets.Length == 15, $"expected 15 packets, got {packets.Length}");
+        Check(Math.Abs(packets.Sum(packet => double.Parse(packet.GetProperty("duration_time").GetString()!, CultureInfo.InvariantCulture)) - 3) < .001, "packet durations do not total 3s");
         var sideData = frames[0].GetProperty("side_data_list").EnumerateArray().ToArray();
         JsonElement light = sideData.Single(x => x.GetProperty("side_data_type").GetString() == "Content light level metadata");
         Check(light.GetProperty("max_content").GetInt32() == 1000 && light.GetProperty("max_average").GetInt32() == 350, "CLL metadata mismatch");

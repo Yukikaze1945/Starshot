@@ -13,6 +13,8 @@ internal class ImageInfo : IDisposable
     public ColorPrimaries ColorPrimaries { get; set; }
 
     public byte[]? IccData { get; set; }
+    public float? SdrReferenceWhiteNits { get; set; }
+    public string? Carrier { get; set; }
 
     private bool disposedValue;
 

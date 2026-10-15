@@ -8,5 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/Starshot/Features/Codec/StaticVideoEncoder.cs" Link="StaticVideoEncoder.cs" />
+    <Compile Include="../../src/Starshot/Features/Codec/StaticVideoMetadata.cs" Link="StaticVideoMetadata.cs" />
   </ItemGroup>
 </Project>

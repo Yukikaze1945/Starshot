@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "rows": [
+    {
+      "hdr": false,
+      "saveMs": 119,
+      "roundtripMs": 175,
+      "bytes": 432,
+      "format": "R16G16B16A16UIntNormalized",
+      "nits": []
+    },
+    {
+      "hdr": true,
+      "saveMs": 125,
+      "roundtripMs": 187,
+      "bytes": 512,
+      "format": "R16G16B16A16Float",
+      "nits": [
+        78.6328125,
+        201.875,
+        785.625,
+        3962.5
+      ]
+    }
+  ]
+}

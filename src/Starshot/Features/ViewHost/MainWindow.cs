@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -42,7 +43,15 @@ public sealed class MainWindow : CpuCaptureNativeWindow
     private IDisposable? _toastHost;
     private bool _initializing, _ready, _startupChecked, _webUiClosed;
     private object? _pendingOcr;
+    private bool _pendingWorkspace;
+    internal void ShowWorkspaceCapture()
+    {
+        _pendingWorkspace=true;Show();Activate();
+        if(_ready){_pendingWorkspace=false;Emit("workspace.capture",new{});}
+    }
+    private string? _loadingOcrText;
     private readonly bool _isOcrPopup;
+    private readonly Stopwatch _uiStartup = Stopwatch.StartNew();
     private CancellationTokenSource? _hiddenLifetime;
     private nint _font;
     private string _loadMessage = "正在打开创作台…";
@@ -54,6 +63,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
     public MainWindow(bool ocrPopup = false)
     {
         _isOcrPopup = ocrPopup;
+        if (ocrPopup) _loadMessage = "正在准备文字…";
         try
         {
             var area = DisplayArea.Primary.WorkArea;
@@ -62,8 +72,8 @@ public sealed class MainWindow : CpuCaptureNativeWindow
             _windowId = Win32Interop.GetWindowIdFromWindow(Hwnd);
             AppWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(_windowId);
             if (!ocrPopup) WindowEx.RegisterMainWindow(_windowId);
-            var width = (int)((ocrPopup ? 720 : 1180) * UIScale);
-            var height = (int)((ocrPopup ? 560 : 760) * UIScale);
+            var width = (int)((ocrPopup ? 460 : 1180) * UIScale);
+            var height = (int)((ocrPopup ? 300 : 760) * UIScale);
             AppWindow.MoveAndResize(new RectInt32(area.X + (area.Width - width) / 2,
                 area.Y + (area.Height - height) / 2, width, height));
             nint module = Kernel32.GetModuleHandle(null).DangerousGetHandle();
@@ -105,14 +115,16 @@ public sealed class MainWindow : CpuCaptureNativeWindow
             var environment = await CoreWebView2Environment.CreateWithOptionsAsync(null,
                 Path.Combine(AppConfig.CacheFolder, "webview2"), new CoreWebView2EnvironmentOptions());
             if (ForceExit || _webUiClosed) return;
+            LogPopupStartup("environment ready");
             var controller = await environment.CreateCoreWebView2ControllerAsync(
                 CoreWebView2ControllerWindowReference.CreateFromWindowHandle((ulong)Hwnd));
             if (ForceExit || _webUiClosed) { controller.Close(); return; }
             _controller = controller;
+            LogPopupStartup("controller ready");
             controller.ShouldDetectMonitorScaleChanges = true;
             controller.BoundsMode = CoreWebView2BoundsMode.UseRawPixels;
             UpdateWebBounds(); ApplyNativeTheme();
-            controller.IsVisible = AppWindow.IsVisible;
+            controller.IsVisible = (!_isOcrPopup || _ready) && AppWindow.IsVisible;
             var core = _core = controller.CoreWebView2;
             core.Settings.AreDefaultContextMenusEnabled = false;
             core.Settings.AreDevToolsEnabled = AppConfig.DevMode;
@@ -139,6 +151,11 @@ public sealed class MainWindow : CpuCaptureNativeWindow
         finally { _initializing = false; }
     }
 
+    private void LogPopupStartup(string stage)
+    {
+        if (_isOcrPopup) AppConfig.GetLogger<MainWindow>().LogInformation("OCR popup {Stage}: {Elapsed} ms", stage, _uiStartup.ElapsedMilliseconds);
+    }
+
     private void UpdateWebBounds()
     {
         if (Hwnd != 0 && _controller is { } controller && CpuCaptureNative.GetClientRect(Hwnd, out var r))
@@ -156,11 +173,14 @@ public sealed class MainWindow : CpuCaptureNativeWindow
     internal void FrontendReady()
     {
         _ready = true;
+        _loadingOcrText = null;
+        LogPopupStartup("frontend ready");
         if (_controller is { } controller) controller.IsVisible = AppWindow.IsVisible;
         if (!_isOcrPopup && _workspaceDraft is { } workspace) Emit("workspace.restore", workspace);
         if (!_isOcrPopup) { InAppToast.FlushPending(); HotkeyManager.ShowRegistrationErrors(); }
         if (!_isOcrPopup && !_startupChecked) { _startupChecked = true; _ = TryCheckUpdateOnStartupAsync(); }
         if (_pendingOcr is { } data) { _pendingOcr = null; Emit("ocr.result", data); }
+        if (_pendingWorkspace) { _pendingWorkspace=false; Emit("workspace.capture",new{}); }
     }
 
     private static async Task TryCheckUpdateOnStartupAsync()
@@ -182,6 +202,19 @@ public sealed class MainWindow : CpuCaptureNativeWindow
     {
         if (!_isOcrPopup) { _ = new OcrResultWindow(lines, translate); return; }
         string text = OcrTextFormatter.Paragraphs(lines);
+        if (!AppWindow.IsVisible)
+        {
+            // Short snippets should not open a document-sized window. Only size a
+            // newly shown popup, preserving the user's size while it stays open.
+            int wraps = 0;
+            foreach (string line in text.Split('\n')) wraps += Math.Max(1, (line.Length + 27) / 28);
+            var area = DisplayArea.GetFromWindowId(_windowId, DisplayAreaFallback.Primary).WorkArea;
+            int width = Math.Min((int)(460 * UIScale), area.Width);
+            int height = Math.Min((int)(Math.Clamp(180 + wraps * 23, 250, 430) * UIScale), area.Height);
+            AppWindow.MoveAndResize(new RectInt32(area.X + (area.Width - width) / 2,
+                area.Y + (area.Height - height) / 2, width, height));
+        }
+        if (!_ready) _loadingOcrText = text.Length > 16384 ? text[..16384] : text;
         bool autoCopied = false; string? copyError = null;
         if (AppConfig.AutoCopyOcrText)
         {
@@ -192,6 +225,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
             translate, autoCopied, copyError, id = Guid.NewGuid().ToString() };
         if (_ready) Emit("ocr.result", data); else _pendingOcr = data;
         Activate();
+        if (!_ready) Redraw();
     }
 
     internal void Emit(string name, object data)
@@ -227,7 +261,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
         if (ForceExit) return;
         CancelHiddenRelease(); _core?.Resume();
         AppWindow.Show(true);
-        if (_controller is { } controller) { UpdateWebBounds(); controller.IsVisible = true; }
+        if (_controller is { } controller) { UpdateWebBounds(); controller.IsVisible = !_isOcrPopup || _ready; }
     }
     public void Hide()
     {
@@ -307,6 +341,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
     public override void Dispose()
     {
         ForceExit = true;
+        _pendingOcr = null; _loadingOcrText = null;
         try { DetachWebUiForRelease(); }
         finally { base.Dispose(); }
     }
@@ -332,14 +367,14 @@ public sealed class MainWindow : CpuCaptureNativeWindow
             case 0x10: Close(); return 0;
             case 0x14: return 1;
             case 0x05:
-                UpdateWebBounds(); if (_controller is { } controller) controller.IsVisible = wparam != 1 && AppWindow.IsVisible;
+                UpdateWebBounds(); if (_controller is { } controller) controller.IsVisible = wparam != 1 && AppWindow.IsVisible && (!_isOcrPopup || _ready);
                 return 0;
             case 0x03: _controller?.NotifyParentWindowPositionChanged(); break;
             case 0x07: if (_ready) _controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic); break;
             case 0x06: if (wparam != 0 && _ready) Emit("library.changed", new { }); break;
             case 0x24:
                 var info = (User32.MINMAXINFO*)lparam;
-                info->minTrackSize = new SIZE((int)((_isOcrPopup ? 560 : 760) * UIScale), (int)((_isOcrPopup ? 420 : 540) * UIScale));
+                info->minTrackSize = new SIZE((int)((_isOcrPopup ? 360 : 760) * UIScale), (int)((_isOcrPopup ? 230 : 540) * UIScale));
                 return 0;
             case 0x2E0:
                 var rect = Marshal.PtrToStructure<CpuCaptureGdi.NativeRect>(lparam);
@@ -359,7 +394,8 @@ public sealed class MainWindow : CpuCaptureNativeWindow
                     CpuCaptureNative.GetClientRect(Hwnd, out var client);
                     var r = Drawing.Rectangle.FromLTRB(0, 0, client.Right, client.Bottom);
                     CpuCaptureGdi.Fill(dc, r, AppConfig.Theme == 2 ? Drawing.Color.FromArgb(24, 27, 25) : Drawing.Color.FromArgb(245, 246, 239));
-                    if (!_ready) CpuCaptureGdi.Text(dc, _loadMessage, new Drawing.Rectangle(0, r.Height / 2 - 20, r.Width, 40), _font,
+                    if (!_ready && _isOcrPopup && _loadingOcrText is { } text) DrawLoadingOcr(dc, r, text);
+                    else if (!_ready) CpuCaptureGdi.Text(dc, _loadMessage, new Drawing.Rectangle(0, r.Height / 2 - 20, r.Width, 40), _font,
                         AppConfig.Theme == 2 ? Drawing.Color.White : Drawing.Color.FromArgb(36, 43, 36), center: true);
                 }
                 finally { CpuCaptureNative.EndPaint(Hwnd, ref paint); }
@@ -367,4 +403,26 @@ public sealed class MainWindow : CpuCaptureNativeWindow
         }
         return null;
     }
+
+    // Show recognized text immediately while the browser/editor boots. No extra
+    // GPU surface or retained WebView is needed to hide its cold-start latency.
+    private void DrawLoadingOcr(nint dc, Drawing.Rectangle bounds, string text)
+    {
+        int padding = (int)(22 * UIScale), header = (int)(42 * UIScale);
+        var foreground = AppConfig.Theme == 2 ? Drawing.Color.White : Drawing.Color.FromArgb(36, 43, 36);
+        CpuCaptureGdi.Text(dc, "原文 · 正在准备编辑器…", new Drawing.Rectangle(padding, padding, Math.Max(1, bounds.Width - padding * 2), header), _font, foreground);
+        nint oldFont = CpuCaptureGdi.SelectObject(dc, _font);
+        int oldMode = SetLoadingBkMode(dc, 1);
+        uint oldColor = SetLoadingTextColor(dc, (uint)(foreground.R | foreground.G << 8 | foreground.B << 16));
+        try
+        {
+            var rect = new CpuCaptureGdi.NativeRect(Drawing.Rectangle.FromLTRB(padding, padding + header, Math.Max(padding + 1, bounds.Right - padding), Math.Max(padding + header + 1, bounds.Bottom - padding)));
+            DrawLoadingText(dc, text, text.Length, ref rect, 0x10 | 0x800); // DT_WORDBREAK | DT_NOPREFIX
+        }
+        finally { SetLoadingTextColor(dc, oldColor); SetLoadingBkMode(dc, oldMode); CpuCaptureGdi.SelectObject(dc, oldFont); }
+    }
+
+    [DllImport("gdi32.dll", EntryPoint = "SetBkMode")] private static extern int SetLoadingBkMode(nint dc, int mode);
+    [DllImport("gdi32.dll", EntryPoint = "SetTextColor")] private static extern uint SetLoadingTextColor(nint dc, uint color);
+    [DllImport("user32.dll", EntryPoint = "DrawTextW", CharSet = CharSet.Unicode)] private static extern int DrawLoadingText(nint dc, string text, int count, ref CpuCaptureGdi.NativeRect rect, uint format);
 }

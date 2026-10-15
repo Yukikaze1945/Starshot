@@ -81,11 +81,19 @@ internal static class Program
             var annotations = (List<CpuAnnotation>)Field("_annotations").GetValue(window)!;
             annotations.Add(new() { Tool = CpuAnnotationTool.Rectangle, Start = new(110, 130), End = new(180, 160), Color = Color.Red });
             CpuCaptureNative.InvalidateRect(hwnd, 0, false); CpuCaptureNative.UpdateWindow(hwnd);
+            var backBuffer = (CpuCaptureSurface?)Field("_backBuffer").GetValue(window);
+            Check(backBuffer is { Width: 720, Height: 480 }, "Selection must compose into a full-size CPU back buffer");
+            CpuCaptureGdi.GdiFlush();
+            int unchangedPixel = (220 * 720 + 220) * 4;
+            Check(backBuffer!.Pixels.Slice(unchangedPixel, 3).SequenceEqual(source.Pixels.AsSpan(unchangedPixel, 3)),
+                "The completed back buffer must retain undimmed selection pixels");
             Finish(window, action);
             var result = window.Completion.Task.GetAwaiter().GetResult();
             try
             {
                 Check(result.Action == action && Handle(window) == 0 && !IsWindow(hwnd), $"{action} must complete and destroy its HWND immediately");
+                Check(backBuffer.Dc == 0 && backBuffer.Bits == 0 && Field("_backBuffer").GetValue(window) is null,
+                    "Closing must release the CPU presentation buffer and its GDI handles");
                 if (action != RegionCaptureAction.Cancel)
                 {
                     Check(result.Image is { Width: 240, Height: 180 }, $"{action} must transfer an independently owned crop");

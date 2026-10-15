@@ -29,6 +29,10 @@ internal static class ImageLoader
         {
             info = await LoadAvifAsync(filePath, cancellation);
         }
+        else if (extension is ".heic" or ".heif")
+        {
+            info = await LoadHeicAsync(filePath, cancellation);
+        }
         else if (extension is ".jxl")
         {
             info = await LoadJxlAsync(filePath, cancellation);
@@ -37,7 +41,7 @@ internal static class ImageLoader
         {
             info = await LoadPngAsync(filePath, cancellation);
         }
-        else if (extension is ".jpg")
+        else if (extension is ".jpg" or ".jpeg")
         {
             info = await LoadJpegAsync(filePath, cancellation);
         }
@@ -62,6 +66,32 @@ internal static class ImageLoader
             info.ColorPrimaries = ColorPrimaries.BT709;
         }
         return info;
+    }
+
+    private static async Task<ImageInfo> LoadHeicAsync(string path, CancellationToken ct)
+    {
+        var frame = await HeicCodec.DecodeAsync(path, ct: ct);
+        if (frame.Hdr && frame.Transfer != 16) throw new NotSupportedException("HLG HEIC viewing is not supported yet");
+        using var packed = CanvasBitmap.CreateFromBytes(CanvasDevice.GetSharedDevice(), frame.Pixels,
+            frame.Width, frame.Height, DirectXPixelFormat.R16G16B16A16UIntNormalized);
+        if (frame.Hdr)
+        {
+            if (frame.Primaries != 9) throw new NotSupportedException("PQ HEIC must use BT.2020 primaries");
+            var result = new CanvasRenderTarget(packed.Device, frame.Width, frame.Height, 96,
+                DirectXPixelFormat.R16G16B16A16Float, CanvasAlphaMode.Premultiplied);
+            try
+            {
+                using var effect = new HDR10ToScRGBEffect { Source = packed, BufferPrecision = CanvasBufferPrecision.Precision16Float };
+                using var ds = result.CreateDrawingSession();
+                ds.DrawImage(effect);
+                return new ImageInfo { CanvasBitmap = result, HDR = true, ColorPrimaries = ColorPrimaries.BT709 };
+            }
+            catch { result.Dispose(); throw; }
+        }
+        ColorPrimaries primaries = frame.Primaries switch { 9 => ColorPrimaries.BT2020, 12 => ColorPrimaries.DisplayP3, _ => ColorPrimaries.BT709 };
+        if (frame.Icc.Length > 0) primaries = ICCHelper.GetColorPrimariesFromIccData(frame.Icc);
+        return new ImageInfo { CanvasBitmap = CanvasBitmap.CreateFromBytes(packed.Device, frame.Pixels, frame.Width, frame.Height,
+            DirectXPixelFormat.R16G16B16A16UIntNormalized), ColorPrimaries = primaries, IccData = frame.Icc, HDR = false };
     }
 
     private static async Task<ImageInfo> LoadAvifAsync(
@@ -420,6 +450,8 @@ internal static class ImageLoader
     {
         var info = new ImageInfo();
         byte[] bytes = await File.ReadAllBytesAsync(path, cancellationToken);
+        if (await Task.Run(() => UhdrImageDecoder.IsUhdr(bytes), cancellationToken))
+            return await UhdrImageDecoder.LoadAsync(bytes, cancellationToken);
         try
         {
             using var decoder = UhdrDecoder.Create(bytes);
@@ -475,6 +507,10 @@ internal static class ImageLoader
     public static async Task<(uint Width, uint Height)> GetImagePixelSizeAsync(string filePath)
     {
         string extension = Path.GetExtension(filePath).ToLowerInvariant();
+        if (extension is ".heic" or ".heif")
+        {
+            return await HeicCodec.SizeAsync(filePath);
+        }
         using var fs = File.OpenRead(filePath);
         if (extension is ".avif" && !ImageThumbnail.AvifDecoderSupported)
         {

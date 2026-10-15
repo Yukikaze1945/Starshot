@@ -605,6 +605,27 @@ internal partial class ScreenCaptureService
             composite = null;
 
             // ===== 走保存管线 =====
+            if(result.Action is RegionCaptureAction.Cutout or RegionCaptureAction.TranslateInPlace)
+            {
+                bool qualifiedHdr=false;
+                try
+                {
+                    var areas=DisplayArea.FindAll();var selection=new Windows.Foundation.Rect(vx+cx,vy+cy,cw,ch);
+                    for(int index=0;index<areas.Count;index++)
+                    {
+                        var area=areas[index];var bounds=area.OuterBounds;
+                        if(selection.X<bounds.X||selection.Y<bounds.Y||selection.Right>bounds.X+bounds.Width||selection.Bottom>bounds.Y+bounds.Height)continue;
+                        using var metadata=DisplayInformation.CreateForDisplayId(area.DisplayId);
+                        qualifiedHdr=metadata.GetAdvancedColorInfo().CurrentAdvancedColorKind==DisplayAdvancedColorKind.HighDynamicRange;break;
+                    }
+                }
+                catch{ }
+                var document=await Features.Workspace.WorkspaceDocument.FromCanvasAsync(cropped,"截图.png",Guid.NewGuid().ToString("N"),sdrWhiteLevel,
+                    Starward.Codec.ICC.ColorPrimaries.BT709,"区域截图",allowHdrAnalysis:qualifiedHdr);
+                document.InitialTool=result.Action==RegionCaptureAction.TranslateInPlace ? "translate" : "polygon";
+                Features.Workspace.WorkspaceCaptureBroker.Publish(document);
+                return;
+            }
             DateTimeOffset frameTime = DateTimeOffset.Now;
             bool hdr = cropped.Format is DirectXPixelFormat.R16G16B16A16Float;
             float maxCLL = -1;
@@ -797,6 +818,7 @@ internal partial class ScreenCaptureService
                 {
                     1 => "jxl",
                     2 => "png",
+                    3 => "heic",
                     _ => "avif",
                 }
             )
@@ -805,6 +827,7 @@ internal partial class ScreenCaptureService
                 {
                     1 => "avif",
                     2 => "jxl",
+                    3 => "heic",
                     _ => "png",
                 }
             );
@@ -847,6 +870,8 @@ internal partial class ScreenCaptureService
                         xmpData,
                         true
                     );
+                else if (extension is "heic")
+                    await ImageSaver.SaveAsHeicAsync(sdrBitmap, ms, ColorPrimaries.BT709, quality, xmpData);
                 else
                     await ImageSaver.SaveAsJxlAsync(
                         sdrBitmap,
@@ -881,6 +906,10 @@ internal partial class ScreenCaptureService
                     maxCLL,
                     maxFALL
                 );
+            }
+            else if (extension is "heic")
+            {
+                await ImageSaver.SaveAsHeicAsync(bitmap, ms, colorPrimaries, quality, xmpData, true, maxCLL, maxFALL);
             }
             else if (extension is "jxl")
             {

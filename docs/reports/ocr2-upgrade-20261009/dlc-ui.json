@@ -1,0 +1,90 @@
+[
+  {
+    "width": 1280,
+    "height": 900,
+    "scale": 2,
+    "theme": 1,
+    "ok": true,
+    "controls": [
+      {
+        "text": "使用 Tiny",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "正在使用",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "校验",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "删除",
+        "visible": true,
+        "fits": true
+      }
+    ],
+    "calls": [
+      "app.bootstrap",
+      "app.ready",
+      "library.list",
+      "ocr.models.status",
+      "ocr.models.status",
+      "ocr.models.download",
+      "ocr.models.cancel",
+      "ocr.models.status",
+      "ocr.models.select",
+      "ocr.models.status",
+      "ocr.models.status",
+      "ocr.models.status",
+      "ocr.models.delete"
+    ]
+  },
+  {
+    "width": 720,
+    "height": 900,
+    "scale": 2,
+    "theme": 2,
+    "ok": true,
+    "controls": [
+      {
+        "text": "使用 Tiny",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "正在使用",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "校验",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "删除",
+        "visible": true,
+        "fits": true
+      }
+    ],
+    "calls": [
+      "app.bootstrap",
+      "app.ready",
+      "library.list",
+      "ocr.models.status",
+      "ocr.models.status",
+      "ocr.models.download",
+      "ocr.models.cancel",
+      "ocr.models.status",
+      "ocr.models.select",
+      "ocr.models.status",
+      "ocr.models.status",
+      "ocr.models.status",
+      "ocr.models.delete"
+    ]
+  }
+]

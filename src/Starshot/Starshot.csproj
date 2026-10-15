@@ -64,6 +64,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.9" />
     <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.3.2" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.31.0" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260529003" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.8249" />
@@ -71,7 +72,7 @@
     <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="SharpCompress" Version="0.50.4" />
-    <PackageReference Include="Sdcb.SimdPaddleOCR" Version="1.4.2" />
+    <PackageReference Include="Sdcb.SimdPaddleOCR" Version="2.0.0" />
     <PackageReference Include="Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny" Version="1.0.0" />
     <PackageReference Include="Starward.Codec" Version="0.5.2" />
     <PackageReference Include="Starward.Win2D" Version="1.3.2-release.1" />
@@ -90,6 +91,7 @@
              Link="ThirdParty\SimdPaddleOCR\%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\workspace-models\*" Link="ThirdParty\WorkspaceModels\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\logo.png" Link="Assets\logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -165,9 +167,29 @@
   </Target>
 
   <!-- 若先编译了启动器会自动拷到 `build/release/` -->
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <Content Include="..\..\third_party\heic\win-x64\*" Link="HeicCodec\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="VerifyHeicCodec" BeforeTargets="PrepareForBuild"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(RuntimeIdentifier)' == 'win-x64'">
+    <PropertyGroup>
+      <_HeicRoot>$(MSBuildThisFileDirectory)..\..\third_party\heic\win-x64</_HeicRoot>
+      <_HeicManifest>$([System.IO.File]::ReadAllText('$(_HeicRoot)\manifest.json'))</_HeicManifest>
+      <_HeicSha>$([System.Text.RegularExpressions.Regex]::Match('$(_HeicManifest)', '&quot;sha256&quot;\s*:\s*&quot;([A-Fa-f0-9]{64})&quot;').Groups[1].Value)</_HeicSha>
+    </PropertyGroup>
+    <GetFileHash Files="$(_HeicRoot)\StarshotHeic.exe" Algorithm="SHA256"><Output TaskParameter="Items" ItemName="_HeicHashed" /></GetFileHash>
+    <Error Condition="'%(_HeicHashed.FileHash)' != '$(_HeicSha)'" Text="HEIC codec checksum mismatch. Rebuild with tools/Build-HeicCodec.ps1." />
+  </Target>
+
   <Target Name="PrepareVideoEncoder" BeforeTargets="PrepareForBuild"
           Condition="'$(DesignTimeBuild)' != 'true' and '$(RuntimeIdentifier)' == 'win-x64'">
     <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\scripts\Restore-VideoEncoder.ps1&quot;" />
+  </Target>
+  <Target Name="PrepareLocalInference" BeforeTargets="PrepareForBuild" Condition="'$(DesignTimeBuild)' != 'true' and '$(RuntimeIdentifier)' == 'win-x64'">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\scripts\Restore-LocalInference.ps1&quot;" />
+    <ItemGroup><_LocalInference Include="$(MSBuildThisFileDirectory)..\..\third_party\local-inference\win-x64\*" /></ItemGroup>
+    <Copy SourceFiles="@(_LocalInference)" DestinationFolder="$(TargetDir)LocalInference" SkipUnchangedFiles="true" />
   </Target>
   <Target Name="CopyVideoEncoderForBuild" AfterTargets="Build" DependsOnTargets="PrepareVideoEncoder"
           Condition="'$(DesignTimeBuild)' != 'true' and '$(RuntimeIdentifier)' == 'win-x64'">

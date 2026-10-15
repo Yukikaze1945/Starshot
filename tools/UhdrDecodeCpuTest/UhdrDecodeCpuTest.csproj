@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+<PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0-windows7.0</TargetFramework><AllowUnsafeBlocks>true</AllowUnsafeBlocks><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><RuntimeIdentifier>win-x64</RuntimeIdentifier></PropertyGroup>
+<ItemGroup><PackageReference Include="Starward.Codec" Version="0.5.2"/><Compile Include="../../src/Starshot/Features/Codec/UhdrLinearDecoder.cs" Link="UhdrLinearDecoder.cs"/><Compile Include="../../src/Starshot/Features/Codec/UhdrReferenceWhite.cs" Link="UhdrReferenceWhite.cs"/></ItemGroup>
+<Target Name="PinnedUhdr" AfterTargets="Build"><Copy SourceFiles="../../third_party/libultrahdr/v2.0.2/win-x64/uhdr.dll" DestinationFolder="$(TargetDir)"/></Target>
+</Project>

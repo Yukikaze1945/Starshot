@@ -5,13 +5,13 @@ using System.Linq;
 
 namespace Starshot.Features.Screenshot;
 
-public enum RegionCaptureAction { Cancel, Save, Copy, Ocr, Translate, Pin, RecordGif, LongCapture }
+public enum RegionCaptureAction { Cancel, Save, Copy, Ocr, Translate, Pin, RecordGif, LongCapture, Cutout, TranslateInPlace }
 
 // UI-independent semantics shared by the GDI and XAML renderers. No capture/device objects.
 internal enum RegionToolbarCommand
 {
     Select, Rectangle, Ellipse, Line, Arrow, Number, Pen, Highlighter, Mosaic, Blur, Text, Eraser,
-    Shapes, Brushes, Texts, Undo, Redo, Ocr, Pin, More, Copy, Save, Cancel, Translate, RecordGif, LongCapture, Reselect, Help, HdrAnalysis
+    Shapes, Brushes, Texts, Undo, Redo, Ocr, Pin, More, Copy, Save, Cancel, Translate, RecordGif, LongCapture, Reselect, Help, HdrAnalysis, Cutout, TranslateInPlace
 }
 internal sealed record RegionToolbarDescriptor(string Label, string Glyph, bool Symbol = true,
     RegionCaptureAction? Action = null, string Shortcut = "");
@@ -30,7 +30,7 @@ internal static class RegionToolbarCatalog
         unchecked((int)0xffffe119), unchecked((int)0xffffffff), unchecked((int)0xff000000)];
     public static readonly int[] Widths = [2, 3, 5, 8, 12];
     public static readonly RegionToolbarCommand[] Main = [RegionToolbarCommand.Select, RegionToolbarCommand.Shapes,
-        RegionToolbarCommand.Arrow, RegionToolbarCommand.Brushes, RegionToolbarCommand.Texts,
+        RegionToolbarCommand.Arrow, RegionToolbarCommand.Brushes, RegionToolbarCommand.Texts, RegionToolbarCommand.Cutout,
         RegionToolbarCommand.Undo, RegionToolbarCommand.Redo, RegionToolbarCommand.Ocr, RegionToolbarCommand.Pin,
         RegionToolbarCommand.More, RegionToolbarCommand.Copy, RegionToolbarCommand.Save, RegionToolbarCommand.Cancel];
     private static readonly Dictionary<RegionToolbarCommand, RegionToolbarDescriptor> Items = new()
@@ -64,6 +64,8 @@ internal static class RegionToolbarCatalog
         [RegionToolbarCommand.Reselect] = new("重新选区", "\uE8B7"),
         [RegionToolbarCommand.Help] = new("快捷键说明", "?", false, Shortcut: "F1"),
         [RegionToolbarCommand.HdrAnalysis] = new("HDR 亮度分析", "\uE9D9"),
+        [RegionToolbarCommand.Cutout] = new("抠图 / 多边形 / 套索", "\uE8C6", Action: RegionCaptureAction.Cutout),
+        [RegionToolbarCommand.TranslateInPlace] = new("原位翻译覆盖", "译层", false,RegionCaptureAction.TranslateInPlace),
     };
     public static RegionToolbarDescriptor Get(RegionToolbarCommand command) => Items[command];
     public static bool IsTool(RegionToolbarCommand command) => command <= RegionToolbarCommand.Eraser;
@@ -121,7 +123,7 @@ internal sealed class RegionToolbarState
     public bool ClosePopup() { bool open = Popup.HasValue; Popup = null; return open; }
     public RegionToolbarCommand[] MenuItems(RegionToolbarLayout layout) => Popup == RegionToolbarCommand.More
         ? layout.Overflow.Concat(new[] { RegionToolbarCommand.Translate, RegionToolbarCommand.RecordGif,
-            RegionToolbarCommand.LongCapture, RegionToolbarCommand.HdrAnalysis, RegionToolbarCommand.Reselect, RegionToolbarCommand.Help }).Distinct()
+            RegionToolbarCommand.LongCapture, RegionToolbarCommand.Cutout, RegionToolbarCommand.TranslateInPlace, RegionToolbarCommand.HdrAnalysis, RegionToolbarCommand.Reselect, RegionToolbarCommand.Help }).Distinct()
             .Where(command => !layout.Slots.Any(slot => slot.Command == command)).ToArray()
         : RegionToolbarCatalog.Members(Popup ?? RegionToolbarCommand.More);
 }

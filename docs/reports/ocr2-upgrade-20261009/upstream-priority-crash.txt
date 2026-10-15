@@ -1,0 +1,121 @@
+Canvas device initialized: Microsoft.Graphics.Canvas.CanvasDevice
+Engine=SimdPaddleOCR-Tiny; Tiny package assembly=Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny; version=1.0.0.0
+assembly=Sdcb.SimdPaddleOCR; version=2.0.0.0; bytes=2219008; path=D:\coding\Starshot\tools\OcrTinyTest\bin\Release\net10.0-windows10.0.26100.0\win-x64\Sdcb.SimdPaddleOCR.dll
+  resource=Sdcb.SimdPaddleOCR.Backends.Metal.Shaders.a_common.metal; bytes=1504
+  resource=Sdcb.SimdPaddleOCR.Backends.Metal.Shaders.conv.metal; bytes=14565
+  resource=Sdcb.SimdPaddleOCR.Backends.Metal.Shaders.dot.metal; bytes=16022
+  resource=Sdcb.SimdPaddleOCR.Backends.Metal.Shaders.elem.metal; bytes=7031
+  resource=Sdcb.SimdPaddleOCR.Backends.Metal.Shaders.gemm.metal; bytes=31099
+  resource=Sdcb.SimdPaddleOCR.Backends.Metal.Shaders.space.metal; bytes=14135
+  resource=Sdcb.SimdPaddleOCR.Backends.Metal.Shaders.xform.metal; bytes=8752
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.addps.spv; bytes=2584
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.affine4.spv; bytes=1768
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.attn.spv; bytes=4912
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.avgpool4.spv; bytes=3672
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.catresize.spv; bytes=6960
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.concat_c.spv; bytes=1464
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.concat4.spv; bytes=2284
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv_dense.spv; bytes=5768
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv_dw.spv; bytes=5444
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv_dw4.spv; bytes=9424
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv_dw4a.spv; bytes=10204
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv_dw4t.spv; bytes=11512
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_n32.spv; bytes=8076
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_n64.spv; bytes=8060
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32_n32.spv; bytes=57496
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32_n64.spv; bytes=61240
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32_ps_n32.spv; bytes=66912
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32_ps_n64.spv; bytes=70656
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32_ps.spv; bytes=60352
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32.spv; bytes=55432
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32d_n32.spv; bytes=7964
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32d_n64.spv; bytes=8804
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32d.spv; bytes=8820
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32l_n32.spv; bytes=22988
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32l_n64.spv; bytes=26688
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32l_ps_n32.spv; bytes=32404
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32l_ps_n64.spv; bytes=36104
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32l_ps.spv; bytes=26160
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm_sg32l.spv; bytes=21240
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_cm.spv; bytes=8212
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.conv1x1_dot.spv; bytes=39068
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.convk_cm_sg32_n32.spv; bytes=60804
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.convk_cm_sg32_n64.spv; bytes=64548
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.convk_cm_sg32.spv; bytes=57788
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.convk_cm_sg32l_n32.spv; bytes=26116
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.convk_cm_sg32l_n64.spv; bytes=29816
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.convk_cm_sg32l.spv; bytes=23416
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.convk_dot.spv; bytes=27864
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.convk_f32n.spv; bytes=28080
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.convt2s2.spv; bytes=4084
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.convt4.spv; bytes=5428
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.elem.spv; bytes=5072
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.elem4.spv; bytes=7488
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.gemm_nc_d.spv; bytes=10136
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.gemm_nc_ds.spv; bytes=8136
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.gemm_nc_s.spv; bytes=10752
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.gemm_nc.spv; bytes=12688
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.im2col.spv; bytes=5292
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.layernorm.spv; bytes=4312
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.maxpool2e.spv; bytes=2180
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.maxpool4.spv; bytes=2580
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.mmdot_sk.spv; bytes=14072
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.nchw2nhwc.spv; bytes=1668
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.reduce_hw.spv; bytes=2236
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.reduce_hw4.spv; bytes=2988
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.reduce_hw4b.spv; bytes=1708
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.resize_nn.spv; bytes=1680
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.resize4.spv; bytes=2716
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.resize4add.spv; bytes=2980
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.se_fused.spv; bytes=7188
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.sigmoid_out.spv; bytes=1464
+  resource=Sdcb.SimdPaddleOCR.Backends.Vulkan.Shaders.softmax.spv; bytes=2128
+assembly=Sdcb.SimdPaddleOCR.ModelProvider; version=1.0.0.0; bytes=7680; path=D:\coding\Starshot\tools\OcrTinyTest\bin\Release\net10.0-windows10.0.26100.0\win-x64\Sdcb.SimdPaddleOCR.ModelProvider.dll
+assembly=Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny; version=1.0.0.0; bytes=6285824; path=D:\coding\Starshot\tools\OcrTinyTest\bin\Release\net10.0-windows10.0.26100.0\win-x64\Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny.dll
+  resource=Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny.det.onnx; bytes=1780590
+  resource=Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny.dict.txt; bytes=34057
+  resource=Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny.rec.onnx; bytes=4462639
+assembly=Sdcb.SimdPaddleOCR.Models.TextLineOrientation; version=1.0.0.0; bytes=1026048; path=D:\coding\Starshot\tools\OcrTinyTest\bin\Release\net10.0-windows10.0.26100.0\win-x64\Sdcb.SimdPaddleOCR.Models.TextLineOrientation.dll
+  resource=Sdcb.SimdPaddleOCR.Models.TextLineOrientation.cls.onnx; bytes=1018940
+PASS fallback preparation, invalid inputs, cancellation, and FP16 rejection
+Fatal error.
+0xC0000005
+   at Sdcb.SimdPaddleOCR.Backends.Vulkan.Vk.<vkCreateDevice>g____PInvoke|64_0(IntPtr, VkDeviceCreateInfo*, Void*, IntPtr*)
+   at Sdcb.SimdPaddleOCR.Backends.Vulkan.Vk.vkCreateDevice(IntPtr, VkDeviceCreateInfo*, Void*, IntPtr ByRef)
+   at Sdcb.SimdPaddleOCR.Backends.Vulkan.VkDevice.Create(UInt32)
+   at Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuBackend.TryGetDevice()
+   at Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuBackend.UsesGpu(Sdcb.SimdPaddleOCR.OcrBackend)
+   at Sdcb.SimdPaddleOCR.OnnxSharp.OcrSessionFactory.IsGpuBackend(Sdcb.SimdPaddleOCR.OcrBackend)
+   at Sdcb.SimdPaddleOCR.PaddleOcrClassifier..ctor(Sdcb.SimdPaddleOCR.OnnxSharp.Model, Sdcb.SimdPaddleOCR.PaddleOcrClassifierOptions, Boolean)
+   at Sdcb.SimdPaddleOCR.PaddleOcrClassifier..ctor(Sdcb.SimdPaddleOCR.OnnxSharp.Model, Sdcb.SimdPaddleOCR.PaddleOcrClassifierOptions)
+   at Sdcb.SimdPaddleOCR.PaddleOcrAll..ctor(Sdcb.SimdPaddleOCR.OnnxSharp.Model, Sdcb.SimdPaddleOCR.OnnxSharp.Model, Sdcb.SimdPaddleOCR.OnnxSharp.Model, System.ReadOnlySpan`1<Byte>, Sdcb.SimdPaddleOCR.PaddleOcrOptions)
+   at Sdcb.SimdPaddleOCR.PaddleOcrAll..ctor(Sdcb.SimdPaddleOCR.PaddleOcrModelSet, Sdcb.SimdPaddleOCR.PaddleOcrOptions)
+   at Sdcb.SimdPaddleOCR.PaddleOcrAll+<LoadAsync>d__22.MoveNext()
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Sdcb.SimdPaddleOCR.PaddleOcrAll+<LoadAsync>d__22, Sdcb.SimdPaddleOCR, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Sdcb.SimdPaddleOCR.PaddleOcrAll+<LoadAsync>d__22, Sdcb.SimdPaddleOCR, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext(System.Threading.Thread)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Sdcb.SimdPaddleOCR.PaddleOcrAll+<LoadAsync>d__22, Sdcb.SimdPaddleOCR, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext()
+   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(System.Runtime.CompilerServices.IAsyncStateMachineBox, Boolean)
+   at System.Threading.Tasks.Task.RunContinuations(System.Object)
+   at System.Threading.Tasks.Task`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].TrySetResult(System.__Canon)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].SetExistingTaskResult(System.Threading.Tasks.Task`1<System.__Canon>, System.__Canon)
+   at Sdcb.SimdPaddleOCR.PaddleOcrModelSet+<LoadAsync>d__19.MoveNext()
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Sdcb.SimdPaddleOCR.PaddleOcrModelSet+<LoadAsync>d__19, Sdcb.SimdPaddleOCR, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Sdcb.SimdPaddleOCR.PaddleOcrModelSet+<LoadAsync>d__19, Sdcb.SimdPaddleOCR, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext(System.Threading.Thread)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Sdcb.SimdPaddleOCR.PaddleOcrModelSet+<LoadAsync>d__19, Sdcb.SimdPaddleOCR, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext()
+   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(System.Runtime.CompilerServices.IAsyncStateMachineBox, Boolean)
+   at System.Threading.Tasks.Task.RunContinuations(System.Object)
+   at System.Threading.Tasks.Task`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].TrySetResult(System.__Canon)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]].SetExistingTaskResult(System.Threading.Tasks.Task`1<System.__Canon>, System.__Canon)
+   at Sdcb.SimdPaddleOCR.PaddleOcrModelSet+<LoadAsync>d__16.MoveNext()
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Sdcb.SimdPaddleOCR.PaddleOcrModelSet+<LoadAsync>d__16, Sdcb.SimdPaddleOCR, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null]].ExecutionContextCallback(System.Object)
+   at System.Threading.ExecutionContext.RunInternal(System.Threading.ExecutionContext, System.Threading.ContextCallback, System.Object)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Sdcb.SimdPaddleOCR.PaddleOcrModelSet+<LoadAsync>d__16, Sdcb.SimdPaddleOCR, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext(System.Threading.Thread)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[System.__Canon, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Sdcb.SimdPaddleOCR.PaddleOcrModelSet+<LoadAsync>d__16, Sdcb.SimdPaddleOCR, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null]].MoveNext()
+   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(System.Runtime.CompilerServices.IAsyncStateMachineBox, Boolean)
+   at System.Threading.Tasks.Task.RunContinuations(System.Object)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(System.Threading.Tasks.Task ByRef, System.Threading.Thread)
+   at System.Threading.ThreadPoolWorkQueue.Dispatch()
+   at System.Threading.PortableThreadPool+WorkerThread.WorkerThreadStart()
+   at System.Threading.Thread.StartCallback()

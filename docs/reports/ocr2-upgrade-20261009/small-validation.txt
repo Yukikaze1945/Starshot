@@ -1,0 +1,24 @@
+official resource=Sdcb.SimdPaddleOCR.Models.ChineseV6Small.det.onnx; bytes=9880512; sha256=D73E0058B7A8086BBD57F3D10B8BCD4FF95363F67E06E2762B5E814FE9C9410E
+official resource=Sdcb.SimdPaddleOCR.Models.ChineseV6Small.rec.onnx; bytes=21159378; sha256=5435FD747C9E0EFE15A96D0B378D5BD157E9492ED8FD80EDF08F30D02FA24634
+official resource=Sdcb.SimdPaddleOCR.Models.ChineseV6Small.dict.txt; bytes=93655; sha256=769E7FA79BB297B5F18D8DBD149E364A45BC61F2B3F574E5EA836F0B261C23A6
+PASS official NuGet 1.0.0 embedded resource identity
+download bytes=31114837; progress samples=71
+PASS actual official download / progress / exact hashes / atomic publication / lazy
+PASS offline failure, invalid length/hash, cancellation and stage cleanup
+PASS selection is lazy, queued cancellation, publish gate and status deadlock protection
+baseline private bytes=210550784
+OCR small-cold: 932 ms; init=262; private=394440704; lines=3; text=截图文字识别 星光 2026 | SCREENSHOT OCR / English 123 | 日本語の文字認識テスト
+OCR small-warm-1: 398 ms; init=262; private=394731520; lines=3; text=截图文字识别 星光 2026 | SCREENSHOT OCR / English 123 | 日本語の文字認識テスト
+OCR small-warm-2: 340 ms; init=262; private=394874880; lines=3; text=截图文字识别 星光 2026 | SCREENSHOT OCR / English 123 | 日本語の文字認識テスト
+PASS Small Chinese / English / Japanese, BGRA unchanged; warm reuse
+OCR restart-small: 836 ms; init=240; private=262467584; lines=3; text=截图文字识别 星光 2026 | SCREENSHOT OCR / English 123 | 日本語の文字認識テスト
+PASS restart keeps Small and lazy loads on first OCR
+OCR small-concurrent: 349 ms; init=262; private=339369984; lines=3; text=截图文字识别 星光 2026 | SCREENSHOT OCR / English 123 | 日本語の文字認識テスト
+OCR tiny-after-switch: 173 ms; init=38; private=340668416; lines=3; text=截图文字识别星光 2026 | SCREENSHOT OCR/ English 123 | 日本語①文字懿識于又卜
+PASS real concurrent OCR and switch retire only when inference finishes
+OCR corrupt-small-tiny-fallback: 153 ms; init=28; private=365649920; lines=3; text=截图文字识别星光 2026 | SCREENSHOT OCR/ English 123 | 日本語①文字懿識于又卜
+PASS on-disk corruption (unchanged size/timestamp) safely falls back to Tiny
+OCR missing-small-tiny-fallback: 81 ms; init=28; private=365645824; lines=3; text=截图文字识别星光 2026 | SCREENSHOT OCR/ English 123 | 日本語①文字懿識于又卜
+PASS delete cancels operations, removes only Small, missing model safe fallback
+OCR runs=8; failed groups=0
+isolated temporary model data removed; no screenshots written

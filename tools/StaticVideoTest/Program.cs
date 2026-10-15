@@ -13,6 +13,8 @@ var tests = new List<(string Name, Func<Task> Run)>
     ("odd dimensions clamp-pad to even values and 64 pixel minimum", TestPadding),
     ("invalid input and cancellation are rejected", TestInvalidAndCancelledInput),
     ("mastering display formats are stable and reject invalid values", TestMasteringFormats),
+    ("default cadence and one-frame comparator arguments", TestCadenceArguments),
+    ("companion descriptor follows schema and reads legacy sidecars", TestDescriptor),
 };
 if (componentDirectory is not null)
     tests.Add(("real FFmpeg output validates HEVC and AV1 HDR/SDR samples", () => TestRealEncodes(componentDirectory, keepSamples)));
@@ -114,6 +116,64 @@ static Task TestMasteringFormats()
     return Task.CompletedTask;
 }
 
+static Task TestCadenceArguments()
+{
+    Equal(15, StaticVideoEncoder.FrameCountForRate(5), "default three-second frame count");
+    Equal(30, StaticVideoEncoder.FrameCountForRate(10), "10 fps frame count");
+    Equal(90, StaticVideoEncoder.FrameCountForRate(30), "30 fps frame count");
+    Equal(1, StaticVideoEncoder.FrameCountForRate(0), "one-frame comparator count");
+    Throws<ArgumentOutOfRangeException>(() => StaticVideoEncoder.FrameCountForRate(31), "unsupported over-limit cadence");
+    var frame = MakeFrame(64, 64, true);
+    string normal = string.Join(" ", StaticVideoEncoder.Arguments(frame, StaticVideoCodec.Hevc, "out.mp4", 1000, 400, null));
+    string comparator = string.Join(" ", StaticVideoEncoder.Arguments(frame, StaticVideoCodec.Hevc, "out.mp4", 1000, 400, null, 0));
+    True(normal.Contains("-framerate 5 ", StringComparison.Ordinal) && normal.Contains("-frames:v 15", StringComparison.Ordinal), "5 fps default arguments");
+    True(comparator.Contains("-framerate 1/3", StringComparison.Ordinal) && comparator.Contains("-frames:v 1", StringComparison.Ordinal), "original one-frame comparator arguments");
+    return Task.CompletedTask;
+}
+
+static Task TestDescriptor()
+{
+    string directory = Path.Combine(Path.GetTempPath(), "Starshot.StaticVideoMetadataTest", Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(directory);
+    try
+    {
+        string image = Path.Combine(directory, "still.png"), video = Path.Combine(directory, "still.mp4");
+        File.WriteAllBytes(image, [1]); File.WriteAllBytes(video, [2]);
+        StaticVideoMetadata.Write(video, image, StaticVideoCodec.Hevc, true);
+        var descriptor = StaticVideoMetadata.Read(video);
+        Equal(image, descriptor.ImagePath!, "descriptor companion path");
+        Equal("HEVC", descriptor.Codec!, "descriptor codec");
+        Equal(true, descriptor.Hdr!.Value, "descriptor HDR flag");
+        Equal(3000, descriptor.DurationMs!.Value, "descriptor duration");
+        Equal(15, descriptor.FrameCount!.Value, "descriptor frames");
+        Equal("5/1", descriptor.FrameRate!, "descriptor rate");
+        using (var json = JsonDocument.Parse(File.ReadAllText(video + ".starshot.json")))
+        {
+            var root = json.RootElement;
+            Equal(1, root.GetProperty("schemaVersion").GetInt32(), "descriptor schema version");
+            Equal("hdr-still-video", root.GetProperty("kind").GetString()!, "descriptor kind");
+            Equal(Path.GetFileName(video), root.GetProperty("videoFilename").GetString()!, "safe video basename");
+            Equal(Path.GetFileName(image), root.GetProperty("imageFilename").GetString()!, "safe image basename");
+            Equal(1, root.GetProperty("version").GetInt32(), "legacy version alias");
+            Equal(Path.GetFileName(image), root.GetProperty("image").GetString()!, "legacy image alias");
+        }
+
+        File.WriteAllText(video + ".starshot.json", "{\"version\":1,\"image\":\"still.png\",\"codec\":\"HEVC\",\"hdr\":true}");
+        descriptor = StaticVideoMetadata.Read(video);
+        Equal(image, descriptor.ImagePath!, "legacy sidecar companion");
+        Equal("HEVC", descriptor.Codec!, "legacy sidecar codec");
+        return Task.CompletedTask;
+    }
+    finally
+    {
+        string root = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "Starshot.StaticVideoMetadataTest"));
+        string target = Path.GetFullPath(directory);
+        if (Path.GetDirectoryName(target) != root || !target.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Refusing to clean a path outside the dedicated descriptor test temp root.");
+        if (Directory.Exists(target)) Directory.Delete(target, recursive: true);
+    }
+}
+
 static async Task TestRealEncodes(string componentDirectory, bool keepSamples)
 {
     componentDirectory = Path.GetFullPath(componentDirectory);
@@ -121,6 +181,7 @@ static async Task TestRealEncodes(string componentDirectory, bool keepSamples)
     string workspace = Path.Combine(root, Guid.NewGuid().ToString("N"));
     Directory.CreateDirectory(workspace);
     var outputs = new Dictionary<string, Dictionary<StaticVideoCodec, string>>();
+    Dictionary<string, string> cadenceOutputs = [];
     try
     {
         await StaticVideoEncoder.VerifyComponentsAsync(componentDirectory, CancellationToken.None);
@@ -146,6 +207,7 @@ static async Task TestRealEncodes(string componentDirectory, bool keepSamples)
         True(!Directory.EnumerateFiles(workspace, "*.partial", SearchOption.TopDirectoryOnly).Any(), "failed encode partial files removed");
 
         var mastering = new VideoMastering(.708, .292, .170, .797, .131, .046, .3127, .3290, .005, 1000);
+        cadenceOutputs = await CompareSyntheticHevcCadences(componentDirectory, workspace, mastering);
         foreach (var codec in new[] { StaticVideoCodec.Hevc, StaticVideoCodec.Av1 })
         {
             foreach (var spec in new[]
@@ -158,11 +220,14 @@ static async Task TestRealEncodes(string componentDirectory, bool keepSamples)
                 string name = $"{spec.Name}-{codec.ToString().ToLowerInvariant()}.mp4";
                 string output = Path.Combine(workspace, name);
                 var frame = MakeFrame(spec.Width, spec.Height, spec.Hdr);
+                var timer = Stopwatch.StartNew();
                 await StaticVideoEncoder.EncodeAsync(frame, codec, output, 1000, 400, spec.Hdr ? mastering : null,
                     CancellationToken.None, componentDirectory);
+                timer.Stop();
                 var expected = (spec.Width < 64 ? 64 : (spec.Width + 1) & ~1,
                     spec.Height < 64 ? 64 : (spec.Height + 1) & ~1);
-                await VerifyOutput(componentDirectory, output, codec, spec.Hdr, expected.Item1, expected.Item2, spec.VerifyLevels);
+                await VerifyOutput(componentDirectory, output, codec, spec.Hdr, expected.Item1, expected.Item2, spec.VerifyLevels, 15);
+                Console.WriteLine($"ENCODE {name}: frames=15 rate=5/1 durationMs=3000 bytes={new FileInfo(output).Length} elapsedMs={timer.Elapsed.TotalMilliseconds:F0}");
                 if (!outputs.TryGetValue(spec.Name, out var pair)) outputs[spec.Name] = pair = [];
                 pair.Add(codec, output);
             }
@@ -179,11 +244,19 @@ static async Task TestRealEncodes(string componentDirectory, bool keepSamples)
         if (keepSamples)
         {
             string projectRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
-            string sampleRoot = Path.Combine(projectRoot, "build", "hdr-video-samples");
+            string sampleRoot = Path.Combine(projectRoot, "build", "hdr-video-cadence-samples-20261009");
             Directory.CreateDirectory(sampleRoot);
-            foreach (string key in new[] { "hdr-64x64", "hdr-4k", "sdr-odd" })
+            foreach (string key in new[] { "hdr-4k", "sdr-odd" })
+            {
+                string group = Path.Combine(sampleRoot, key);
+                Directory.CreateDirectory(group);
                 foreach (var (codec, path) in outputs[key])
-                    File.Copy(path, Path.Combine(sampleRoot, Path.GetFileName(path)), overwrite: true);
+                    File.Copy(path, Path.Combine(group, Path.GetFileName(path)), overwrite: true);
+            }
+            string cadenceGroup = Path.Combine(sampleRoot, "cadence-hevc-1080p");
+            Directory.CreateDirectory(cadenceGroup);
+            foreach (var (name, path) in cadenceOutputs)
+                File.Copy(path, Path.Combine(cadenceGroup, Path.GetFileName(path)), overwrite: true);
         }
     }
     finally
@@ -196,6 +269,105 @@ static async Task TestRealEncodes(string componentDirectory, bool keepSamples)
         if (Directory.Exists(fullWorkspace)) Directory.Delete(fullWorkspace, recursive: true);
     }
 }
+
+static async Task<Dictionary<string, string>> CompareSyntheticHevcCadences(string directory, string workspace, VideoMastering mastering)
+{
+    var outputs = new Dictionary<string, string>();
+    string csv = "variant,frameRate,frames,packets,packetDurationSeconds,bytes,elapsedMs,peakWorkingSetMiB,peakPrivateMiB,inputFrameBytes,bytesFed\r\n";
+    foreach (int rate in new[] { 0, 5, 10, 30 })
+    {
+        string label = rate == 0 ? "one-frame" : $"{rate}fps";
+        string output = Path.Combine(workspace, $"cadence-{label}.mp4");
+        var frame = MakeGradientFrame(1920, 1080);
+        var timer = Stopwatch.StartNew();
+        var memory = await MeasureFfmpegMemoryAsync(directory, () => StaticVideoEncoder.EncodeAsync(frame,
+            StaticVideoCodec.Hevc, output, 1000, 400, mastering, CancellationToken.None, directory, rate));
+        timer.Stop();
+        int expectedCount = rate == 0 ? 1 : rate * 3;
+        await VerifyOutput(directory, output, StaticVideoCodec.Hevc, true, 1920, 1080, false, expectedCount);
+        string probe = await StaticVideoEncoder.RunTextAsync(Path.Combine(directory, "ffprobe.exe"),
+            ["-v", "error", "-show_packets", "-show_streams", "-of", "json", output], CancellationToken.None);
+        using var doc = JsonDocument.Parse(probe);
+        var packets = doc.RootElement.GetProperty("packets").EnumerateArray().ToArray();
+        double packetDuration = packets.Sum(packet => double.Parse(packet.GetProperty("duration_time").GetString()!, CultureInfo.InvariantCulture));
+        for (int i = 0; i < packets.Length; i++)
+        {
+            long pts = JsonInteger(packets[i].GetProperty("pts"));
+            long dts = JsonInteger(packets[i].GetProperty("dts"));
+            if (i > 0)
+            {
+                long prevPts = JsonInteger(packets[i - 1].GetProperty("pts"));
+                long prevDts = JsonInteger(packets[i - 1].GetProperty("dts"));
+                True(pts > prevPts && dts > prevDts, $"{label} monotonic PTS/DTS");
+            }
+        }
+        long outputBytes = new FileInfo(output).Length;
+        long bytesFed = checked(frame.Pixels.LongLength * expectedCount);
+        double workingSetMiB = memory.PeakWorkingSetBytes / 1048576d;
+        double privateMiB = memory.PeakPrivateBytes / 1048576d;
+        string fps = rate == 0 ? "1/3" : $"{rate}/1";
+        Console.WriteLine($"CADENCE HEVC {label}: size=1920x1080 frames={expectedCount} packets={packets.Length} rate={fps} duration={packetDuration:F6}s bytes={outputBytes} elapsedMs={timer.Elapsed.TotalMilliseconds:F0} peakWorkingSetMiB={workingSetMiB:F1} peakPrivateMiB={privateMiB:F1} inputFrameBytes={frame.Pixels.LongLength} bytesFed={bytesFed}");
+        csv += $"{label},{fps},{expectedCount},{packets.Length},{packetDuration.ToString("F6", CultureInfo.InvariantCulture)},{outputBytes},{timer.Elapsed.TotalMilliseconds.ToString("F0", CultureInfo.InvariantCulture)},{workingSetMiB.ToString("F2", CultureInfo.InvariantCulture)},{privateMiB.ToString("F2", CultureInfo.InvariantCulture)},{frame.Pixels.LongLength},{bytesFed}\r\n";
+        outputs.Add(label, output);
+    }
+    await File.WriteAllTextAsync(Path.Combine(workspace, "cadence-validation.csv"), csv);
+    return outputs;
+}
+
+static async Task<(long PeakWorkingSetBytes, long PeakPrivateBytes)> MeasureFfmpegMemoryAsync(string encoderDirectory, Func<Task> encode)
+{
+    long peakWorkingSet = 0, peakPrivate = 0;
+    string expectedExe = Path.GetFullPath(Path.Combine(encoderDirectory, "ffmpeg.exe"));
+    using var stop = new CancellationTokenSource();
+    Task monitor = Task.Run(async () =>
+    {
+        while (!stop.IsCancellationRequested)
+        {
+            foreach (Process process in Process.GetProcessesByName("ffmpeg"))
+            {
+                using (process)
+                {
+                    try
+                    {
+                        string? fileName = process.MainModule?.FileName;
+                        if (string.IsNullOrEmpty(fileName) || !string.Equals(Path.GetFullPath(fileName), expectedExe, StringComparison.OrdinalIgnoreCase)) continue;
+                        peakWorkingSet = Math.Max(peakWorkingSet, process.WorkingSet64);
+                        peakPrivate = Math.Max(peakPrivate, process.PrivateMemorySize64);
+                    }
+                    catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException) { }
+                }
+            }
+            try { await Task.Delay(20, stop.Token); }
+            catch (OperationCanceledException) { break; }
+        }
+    });
+    try { await encode(); }
+    finally { stop.Cancel(); await monitor; }
+    return (peakWorkingSet, peakPrivate);
+}
+
+static StaticVideoFrame MakeGradientFrame(int width, int height)
+{
+    byte[] pixels = new byte[checked(width * height * 8)];
+    for (int y = 0; y < height; y++)
+    for (int x = 0; x < width; x++)
+    {
+        double horizontal = x / (double)(width - 1);
+        double vertical = y / (double)(height - 1);
+        double nits = 80 + 920 * horizontal;
+        ushort value = Pq16(nits);
+        ushort accent = Pq16(Math.Clamp(nits * (0.94 + 0.06 * vertical), 0, 1000));
+        int offset = (y * width + x) * 8;
+        BitConverter.TryWriteBytes(pixels.AsSpan(offset, 2), value);
+        BitConverter.TryWriteBytes(pixels.AsSpan(offset + 2, 2), accent);
+        BitConverter.TryWriteBytes(pixels.AsSpan(offset + 4, 2), value);
+        BitConverter.TryWriteBytes(pixels.AsSpan(offset + 6, 2), ushort.MaxValue);
+    }
+    return StaticVideoPixels.Prepare(pixels, width, height, pq16: true);
+}
+
+static long JsonInteger(JsonElement value) => value.ValueKind == JsonValueKind.Number
+    ? value.GetInt64() : long.Parse(value.GetString()!, CultureInfo.InvariantCulture);
 
 static StaticVideoFrame MakeFrame(int width, int height, bool hdr)
 {
@@ -219,7 +391,7 @@ static StaticVideoFrame MakeFrame(int width, int height, bool hdr)
     return StaticVideoPixels.Prepare(pixels, width, height, hdr);
 }
 
-static async Task VerifyOutput(string directory, string path, StaticVideoCodec codec, bool hdr, int width, int height, bool verifyLevels)
+static async Task VerifyOutput(string directory, string path, StaticVideoCodec codec, bool hdr, int width, int height, bool verifyLevels, int expectedFrames)
 {
     string json = await StaticVideoEncoder.RunTextAsync(Path.Combine(directory, "ffprobe.exe"),
         ["-v", "error", "-show_streams", "-show_format", "-show_frames", "-show_packets", "-of", "json", path], CancellationToken.None);
@@ -246,9 +418,10 @@ static async Task VerifyOutput(string directory, string path, StaticVideoCodec c
         frames = doc.RootElement.GetProperty("frames").EnumerateArray().ToArray();
         packets = doc.RootElement.GetProperty("packets").EnumerateArray().ToArray();
     }
-    Equal(1, frames.Length, "exactly one decoded frame");
-    Equal(1, packets.Length, "exactly one encoded packet");
-    Near(3, double.Parse(packets[0].GetProperty("duration_time").GetString() ?? "NaN", CultureInfo.InvariantCulture), .001, "single packet duration");
+    Equal(expectedFrames, frames.Length, "decoded frame count");
+    Equal(expectedFrames, packets.Length, "encoded packet count");
+    Near(3, packets.Sum(x => double.Parse(x.GetProperty("duration_time").GetString() ?? "NaN", CultureInfo.InvariantCulture)), .001, "total packet duration");
+    Equal("starshot-hdr-still-video", doc.RootElement.GetProperty("format").GetProperty("tags").GetProperty("comment").GetString() ?? "", "Starshot MP4 marker");
 
     if (!hdr) return;
     Equal("smpte2084", stream.GetProperty("color_transfer").GetString() ?? "<missing>", "PQ transfer");

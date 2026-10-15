@@ -223,7 +223,7 @@ public sealed partial class PinnedCaptureWindow : WindowEx
             {
                 var items = await data.GetStorageItemsAsync();
                 var file = items.OfType<StorageFile>().FirstOrDefault(item =>
-                    new[] { ".png", ".jpg", ".jpeg", ".bmp", ".webp", ".avif", ".jxl" }
+                    new[] { ".png", ".jpg", ".jpeg", ".bmp", ".webp", ".avif", ".jxl", ".heic", ".heif" }
                         .Contains(Path.GetExtension(item.Path).ToLowerInvariant()));
                 if (file is not null)
                 {

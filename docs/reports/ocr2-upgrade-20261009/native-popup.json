@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "rows": [
+    {
+      "cycle": 1,
+      "readyMs": 1589,
+      "resultMs": 1644,
+      "immediateTextMs": 41.9398,
+      "beforePrivateBytes": 78790656,
+      "privateBytes": 85061632,
+      "hidden": true,
+      "metrics": "\u0022{\\\u0022width\\\u0022:587,\\\u0022height\\\u0022:395,\\\u0022overflow\\\u0022:false,\\\u0022editorBorder\\\u0022:\\\u00221px\\\u0022,\\\u0022js\\\u0022:[{\\\u0022name\\\u0022:\\\u0022https://starshot.local/assets/index-BvZJ_qTv.js\\\u0022,\\\u0022bytes\\\u0022:0}]}\u0022"
+    },
+    {
+      "cycle": 2,
+      "readyMs": 2625,
+      "resultMs": 2680,
+      "immediateTextMs": 1.7479,
+      "beforePrivateBytes": 85204992,
+      "privateBytes": 86491136,
+      "hidden": true,
+      "metrics": "\u0022{\\\u0022width\\\u0022:587,\\\u0022height\\\u0022:395,\\\u0022overflow\\\u0022:false,\\\u0022editorBorder\\\u0022:\\\u00221px\\\u0022,\\\u0022js\\\u0022:[{\\\u0022name\\\u0022:\\\u0022https://starshot.local/assets/index-BvZJ_qTv.js\\\u0022,\\\u0022bytes\\\u0022:0}]}\u0022"
+    }
+  ]
+}

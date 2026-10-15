@@ -1,6 +1,7 @@
 namespace Starshot;
 internal static class AppConfig
 {
+    internal static bool OcrGpuAcceleration { get; set; }
     internal static string UserDataFolder { get; set; } = "";
     internal static string OcrModel
     {

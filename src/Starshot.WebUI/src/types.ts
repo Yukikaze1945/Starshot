@@ -1,12 +1,13 @@
 export type CaptureMode = 'region' | 'screen' | 'long' | 'gif' | 'ocr' | 'copy'
-export type Page = 'studio' | 'gallery' | 'ocr' | 'clipboard'
+export type Page = 'studio' | 'gallery' | 'ocr' | 'clipboard' | 'models'
 export interface Settings {
   screenshotFolder: string; extraFolders: string[]; subfolders: boolean; subfolderPattern: string;
   filenamePattern: string; regionFilenamePattern: string; autoCopy: boolean; autoCopyOcr: boolean; ultraHdr: boolean;
   capacityManual: boolean; capacity: number; sdrFormat: number; hdrFormat: number; quality: number;
-  captureMode: number; videoCodec: number; ocrModel: 'tiny' | 'small';
+  captureMode: number; videoCodec: number; ocrModel: 'tiny' | 'small'; ocrGpuAcceleration: boolean;
   colorManagement: boolean; deleteSdrHdr: boolean; sdrWhite: number; monitorSource: number;
   muteFullscreen: boolean; endpoint: string; model: string; targetLanguage: string;
+  translationBackend?: 'api' | 'local';
   theme: number; language: string; autoUpdate: boolean; previewUpdates: boolean; startupHidden: boolean; highPriority: boolean;
 }
 export interface OcrModelsStatus {

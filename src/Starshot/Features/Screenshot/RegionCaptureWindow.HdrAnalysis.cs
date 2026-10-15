@@ -56,8 +56,12 @@ public sealed partial class RegionCaptureWindow
             _analysisMonitors = new();
             try
             {
-                foreach (var area in DisplayArea.FindAll())
+                // CsWinRT's IReadOnlyList enumerator can throw InvalidCastException in
+                // the trimmed publish. Use Count/index access, as capture itself does.
+                var areas = DisplayArea.FindAll();
+                for (int i = 0; i < areas.Count; i++)
                 {
+                    var area = areas[i];
                     using var info = DisplayInformation.CreateForDisplayId(area.DisplayId);
                     var color = info.GetAdvancedColorInfo();
                     var b = area.OuterBounds;

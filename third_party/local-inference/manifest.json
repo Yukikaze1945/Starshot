@@ -1,0 +1,7 @@
+{
+  "version": "b11429",
+  "packageUrl": "https://github.com/ggml-org/llama.cpp/releases/download/b11429/llama-b11429-bin-win-cpu-x64.zip",
+  "packageSha256": "1283323272B04CD07905816A597A0DA810918102DE958F4FF6F7BBAA70ED2EFE",
+  "source": "https://github.com/ggml-org/llama.cpp/tree/b11429",
+  "license": "MIT"
+}

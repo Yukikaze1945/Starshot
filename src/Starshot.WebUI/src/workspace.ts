@@ -19,7 +19,7 @@ export function registerTextWorkspace(reader: () => TextWorkspace | null) {
 export function restoreWorkspace(value: unknown): Workspace | null {
   if (!value || typeof value !== 'object') return null
   const v = value as Partial<Workspace>
-  if (v.version !== 1 || !['studio', 'gallery', 'ocr', 'clipboard'].includes(v.page || '')
+  if (v.version !== 1 || !['studio', 'gallery', 'ocr', 'clipboard', 'models'].includes(v.page || '')
     || !['region', 'screen', 'long', 'gif', 'ocr', 'copy'].includes(v.mode || '')) return null
   const text = v.text
   textDraft = text?.source?.type === 'doc' && text.translated?.type === 'doc'

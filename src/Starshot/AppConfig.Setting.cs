@@ -18,6 +18,7 @@ public enum CaptureMonitorSource
 
 public static partial class AppConfig
 {
+    public static string TranslationBackend {get=>GetValue("api");set=>SetValue(value=="local" ? "local" : "api");}
     #region Static Setting
 
 
@@ -611,6 +612,13 @@ public static partial class AppConfig
         set => SetValue(value);
     }
 
+    /// <summary>Opt-in automatic GPU OCR backend. Explicit CPU remains the default.</summary>
+    public static bool OcrGpuAcceleration
+    {
+        get => GetValue(false);
+        set => SetValue(value);
+    }
+
     /// <summary>Data-only optional Small DLC; missing/invalid choices normalize to Tiny.</summary>
     public static string OcrModel
     {
@@ -653,7 +661,7 @@ public static partial class AppConfig
     }
 
     /// <summary>
-    /// SDR 截图格式：0: PNG, 1: AVIF, 2: JPEG XL
+    /// SDR 截图格式：0: PNG, 1: AVIF, 2: JPEG XL, 3: HEIC
     /// </summary>
     public static int ScreenCaptureSDRFormat
     {
@@ -662,7 +670,7 @@ public static partial class AppConfig
     }
 
     /// <summary>
-    /// HDR 截图格式：0: AVIF, 1: JPEG XL
+    /// HDR 截图格式：0: AVIF, 1: JPEG XL, 2: PNG（保留）, 3: HEIC
     /// </summary>
     public static int ScreenCaptureHDRFormat
     {

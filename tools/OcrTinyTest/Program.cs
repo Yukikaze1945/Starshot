@@ -10,6 +10,7 @@ using Microsoft.UI;
 using Serilog;
 using Starshot.Features.Codec;
 using Starshot.Helpers;
+using Starshot;
 using Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny;
 using Windows.Graphics.DirectX;
 using Microsoft.UI.Text;
@@ -45,15 +46,29 @@ internal static class Program
         {
             await RunAsync("fallback preparation, invalid inputs, cancellation, and FP16 rejection", () => PreparationChecks(device));
             var fixtures = MakeFixtures(device);
-            foreach (Fixture fixture in fixtures)
-                await RunOcrCase(fixture);
-            try { await RunOcrCase(MakeHdrPreview(device)); }
-            catch (Exception ex) { _failures++; Console.Error.WriteLine($"FAIL HDR→SDR preview fixture: {ex.GetType().Name}: {ex.Message}"); }
+            if (args.Contains("--retry-only"))
+                await RunBackendRetryCheck(fixtures.Single(x => x.Name == "English"));
+            else if (args.Contains("--gpu-only"))
+            {
+                await OcrHelper.SelectAccelerationAsync(true);
+                await RunOcrCase(fixtures.Single(x => x.Name == "English"));
+                ReportGpuDiagnostics("GPU isolated");
+            }
+            else if (args.Contains("--upgrade"))
+                await RunUpgradeChecks(device, fixtures);
+            else
+            {
+                foreach (Fixture fixture in fixtures)
+                    await RunOcrCase(fixture);
+                try { await RunOcrCase(MakeHdrPreview(device)); }
+                catch (Exception ex) { _failures++; Console.Error.WriteLine($"FAIL HDR→SDR preview fixture: {ex.GetType().Name}: {ex.Message}"); }
 
-            await RunWarmCurve(fixtures.Single(x => x.Name == "ordinary SDR"));
-            Check(OcrHelper.ModelInitializationCount == 1, $"expected exactly one engine initialization, got {OcrHelper.ModelInitializationCount}");
-            Check(OcrHelper.FallbackCount == 0, $"expected no Windows OCR fallback, got {OcrHelper.FallbackCount}");
-            await RunFallbackFaultInjection(fixtures.Single(x => x.Name == "English"));
+                await RunWarmCurve(fixtures.Single(x => x.Name == "ordinary SDR"));
+                Check(OcrHelper.ModelInitializationCount == 1, $"expected exactly one engine initialization, got {OcrHelper.ModelInitializationCount}");
+                Check(OcrHelper.FallbackCount == 0, $"expected no Windows OCR fallback, got {OcrHelper.FallbackCount}");
+                await RunFallbackFaultInjection(fixtures.Single(x => x.Name == "English"));
+            }
+
         }
         catch (Exception ex)
         {
@@ -73,6 +88,71 @@ internal static class Program
         Console.WriteLine($"Metrics: {CsvPath}");
         Console.WriteLine($"Log: {Path.Combine(OutputDirectory, "ocr-tiny-validation.log")}");
         return _failures == 0 ? 0 : 1;
+    }
+
+    private static async Task RunBackendRetryCheck(Fixture fixture)
+    {
+        await RunOcrCase(fixture with { Name = "Retry setup CPU" });
+        var flags = BindingFlags.Static | BindingFlags.NonPublic;
+        var engineField = typeof(OcrHelper).GetField("_engine", flags)!;
+        ((IDisposable)engineField.GetValue(null)!).Dispose();
+        AppConfig.OcrGpuAcceleration = true;
+        typeof(OcrHelper).GetField("_engineGpuRequested", flags)!.SetValue(null, true);
+        typeof(OcrHelper).GetField("_engineBackend", flags)!.SetValue(null, Sdcb.SimdPaddleOCR.OcrBackend.Auto);
+        await RunOcrCase(fixture with { Name = "Faulted Auto retries CPU" });
+        Check(OcrHelper.LoadedBackend == Sdcb.SimdPaddleOCR.OcrBackend.Cpu && AppConfig.OcrGpuAcceleration, "CPU retry preserves opt-in preference");
+        int init = OcrHelper.ModelInitializationCount;
+        await RunOcrCase(fixture with { Name = "CPU fallback warm reuse" });
+        Check(OcrHelper.ModelInitializationCount == init && OcrHelper.FallbackCount == 0, "fallback CPU stays warm and does not invoke legacy");
+    }
+
+    // Eight in-memory OCR calls; no desktop capture, images, forced GC or A/B engines.
+    private static async Task RunUpgradeChecks(CanvasDevice device, List<Fixture> fixtures)
+    {
+        Check(typeof(Sdcb.SimdPaddleOCR.PaddleOcrAll).Assembly.GetName().Version?.Major == 2, "core assembly must be 2.x");
+        await OcrHelper.SelectAccelerationAsync(false);
+        Check(OcrHelper.ModelInitializationCount == 0 && OcrHelper.LoadedModel is null, "CPU preference must remain lazy");
+        foreach (string name in new[] { "Chinese", "English", "game UI smallfont", "4K small text" })
+            await RunOcrCase(fixtures.Single(x => x.Name == name));
+        await RunOcrCase(MakeHdrPreview(device));
+        Check(OcrHelper.ModelInitializationCount == 1 && OcrHelper.LoadedBackend == Sdcb.SimdPaddleOCR.OcrBackend.Cpu, "explicit CPU reused one engine");
+        ReportGpuDiagnostics("CPU before opt-in");
+        var gate = (SemaphoreSlim)typeof(OcrHelper).GetField("EngineGate", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        await gate.WaitAsync();
+        Task switching;
+        try
+        {
+            switching = OcrHelper.SelectAccelerationAsync(true);
+            await Task.Delay(30);
+            Check(!switching.IsCompleted && OcrHelper.LoadedModel == "tiny", "backend switching must wait for inference gate");
+        }
+        finally { gate.Release(); }
+        await switching;
+        Check(OcrHelper.ModelInitializationCount == 1 && OcrHelper.LoadedModel is null, "switch retires CPU without eagerly loading GPU");
+        var english = fixtures.Single(x => x.Name == "English");
+        await RunOcrCase(english with { Name = "Auto cold English" });
+        ReportGpuDiagnostics("Auto cold");
+        int gpuInit = OcrHelper.ModelInitializationCount;
+        await RunOcrCase(english with { Name = "Auto warm English" });
+        Check(OcrHelper.ModelInitializationCount == gpuInit, "warm Auto must reuse engine");
+        await OcrHelper.SelectAccelerationAsync(false);
+        Check(OcrHelper.LoadedModel is null, "disable acceleration retires Auto engine");
+        await RunOcrCase(english with { Name = "CPU after GPU" });
+        Check(OcrHelper.LoadedBackend == Sdcb.SimdPaddleOCR.OcrBackend.Cpu && OcrHelper.FallbackCount == 0, "CPU restored without Windows fallback");
+    }
+
+    // Test-only reflection of pinned upstream diagnostics. Never used by the app or UI.
+    private static void ReportGpuDiagnostics(string stage)
+    {
+        var assembly = typeof(Sdcb.SimdPaddleOCR.PaddleOcrAll).Assembly;
+        var type = assembly.GetType("Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuBackend");
+        var flags = BindingFlags.Static | BindingFlags.NonPublic;
+        var device = type?.GetField("s_device", flags)?.GetValue(null);
+        var engine = typeof(OcrHelper).GetField("_engine", flags)?.GetValue(null);
+        var selected = engine?.GetType().GetField("_recGpu", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(engine);
+        var rec = engine?.GetType().GetField("_recognizer", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(engine);
+        var alive = rec?.GetType().GetProperty("GpuRecAlive", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(rec);
+        Console.WriteLine($"GPU diagnostic {stage}: probed={type?.GetField("s_probed", flags)?.GetValue(null)} device={device?.GetType().Name ?? "none"} recognizerGpuSelected={selected ?? "not exposed"} recognizerGpuAlive={alive ?? "not exposed"}; requestedBackend={OcrHelper.LoadedBackend}");
     }
 
     private static void ReportModelResources()

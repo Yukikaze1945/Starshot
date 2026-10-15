@@ -85,6 +85,13 @@ internal partial class ScreenCaptureService
         }
 
         releaseGuard();
+        if(result.Action is RegionCaptureAction.Cutout or RegionCaptureAction.TranslateInPlace)
+        {
+            var document=new Starshot.Features.Workspace.WorkspaceDocument("截图.png",Guid.NewGuid().ToString("N"),image.Width,image.Height,(byte[])image.Pixels.Clone())
+                {InitialTool=result.Action==RegionCaptureAction.TranslateInPlace ? "translate" : "polygon"};
+            Starshot.Features.Workspace.WorkspaceCaptureBroker.Publish(document);
+            return;
+        }
         if (result.Action is RegionCaptureAction.Ocr or RegionCaptureAction.Translate)
         {
             var lines = await Task.Run(() => OcrHelper.RecognizeAsync(image.Pixels, image.Width, image.Height, 1.0));
@@ -121,7 +128,7 @@ internal partial class ScreenCaptureService
             if (!string.IsNullOrWhiteSpace(subfolder)) root = Path.Combine(root, subfolder);
         }
         root = Path.GetFullPath(root); Directory.CreateDirectory(root);
-        string extension = AppConfig.ScreenCaptureSDRFormat switch { 1 => "avif", 2 => "jxl", _ => "png" };
+        string extension = AppConfig.ScreenCaptureSDRFormat switch { 1 => "avif", 2 => "jxl", 3 => "heic", _ => "png" };
         string path = EnsureUniquePath(Path.Combine(root, BuildFileName(process, exe, title.ToString(), now,
             (uint)image.Width, (uint)image.Height, isRegion ? AppConfig.RegionScreenshotFileNamePattern : null) + "." + extension));
         byte[] xmp = BuildXMPMetadata(now);
@@ -137,6 +144,9 @@ internal partial class ScreenCaptureService
             else if (extension == "avif")
                 await ImageSaver.SaveAsAvifAsync(memory, (uint)image.Width, (uint)image.Height,
                     DirectXPixelFormat.B8G8R8A8UIntNormalized, image.Pixels, ColorPrimaries.BT709, quality, xmp, true);
+            else if (extension == "heic")
+                await ImageSaver.SaveAsHeicAsync(memory, (uint)image.Width, (uint)image.Height,
+                    DirectXPixelFormat.B8G8R8A8UIntNormalized, image.Pixels, ColorPrimaries.BT709, quality, xmp);
             else
                 await ImageSaver.SaveAsJxlAsync(memory, (uint)image.Width, (uint)image.Height,
                     DirectXPixelFormat.R8G8B8A8UIntNormalized, image.RgbaPixels(), ColorPrimaries.BT709, distance, xmp, true);

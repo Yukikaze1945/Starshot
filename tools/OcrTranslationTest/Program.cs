@@ -160,11 +160,16 @@ namespace Starshot
         public static string UserDataFolder { get; set; } = "";
         public static string TranslationApiUrl { get; set; } = "";
         public static string TranslationModel { get; set; } = "";
+        public static string TranslationBackend { get; set; } = "api";
     }
 }
 
 namespace Starshot.Helpers
 {
+    internal static class OfflineTranslation
+    {
+        internal static Task<string> SendAsync(string prompt,string text,CancellationToken ct)=>throw new NotSupportedException("Use WorkspaceCoreTest for real offline inference.");
+    }
     public record TestRect(double Left, double Top, double Width, double Height);
     public record OcrLine(string Text, TestRect Rect);
 }

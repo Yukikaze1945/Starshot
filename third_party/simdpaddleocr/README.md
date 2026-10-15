@@ -1,6 +1,6 @@
 # Starshot OCR component attribution
 
-Runtime: `Sdcb.SimdPaddleOCR` 1.4.2, official NuGet package (CPU .NET 10 API).
+Runtime: `Sdcb.SimdPaddleOCR` 2.0.0, official NuGet package (.NET 10 CPU / optional Vulkan API).
 Models: `Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny` 1.0.0; official transitive
 `Sdcb.SimdPaddleOCR.Models.TextLineOrientation` 1.0.0 and ModelProvider 1.0.0.
 
@@ -9,8 +9,8 @@ the model assemblies. NuGet restores them at build time; normal build/publish
 copies the assemblies. Runtime loads embedded streams, without external model
 paths, filesystem extraction, downloads or dependence on the user's NuGet cache.
 
-Library source/tag: https://github.com/sdcb/SimdPaddleOCR/tree/v1.4.2
-Core source revision: `733c0b08a97dfd358a43a0a74938c21f6bccdbb9`.
+Library source/tag: https://github.com/sdcb/SimdPaddleOCR/tree/v2.0.0
+Core version pinned to the official NuGet 2.0.0 package.
 Tiny model-package source revision: `315e4fff4466260fd8f09cd4d53a70ec3b63f65c`.
 Library author: sdcb / Sdcb.SimdPaddleOCR contributors.
 Models: Copyright (c) 2016 PaddlePaddle Authors. All Rights Reserved.
@@ -21,7 +21,10 @@ names belong to their respective owners; no official endorsement is claimed.
 Starshot retains its separate LICENSE.
 
 Starshot does not use the repository's ImageSharp, SkiaSharp, OpenCvSharp examples,
-ONNX Runtime, Paddle Inference or optional development GPU implementations.
+ONNX Runtime or Paddle Inference. GPU OCR is opt-in using the core package’s Vulkan
+backend and system Vulkan loader. CPU is explicitly selected by default. No
+downloaded executable GPU plugin is loaded. Auto may choose CPU on unsupported
+or unsuitable hardware; upstream can also fall back per graph/session.
 
 ## Optional PP-OCRv6 Small DLC
 

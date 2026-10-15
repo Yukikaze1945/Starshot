@@ -1,0 +1,7 @@
+Published assembly=D:\coding\Starshot\build\ocr2-publish\app\Starshot.dll; version=0.0.0.0
+Synthetic scRGB max=2.50, foreground=2.50, background=0.06
+Model assembly=Sdcb.SimdPaddleOCR; version=2.0.0.0; path=D:\coding\Starshot\build\ocr2-publish\app\Sdcb.SimdPaddleOCR.dll
+Model assembly=Sdcb.SimdPaddleOCR.ModelProvider; version=1.0.0.0; path=D:\coding\Starshot\build\ocr2-publish\app\Sdcb.SimdPaddleOCR.ModelProvider.dll
+Model assembly=Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny; version=1.0.0.0; path=D:\coding\Starshot\build\ocr2-publish\app\Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny.dll
+Model assembly=Sdcb.SimdPaddleOCR.Models.TextLineOrientation; version=1.0.0.0; path=D:\coding\Starshot\build\ocr2-publish\app\Sdcb.SimdPaddleOCR.Models.TextLineOrientation.dll
+PASS published HDR pipeline: TonemapToSdr → PreparePixels (R8→BGRA) → RecognizeAsync; init=1 fallback=0 elapsed=339ms privateDelta=91MiB lines=1 unchanged=True SDRrange=30..253 text='HDR PREVIEW 203 NITS' formatted='HDR PREVIEW 203 NITS'

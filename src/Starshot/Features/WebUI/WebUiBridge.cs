@@ -30,7 +30,7 @@ using Windows.System;
 namespace Starshot.Features.WebUI;
 
 /// <summary>Versioned, allowlisted RPC. No arbitrary paths, reflection, script or shell execution.</summary>
-internal sealed class WebUiBridge : IDisposable
+internal sealed partial class WebUiBridge : IDisposable
 {
     private readonly MainWindow _window;
     private readonly CoreWebView2 _core;
@@ -95,6 +95,8 @@ internal sealed class WebUiBridge : IDisposable
 
     private async Task<object?> DispatchAsync(string method, JsonElement p, CancellationToken ct)
     {
+        if (method.StartsWith("workspace.", StringComparison.Ordinal)) return await WorkspaceAsync(method,p,ct);
+        if (method.StartsWith("models.", StringComparison.Ordinal)) return await ModelLibraryAsync(method,p,ct);
         switch (method)
         {
             case "app.bootstrap":
@@ -127,7 +129,7 @@ internal sealed class WebUiBridge : IDisposable
                 return await ThumbnailAsync(ResolveFile(p), ct);
             case "library.import":
                 var imported = await FileDialogHelper.PickMultipleFilesAsync(_window.WindowHandle,
-                    ("图像", ".png"), ("图像", ".jpg"), ("图像", ".avif"), ("图像", ".jxl"), ("图像", ".webp"), ("图像", ".jxr"), ("动图", ".gif"), ("视频", ".mp4"));
+                    ("图像", ".png"), ("图像", ".jpg"), ("图像", ".avif"), ("图像", ".heic"), ("图像", ".heif"), ("图像", ".jxl"), ("图像", ".webp"), ("图像", ".jxr"), ("动图", ".gif"), ("视频", ".mp4"));
                 foreach (string path in imported) _imports.Add(path);
                 return imported.Select(RegisterFile).ToArray();
             case "library.open":
@@ -213,6 +215,8 @@ internal sealed class WebUiBridge : IDisposable
                     await CaptureModeController.SetModeAsync((ScreenshotCaptureMode)Range(p.GetProperty("value"), 0, 3));
                 else if (settingKey == "ocrModel")
                     await OcrHelper.SelectModelAsync(p.GetProperty("value").GetString() ?? "", ct);
+                else if (settingKey == "ocrGpuAcceleration")
+                    await OcrHelper.SelectAccelerationAsync(p.GetProperty("value").GetBoolean(), ct);
                 else
                     ApplySetting(settingKey, p.GetProperty("value"));
                 return Settings();
@@ -355,6 +359,15 @@ internal sealed class WebUiBridge : IDisposable
             uint width, height;
             try
             {
+                if (Path.GetExtension(path).ToLowerInvariant() is ".heic" or ".heif")
+                {
+                    var image = await HeicCodec.DecodeAsync(path, 720, ct);
+                    width = (uint)image.Width; height = (uint)image.Height;
+                    encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied,
+                        width, height, 96, 96, HeicCodec.PreviewBgra(image));
+                }
+                else
+                {
                 // WIC decodes straight to a bounded CPU thumbnail; no disk cache or full-size GPU surface.
                 using var file = File.OpenRead(path);
                 var decoder = await BitmapDecoder.CreateAsync(file.AsRandomAccessStream()).AsTask(ct);
@@ -369,6 +382,7 @@ internal sealed class WebUiBridge : IDisposable
                     }, ExifOrientationMode.RespectExifOrientation, ColorManagementMode.ColorManageToSRgb).AsTask(ct);
                 // BitmapEncoder retains the input until FlushAsync completes.
                 encoder.SetSoftwareBitmap(thumbnail);
+                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException &&
                 Path.GetExtension(path).ToLowerInvariant() is ".avif" or ".jxl" or ".jxr")
@@ -457,6 +471,7 @@ internal sealed class WebUiBridge : IDisposable
         autoCopy = AppConfig.AutoCopyScreenshotToClipboard,
         autoCopyOcr = AppConfig.AutoCopyOcrText,
         ocrModel = AppConfig.OcrModel,
+        ocrGpuAcceleration = AppConfig.OcrGpuAcceleration,
         ultraHdr = AppConfig.AutoSaveUltraHDRJpeg,
         capacityManual = AppConfig.UhdrCapacityManual,
         capacity = AppConfig.UhdrCapacityValue,
@@ -469,6 +484,7 @@ internal sealed class WebUiBridge : IDisposable
         muteFullscreen = AppConfig.MuteNotificationInFullscreen,
         endpoint = AppConfig.TranslationApiUrl, model = AppConfig.TranslationModel,
         targetLanguage = AppConfig.TranslationTargetLanguage,
+        translationBackend = AppConfig.TranslationBackend,
         theme = AppConfig.Theme,
         language = AppConfig.Language ?? "",
         autoUpdate = AppConfig.EnableAutoUpdateCheck,
@@ -492,8 +508,8 @@ internal sealed class WebUiBridge : IDisposable
             case "ultraHdr": AppConfig.AutoSaveUltraHDRJpeg = value.GetBoolean(); break;
             case "capacityManual": AppConfig.UhdrCapacityManual = value.GetBoolean(); break;
             case "capacity": double c = value.GetDouble(); if (!double.IsFinite(c) || c < 2 || c > 32) throw new ArgumentException("容量范围为 2–32×。"); AppConfig.UhdrCapacityValue = c; break;
-            case "sdrFormat": AppConfig.ScreenCaptureSDRFormat = Range(value, 0, 2); break;
-            case "hdrFormat": AppConfig.ScreenCaptureHDRFormat = Range(value, 0, 1); break;
+            case "sdrFormat": AppConfig.ScreenCaptureSDRFormat = Range(value, 0, 3); break;
+            case "hdrFormat": AppConfig.ScreenCaptureHDRFormat = Range(value, 0, 3); break;
             case "videoCodec": AppConfig.ScreenshotVideoCodec = Range(value, 0, 1); break;
             case "quality": AppConfig.ScreenCaptureEncodeQuality = Range(value, 0, 2); break;
             case "colorManagement": AppConfig.EnableScreenshotColorManagement = value.GetBoolean(); break;
@@ -517,6 +533,7 @@ internal sealed class WebUiBridge : IDisposable
     {
         if (_disposed) return;
         _disposed = true; _core.WebMessageReceived -= OnMessage; _lifetime.Cancel(); _lifetime.Dispose();
+        CloseWorkspace();
         foreach (var window in _utilityWindows.ToArray()) window.Close();
         _files.Clear();
     }
