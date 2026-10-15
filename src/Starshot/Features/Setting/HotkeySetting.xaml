@@ -267,12 +267,12 @@
               Background="{ThemeResource AccentFillColorTertiaryBrush}"
               CornerRadius="8"
             >
-            <!--  与查看器 / 右键菜单 / 托盘的识别文字图标统一（Segoe 无 ScanText 等价字形）  -->
-            <fluent:SymbolIcon
-              FontSize="24"
-              Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-              Symbol="ScanText"
-            />
+              <!--  与查看器 / 右键菜单 / 托盘的识别文字图标统一（Segoe 无 ScanText 等价字形）  -->
+              <fluent:SymbolIcon
+                FontSize="24"
+                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                Symbol="ScanText"
+              />
             </Border>
 
             <!--  标题和描述  -->

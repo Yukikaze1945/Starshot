@@ -769,6 +769,21 @@
   <data name="Starshot_AutoStartMinimized" xml:space="preserve">
     <value>启动时最小化到托盘</value>
   </data>
+  <data name="Starshot_AutoStartDesc" xml:space="preserve">
+    <value>此开关仅负责本应用自身的开机自启项，不负责其启用或禁用状态。该状态一般无需手动更改，如需管理可前往 Windows 设置或任务计划程序。</value>
+  </data>
+  <data name="Starshot_AutoStartStatusLabel" xml:space="preserve">
+    <value>当前状态：</value>
+  </data>
+  <data name="Starshot_AutoStartStatusEnabled" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="Starshot_AutoStartStatusDisabled" xml:space="preserve">
+    <value>禁用</value>
+  </data>
+  <data name="Starshot_AutoStartStatusUndefined" xml:space="preserve">
+    <value>未定义</value>
+  </data>
   <data name="Starshot_AboutLicense" xml:space="preserve">
     <value>MIT 许可证</value>
   </data>

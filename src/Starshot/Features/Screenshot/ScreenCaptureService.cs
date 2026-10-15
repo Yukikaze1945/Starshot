@@ -256,8 +256,8 @@ internal partial class ScreenCaptureService
         {
             var size = sdrCrop.SizeInPixels;
             byte[] pixels = sdrCrop.GetPixelBytes();
-            var lines = await Task.Run(
-                () => OcrHelper.RecognizeAsync(pixels, (int)size.Width, (int)size.Height, 1.0)
+            var lines = await Task.Run(() =>
+                OcrHelper.RecognizeAsync(pixels, (int)size.Width, (int)size.Height, 1.0)
             );
             if (lines is null)
             {

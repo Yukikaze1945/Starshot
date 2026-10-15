@@ -55,6 +55,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
     private float _scale;
     private int _vx,
         _vy; // 虚拟屏幕物理坐标原点（放大镜钳制到当前显示器用）
+    // 覆盖层盖整个虚拟屏幕，是单 HWND 单 DIP 空间；_scale 全窗口统一，混合 DPI 下也不逐屏换算。
 
     private Point _positionOnClick;
     private DragMode _dragMode;
@@ -865,13 +866,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
     }
 
     /// <summary>坐标条：宽与放大镜对齐，文本水平居中，黑底白字圆角。</summary>
-    private void DrawCoordStrip(
-        CanvasDrawingSession ds,
-        string text,
-        float x,
-        float y,
-        float width
-    )
+    private void DrawCoordStrip(CanvasDrawingSession ds, string text, float x, float y, float width)
     {
         try
         {
@@ -879,7 +874,12 @@ public sealed partial class RegionCaptureWindow : WindowEx
             {
                 FontSize = 13,
                 FontFamily = "Consolas",
-                HorizontalAlignment = Microsoft.Graphics.Canvas.Text.CanvasHorizontalAlignment.Center,
+                HorizontalAlignment = Microsoft
+                    .Graphics
+                    .Canvas
+                    .Text
+                    .CanvasHorizontalAlignment
+                    .Center,
             };
             using var layout = new Microsoft.Graphics.Canvas.Text.CanvasTextLayout(
                 ds,
@@ -1326,9 +1326,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         LogOverlayPhase("Region overlay Activate done", generation);
         // 首次完成交接前持续兜底；只有本次会话真正发生物理移动后，后续会话才永久停用。
         _captureCursorActive = !_firstCaptureCursorHandoffCompleted;
-        _captureCursorOrigin = User32.GetCursorPos(out var cursorPosition)
-            ? cursorPosition
-            : null;
+        _captureCursorOrigin = User32.GetCursorPos(out var cursorPosition) ? cursorPosition : null;
         if (_captureCursorActive)
             ApplyCaptureCursor();
     }
@@ -1376,11 +1374,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         _captureCursorActive = false;
         // 先停维持，再清理本会话的原生光标；不清/重设 ProtectedCursor。
         // 使用同样的鼠标命中边界，即使焦点变化也配对清理；不改其他窗口下的光标。
-        if (
-            _captureCursorApplied
-            && !IsDestroyed
-            && IsPointerOverCaptureWindow()
-        )
+        if (_captureCursorApplied && !IsDestroyed && IsPointerOverCaptureWindow())
         {
             var arrow = User32.LoadCursor(IntPtr.Zero, User32.IDC_ARROW);
             if (!arrow.IsNull)
@@ -1655,6 +1649,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
     // 鼠标框选时两端是光标像素索引（含端点），宽 = |x2-x1| + 1（CreateRectangle）；
     // 窗口矩形本身就是正常尺寸，不 +1。WinUI 指针是 DIP，先 round 成物理像素索引。
+    // ratio 全局一个刻度即可：覆盖层是单个 HWND 盖整块虚拟屏幕，整个客户区只有一个 DIP
+    // 空间和一个 DPI——各屏自己的缩放与"逐屏换算"不存在，勿按屏拆分 ratio（概念错误）
     private Rect ComputePhysicalRect(Rect dipRect, bool fromDrag)
     {
         double ratioX = _canvasOriginal.SizeInPixels.Width / _lockedW;

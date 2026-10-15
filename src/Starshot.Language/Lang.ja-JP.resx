@@ -769,6 +769,21 @@
   <data name="Starshot_AutoStartMinimized" xml:space="preserve">
     <value>トレイに最小化して起動</value>
   </data>
+  <data name="Starshot_AutoStartDesc" xml:space="preserve">
+    <value>このスイッチは本アプリ自身のスタートアップ項目のみを担当し、その有効／無効の状態は担当しません。この状態は通常、手動で変更する必要はありません。管理が必要な場合は、Windows の設定またはタスク スケジューラをご利用ください。</value>
+  </data>
+  <data name="Starshot_AutoStartStatusLabel" xml:space="preserve">
+    <value>現在の状態：</value>
+  </data>
+  <data name="Starshot_AutoStartStatusEnabled" xml:space="preserve">
+    <value>有効</value>
+  </data>
+  <data name="Starshot_AutoStartStatusDisabled" xml:space="preserve">
+    <value>無効</value>
+  </data>
+  <data name="Starshot_AutoStartStatusUndefined" xml:space="preserve">
+    <value>未定義</value>
+  </data>
   <data name="Starshot_AboutLicense" xml:space="preserve">
     <value>MIT ライセンス</value>
   </data>

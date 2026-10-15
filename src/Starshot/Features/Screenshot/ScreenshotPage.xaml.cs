@@ -700,9 +700,7 @@ public sealed partial class ScreenshotPage : PageBase
                         if (group.Remove(item))
                         {
                             _screenshotDict.Remove(
-                                AppConfig.ScreenshotSubfolderEnabled
-                                    ? item.FilePath
-                                    : item.FileName
+                                AppConfig.ScreenshotSubfolderEnabled ? item.FilePath : item.FileName
                             );
                             if (group.Count == 0)
                             {

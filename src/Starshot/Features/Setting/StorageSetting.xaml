@@ -324,7 +324,7 @@
 
       <!--  日志级别  -->
       <StackPanel Spacing="8">
-        <TextBlock FontSize="14" Text="{x:Bind lang:Lang.Starshot_LogLevel}" />
+        <TextBlock Text="{x:Bind lang:Lang.Starshot_LogLevel}" />
         <cwc:Segmented SelectedIndex="{x:Bind LogLevel, Mode=TwoWay}">
           <cwc:SegmentedItem Content="{x:Bind lang:Lang.Starshot_LogLevelOff}" />
           <cwc:SegmentedItem Content="Error" />

@@ -1404,6 +1404,51 @@ namespace Starshot.Language {
                 return ResourceManager.GetString("Starshot_AutoStartMinimized", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   查找类似 This switch only controls this app's own startup entry. 的本地化字符串。
+        /// </summary>
+        public static string Starshot_AutoStartDesc {
+            get {
+                return ResourceManager.GetString("Starshot_AutoStartDesc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Current status: 的本地化字符串。
+        /// </summary>
+        public static string Starshot_AutoStartStatusLabel {
+            get {
+                return ResourceManager.GetString("Starshot_AutoStartStatusLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Enabled 的本地化字符串。
+        /// </summary>
+        public static string Starshot_AutoStartStatusEnabled {
+            get {
+                return ResourceManager.GetString("Starshot_AutoStartStatusEnabled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Disabled 的本地化字符串。
+        /// </summary>
+        public static string Starshot_AutoStartStatusDisabled {
+            get {
+                return ResourceManager.GetString("Starshot_AutoStartStatusDisabled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Undefined 的本地化字符串。
+        /// </summary>
+        public static string Starshot_AutoStartStatusUndefined {
+            get {
+                return ResourceManager.GetString("Starshot_AutoStartStatusUndefined", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   查找类似 Back Up Database 的本地化字符串。

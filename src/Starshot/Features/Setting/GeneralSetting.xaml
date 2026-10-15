@@ -165,6 +165,26 @@
       <!--  开机自启  -->
       <StackPanel Spacing="8">
         <TextBlock FontSize="20" Text="{x:Bind lang:Lang.Starshot_AutoStart}" />
+        <StackPanel Spacing="2">
+          <TextBlock
+            FontSize="12"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            Text="{x:Bind lang:Lang.Starshot_AutoStartDesc}"
+            TextWrapping="Wrap"
+          />
+          <StackPanel Orientation="Horizontal">
+            <TextBlock
+              FontSize="12"
+              Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+              Text="{x:Bind lang:Lang.Starshot_AutoStartStatusLabel}"
+            />
+            <TextBlock
+              FontSize="12"
+              Foreground="{x:Bind AutoStartStatusBrush, Mode=OneWay}"
+              Text="{x:Bind AutoStartStatusText, Mode=OneWay}"
+            />
+          </StackPanel>
+        </StackPanel>
         <StackPanel Orientation="Horizontal">
           <ToggleSwitch
             IsOn="{x:Bind EnableAutoStart, Mode=TwoWay}"
@@ -173,7 +193,6 @@
             OnContent="{x:Bind lang:Lang.Starshot_AutoStart}"
           />
           <TextBlock
-            FontSize="14"
             VerticalAlignment="Center"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             Visibility="{x:Bind PriorityStartHintVisibility}"

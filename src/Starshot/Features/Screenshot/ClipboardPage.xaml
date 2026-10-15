@@ -67,7 +67,7 @@
           />
           <TextBlock
             x:Name="TextBlock_CurrentDims"
-            FontSize="13"
+            FontSize="14"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
           />
           <TextBlock

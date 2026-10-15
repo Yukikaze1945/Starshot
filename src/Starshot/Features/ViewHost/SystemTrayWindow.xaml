@@ -75,10 +75,7 @@
       >
         <StackPanel Orientation="Horizontal" Spacing="12">
           <fluent:SymbolIcon FontSize="16" Symbol="ScanText" />
-          <TextBlock
-            VerticalAlignment="Center"
-            Text="{x:Bind lang:Lang.ImageViewWindow_Ocr}"
-          />
+          <TextBlock VerticalAlignment="Center" Text="{x:Bind lang:Lang.ImageViewWindow_Ocr}" />
         </StackPanel>
       </Button>
       <MenuFlyoutSeparator />

@@ -5,7 +5,12 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>Starshot</RootNamespace>
     <Nullable>enable</Nullable>
-    <NoWarn>CA1416;CS0108;CS8600;CS8603;CS8618;CS9264;IL2026;IL2087;MVVMTK0049;MVVMTK0050;WMC1506</NoWarn>
+    <!-- .NET 平台兼容性分析器 -->
+    <NoWarn>CA1416</NoWarn>
+    <!-- C# 编译器 -->
+    <NoWarn>$(NoWarn);CS0108;CS8600;CS8603;CS8618;CS9264</NoWarn>
+    <!-- CommunityToolkit.Mvvm / WinUI XAML 编译器 -->
+    <NoWarn>$(NoWarn);MVVMTK0049;MVVMTK0050;WMC1506</NoWarn>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>../logo.ico</ApplicationIcon>
@@ -40,6 +45,12 @@
 
   <!-- Release 发布配置（CLI dotnet publish -c Release 直接生效） -->
   <PropertyGroup Condition="'$(Configuration)' != 'Debug'">
+    <!-- IL2104：这个库没有做裁剪适配，不保证裁剪后能正常工作。
+    IL2026：大部分为第三方库产生的警告（无法直接修），
+    还有部分为项目自己代码的静态检查，实际未作裁剪，不影响产物，已核实哈希。
+    含义：调用了被标记为 [RequiresUnreferencedCode] 的方法。
+    这类方法本身依赖反射或动态代码，与裁剪不兼容。 -->
+    <NoWarn>$(NoWarn);IL2026;IL2104</NoWarn>
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
     <PublishReadyToRun>true</PublishReadyToRun>

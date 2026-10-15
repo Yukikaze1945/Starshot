@@ -167,10 +167,7 @@ public sealed partial class AppBackground : UserControl
             {
                 _sessionLocked = true;
             }
-            if (
-                _mediaPlayer?.PlaybackSession?.PlaybackState
-                is MediaPlaybackState.Playing
-            )
+            if (_mediaPlayer?.PlaybackSession?.PlaybackState is MediaPlaybackState.Playing)
             {
                 _pausedBySessionLocked = sessionLock;
             }
@@ -193,9 +190,7 @@ public sealed partial class AppBackground : UserControl
                 _pausedBySessionLocked = false;
             }
             bool shouldResume =
-                !sessionUnlock
-                || pausedBySessionLock
-                || (_mediaOpened && !_videoFramePresented);
+                !sessionUnlock || pausedBySessionLock || (_mediaOpened && !_videoFramePresented);
             if (shouldResume && !_windowHidden && !_sessionLocked && _mediaPlayer is not null)
             {
                 if (!_mediaOpened)
@@ -623,11 +618,7 @@ public sealed partial class AppBackground : UserControl
         _videoFramePresented = false;
         _videoAccentExtracted = false;
 
-        var player = new MediaPlayer
-        {
-            IsLoopingEnabled = true,
-            IsMuted = true,
-        };
+        var player = new MediaPlayer { IsLoopingEnabled = true, IsMuted = true };
         player.CommandManager.IsEnabled = false;
         player.SystemMediaTransportControls.IsEnabled = false;
         player.VideoFrameAvailable += MediaPlayer_VideoFrameAvailable;
@@ -654,12 +645,7 @@ public sealed partial class AppBackground : UserControl
             DispatcherQueue is null
             || !DispatcherQueue.TryEnqueue(() =>
             {
-                if (
-                    _mediaPlayer == player
-                    && !_mediaOpened
-                    && !_windowHidden
-                    && !_sessionLocked
-                )
+                if (_mediaPlayer == player && !_mediaOpened && !_windowHidden && !_sessionLocked)
                 {
                     RetryOrKeepPlaceholder(player, "MediaOpened timeout");
                 }
@@ -726,7 +712,8 @@ public sealed partial class AppBackground : UserControl
                 {
                     RetryOrKeepPlaceholder(sender, "MediaOpened handler", ex);
                 }
-            }) ?? false;
+            })
+            ?? false;
         if (!queued)
         {
             _logger.LogWarning("MediaOpened could not enqueue to UI dispatcher");
@@ -795,111 +782,115 @@ public sealed partial class AppBackground : UserControl
         bool queued;
         try
         {
-            queued = DispatcherQueue?.TryEnqueue(() =>
-            {
-                CanvasRenderTarget? pendingSurface = null;
-                try
+            queued =
+                DispatcherQueue?.TryEnqueue(() =>
                 {
-                    // Dispose/rebuild 后旧播放器可能仍有已排队的帧回调，不能再触碰新会话的共享 surface
-                    if (_mediaPlayer != sender)
+                    CanvasRenderTarget? pendingSurface = null;
+                    try
                     {
-                        return;
-                    }
-
-                    int w = (int)sender.PlaybackSession.NaturalVideoWidth;
-                    int h = (int)sender.PlaybackSession.NaturalVideoHeight;
-                    if (w <= 0 || h <= 0)
-                    {
-                        throw new InvalidOperationException($"Invalid video frame size {w}x{h}.");
-                    }
-
-                    bool needsNewSurface =
-                        _videoSurface is null
-                        || _videoImageSource is null
-                        || (int)_videoSurface.SizeInPixels.Width != w
-                        || (int)_videoSurface.SizeInPixels.Height != h;
-                    CanvasRenderTarget surface;
-                    CanvasImageSource imageSource;
-                    if (needsNewSurface)
-                    {
-                        pendingSurface = new CanvasRenderTarget(
-                            CanvasDevice.GetSharedDevice(),
-                            w,
-                            h,
-                            96
-                        );
-                        surface = pendingSurface;
-                        imageSource = new CanvasImageSource(
-                            CanvasDevice.GetSharedDevice(),
-                            w,
-                            h,
-                            96
-                        );
-                    }
-                    else
-                    {
-                        surface = _videoSurface!;
-                        imageSource = _videoImageSource!;
-                    }
-
-                    // 只有 Copy + Draw 都成功，才发布新 surface 并用它替换占位图
-                    sender.CopyFrameToVideoSurface(surface);
-                    using (var ds = imageSource.CreateDrawingSession(Colors.Transparent))
-                    {
-                        ds.DrawImage(surface);
-                    }
-
-                    if (needsNewSurface)
-                    {
-                        _videoSurface?.Dispose();
-                        _videoSurface = surface;
-                        _videoImageSource = imageSource;
-                        pendingSurface = null;
-                    }
-                    BackgroundImageSource = imageSource;
-
-                    if (!_videoFramePresented)
-                    {
-                        _videoFramePresented = true;
-                        _mediaPlayerRetryCount = 0;
-                        ReportNowPlaying(_currentVideoFile);
-                        _logger.LogDebug("Video first frame presented {W}x{H}", w, h);
-                    }
-
-                    // 视频首个成功呈现帧取一次色（自动取色开时），避免强调色随帧乱跳
-                    if (!_videoAccentExtracted && AppConfig.EnableAccentFromWallpaper)
-                    {
-                        _videoAccentExtracted = true;
-                        try
+                        // Dispose/rebuild 后旧播放器可能仍有已排队的帧回调，不能再触碰新会话的共享 surface
+                        if (_mediaPlayer != sender)
                         {
-                            var color = AccentColorHelper.GetAccentColor(
-                                surface.GetPixelBytes(),
-                                (int)surface.SizeInPixels.Width,
-                                (int)surface.SizeInPixels.Height
+                            return;
+                        }
+
+                        int w = (int)sender.PlaybackSession.NaturalVideoWidth;
+                        int h = (int)sender.PlaybackSession.NaturalVideoHeight;
+                        if (w <= 0 || h <= 0)
+                        {
+                            throw new InvalidOperationException(
+                                $"Invalid video frame size {w}x{h}."
                             );
-                            if (color is not null)
+                        }
+
+                        bool needsNewSurface =
+                            _videoSurface is null
+                            || _videoImageSource is null
+                            || (int)_videoSurface.SizeInPixels.Width != w
+                            || (int)_videoSurface.SizeInPixels.Height != h;
+                        CanvasRenderTarget surface;
+                        CanvasImageSource imageSource;
+                        if (needsNewSurface)
+                        {
+                            pendingSurface = new CanvasRenderTarget(
+                                CanvasDevice.GetSharedDevice(),
+                                w,
+                                h,
+                                96
+                            );
+                            surface = pendingSurface;
+                            imageSource = new CanvasImageSource(
+                                CanvasDevice.GetSharedDevice(),
+                                w,
+                                h,
+                                96
+                            );
+                        }
+                        else
+                        {
+                            surface = _videoSurface!;
+                            imageSource = _videoImageSource!;
+                        }
+
+                        // 只有 Copy + Draw 都成功，才发布新 surface 并用它替换占位图
+                        sender.CopyFrameToVideoSurface(surface);
+                        using (var ds = imageSource.CreateDrawingSession(Colors.Transparent))
+                        {
+                            ds.DrawImage(surface);
+                        }
+
+                        if (needsNewSurface)
+                        {
+                            _videoSurface?.Dispose();
+                            _videoSurface = surface;
+                            _videoImageSource = imageSource;
+                            pendingSurface = null;
+                        }
+                        BackgroundImageSource = imageSource;
+
+                        if (!_videoFramePresented)
+                        {
+                            _videoFramePresented = true;
+                            _mediaPlayerRetryCount = 0;
+                            ReportNowPlaying(_currentVideoFile);
+                            _logger.LogDebug("Video first frame presented {W}x{H}", w, h);
+                        }
+
+                        // 视频首个成功呈现帧取一次色（自动取色开时），避免强调色随帧乱跳
+                        if (!_videoAccentExtracted && AppConfig.EnableAccentFromWallpaper)
+                        {
+                            _videoAccentExtracted = true;
+                            try
                             {
-                                AccentColorHelper.ChangeAppAccentColor(color);
-                                // 同图片壁纸：只应用不存储，不污染手动色
+                                var color = AccentColorHelper.GetAccentColor(
+                                    surface.GetPixelBytes(),
+                                    (int)surface.SizeInPixels.Width,
+                                    (int)surface.SizeInPixels.Height
+                                );
+                                if (color is not null)
+                                {
+                                    AccentColorHelper.ChangeAppAccentColor(color);
+                                    // 同图片壁纸：只应用不存储，不污染手动色
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "Accent from video first frame");
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Accent from video first frame");
-                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    // 不把空画布发布为成功首帧；看门狗仍会在超时后重建播放器
-                    _logger.LogWarning(ex, "Video frame copy/draw failed");
-                }
-                finally
-                {
-                    pendingSurface?.Dispose();
-                    _videoSemaphore.Release();
-                }
-            }) ?? false;
+                    catch (Exception ex)
+                    {
+                        // 不把空画布发布为成功首帧；看门狗仍会在超时后重建播放器
+                        _logger.LogWarning(ex, "Video frame copy/draw failed");
+                    }
+                    finally
+                    {
+                        pendingSurface?.Dispose();
+                        _videoSemaphore.Release();
+                    }
+                })
+                ?? false;
         }
         catch (Exception ex)
         {

@@ -71,7 +71,7 @@
             Text="{x:Bind lang:Lang.Starshot_AboutTagline}"
           />
           <TextBlock
-            FontSize="13"
+            FontSize="12"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             Text="{x:Bind lang:Lang.Starshot_AboutDesc}"
             TextWrapping="Wrap"
@@ -118,7 +118,7 @@
         CornerRadius="8"
         Spacing="10"
       >
-        <TextBlock FontSize="13" TextWrapping="Wrap">
+        <TextBlock FontSize="12" TextWrapping="Wrap">
           <Run Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="•  " />
           <Hyperlink NavigateUri="https://github.com/Scighost/Starward" UnderlineStyle="None">
             <Run FontWeight="SemiBold" Text="Starward" />
@@ -130,7 +130,7 @@
           />
         </TextBlock>
 
-        <TextBlock FontSize="13" TextWrapping="Wrap">
+        <TextBlock FontSize="12" TextWrapping="Wrap">
           <Run Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="•  " />
           <Hyperlink NavigateUri="https://github.com/ShareX/ShareX" UnderlineStyle="None">
             <Run FontWeight="SemiBold" Text="ShareX" />
@@ -142,7 +142,7 @@
           />
         </TextBlock>
 
-        <TextBlock FontSize="13" TextWrapping="Wrap">
+        <TextBlock FontSize="12" TextWrapping="Wrap">
           <Run Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="•  " />
           <Hyperlink
             NavigateUri="https://github.com/YuehaiTeam/kachina-installer"

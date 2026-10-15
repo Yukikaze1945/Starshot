@@ -769,6 +769,21 @@
   <data name="Starshot_AutoStartMinimized" xml:space="preserve">
     <value>Start Minimized to Tray</value>
   </data>
+  <data name="Starshot_AutoStartDesc" xml:space="preserve">
+    <value>This switch only manages this app's own startup entry, and does not control whether that entry is enabled or disabled. That state normally needs no manual change; to manage it, go to Windows Settings or Task Scheduler.</value>
+  </data>
+  <data name="Starshot_AutoStartStatusLabel" xml:space="preserve">
+    <value>Current status: </value>
+  </data>
+  <data name="Starshot_AutoStartStatusEnabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="Starshot_AutoStartStatusDisabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="Starshot_AutoStartStatusUndefined" xml:space="preserve">
+    <value>Undefined</value>
+  </data>
   <data name="Starshot_AboutLicense" xml:space="preserve">
     <value>MIT License</value>
   </data>

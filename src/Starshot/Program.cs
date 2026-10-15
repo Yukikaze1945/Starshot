@@ -45,13 +45,20 @@ public static class Program
                     td.Actions.Add(new ExecAction(launcherPath, taskArgs));
                     td.Settings.DisallowStartIfOnBatteries = false;
                     td.Settings.StopIfGoingOnBatteries = false;
+                    // 以下几项若不显式设置，会落到「默认值」而误杀常驻进程：
+                    //   ExecutionTimeLimit 默认 PT72H  → 连续跑满 3 天被停止（TimeSpan.Zero = 不限制）
+                    //   AllowHardTerminate 默认 true   → 停止请求可用 TerminateProcess 强杀
+                    //   StopOnIdleEnd      默认 true   → 空闲条件结束即停止任务
+                    td.Settings.ExecutionTimeLimit = TimeSpan.Zero;
+                    td.Settings.AllowHardTerminate = false;
+                    td.Settings.IdleSettings.StopOnIdleEnd = false;
                     try
                     {
-                        ts.RootFolder.DeleteTask("Starshot", false);
+                        ts.RootFolder.DeleteTask(AppConfig.AutoStartName, false);
                     }
                     catch { }
                     ts.RootFolder.RegisterTaskDefinition(
-                        "Starshot",
+                        AppConfig.AutoStartName,
                         td,
                         TaskCreation.CreateOrUpdate,
                         $"{Environment.UserDomainName}\\{Environment.UserName}",
@@ -62,7 +69,7 @@ public static class Program
                 }
                 else
                 {
-                    ts.RootFolder.DeleteTask("Starshot", false);
+                    ts.RootFolder.DeleteTask(AppConfig.AutoStartName, false);
                     LogManageTask("Task deleted");
                 }
             }
