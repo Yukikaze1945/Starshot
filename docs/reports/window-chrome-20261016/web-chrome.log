@@ -1,0 +1,151 @@
+{
+  "ok": true,
+  "softwareRendering": true,
+  "desktopInput": false,
+  "modelInference": false,
+  "results": [
+    {
+      "surface": "main",
+      "width": 1280,
+      "height": 800,
+      "theme": 1,
+      "dpi": 2,
+      "metrics": {
+        "height": 48,
+        "right": 1280,
+        "drag": "drag",
+        "buttons": [
+          {
+            "right": 996,
+            "label": "找功能\nCtrl K",
+            "drag": "no-drag"
+          },
+          {
+            "right": 1128,
+            "label": "收起到托盘",
+            "drag": "no-drag"
+          }
+        ],
+        "overflow": false
+      }
+    },
+    {
+      "surface": "main",
+      "width": 960,
+      "height": 640,
+      "theme": 2,
+      "dpi": 1.5,
+      "metrics": {
+        "height": 48,
+        "right": 960,
+        "drag": "drag",
+        "buttons": [
+          {
+            "right": 764,
+            "label": "找功能\nCtrl K",
+            "drag": "no-drag"
+          },
+          {
+            "right": 808,
+            "label": "收起到托盘",
+            "drag": "no-drag"
+          }
+        ],
+        "overflow": false
+      }
+    },
+    {
+      "surface": "main",
+      "width": 760,
+      "height": 540,
+      "theme": 1,
+      "dpi": 2,
+      "metrics": {
+        "height": 48,
+        "right": 760,
+        "drag": "drag",
+        "buttons": [
+          {
+            "right": 564,
+            "label": "",
+            "drag": "no-drag"
+          },
+          {
+            "right": 608,
+            "label": "收起到托盘",
+            "drag": "no-drag"
+          }
+        ],
+        "overflow": false
+      }
+    },
+    {
+      "surface": "ocr",
+      "width": 460,
+      "height": 300,
+      "theme": 1,
+      "dpi": 2,
+      "metrics": {
+        "height": 32,
+        "right": 460,
+        "drag": "drag",
+        "buttons": [],
+        "overflow": false
+      }
+    },
+    {
+      "surface": "ocr",
+      "width": 360,
+      "height": 262,
+      "theme": 2,
+      "dpi": 2,
+      "metrics": {
+        "height": 32,
+        "right": 360,
+        "drag": "drag",
+        "buttons": [],
+        "overflow": false
+      }
+    },
+    {
+      "surface": "image",
+      "width": 1280,
+      "height": 800,
+      "theme": 1,
+      "dpi": 2,
+      "metrics": {
+        "height": 48,
+        "right": 1280,
+        "drag": "drag",
+        "buttons": [
+          {
+            "right": 48,
+            "label": "关闭图像工作区",
+            "drag": "no-drag"
+          },
+          {
+            "right": 913.03125,
+            "label": "上一张",
+            "drag": "no-drag"
+          },
+          {
+            "right": 953.03125,
+            "label": "下一张",
+            "drag": "no-drag"
+          },
+          {
+            "right": 1029.03125,
+            "label": "复制",
+            "drag": "no-drag"
+          },
+          {
+            "right": 1130,
+            "label": "导出 PNG",
+            "drag": "no-drag"
+          }
+        ],
+        "overflow": false
+      }
+    }
+  ]
+}

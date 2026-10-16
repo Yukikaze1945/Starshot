@@ -74,12 +74,21 @@ internal static class CpuCaptureGdi
 
     internal static void Blit(nint dc, byte[] pixels, int width, int height, Rectangle destination, Rectangle source)
     {
-        var info = BitmapInfo.For(width, height);
+        if (width <= 0 || height <= 0 || pixels.Length != checked(width * height * 4)
+            || source.Width <= 0 || source.Height <= 0 || source.X < 0 || source.Y < 0
+            || source.Right > width || source.Bottom > height)
+            throw new ArgumentOutOfRangeException(nameof(source));
+        // Expose only the requested rows, retaining the original row stride.
+        // GDI's stretch and non-stretch fast paths interpret a partial top-down
+        // DIB's nonzero source Y differently. A row view always uses source Y=0
+        // and full view height, so both paths read the same physical pixels.
+        var info = BitmapInfo.For(width, source.Height);
         var pin = GCHandle.Alloc(pixels, GCHandleType.Pinned);
         try
         {
+            nint rows = pin.AddrOfPinnedObject() + checked(source.Y * width * 4);
             if (StretchDIBits(dc, destination.X, destination.Y, destination.Width, destination.Height,
-                source.X, source.Y, source.Width, source.Height, pin.AddrOfPinnedObject(), ref info, 0, Copy) == -1)
+                source.X, 0, source.Width, source.Height, rows, ref info, 0, Copy) == -1)
                 throw new Win32Exception(Marshal.GetLastWin32Error());
         }
         finally { pin.Free(); }

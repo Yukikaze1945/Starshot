@@ -1,0 +1,1 @@
+PASS 19 window chrome checks; hidden HWNDs; no WebView startup, capture, textures, model inference or desktop input.

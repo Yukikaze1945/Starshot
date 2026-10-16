@@ -53,6 +53,8 @@ public sealed partial class ImageBatchConvertWindow : PageBase
         InitializeComponent();
     }
 
+    internal FrameworkElement ChromeDragArea => ConversionDragArea;
+
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);

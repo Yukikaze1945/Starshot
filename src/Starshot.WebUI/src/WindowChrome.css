@@ -1,0 +1,41 @@
+.native-chrome { --caption-inset: 138px; }
+.native-chrome .topbar,
+.native-chrome .image-workspace-header,
+.native-chrome .compact-titlebar,
+.native-chrome .dialog-title { -webkit-app-region: drag; app-region: drag; user-select: none; }
+.native-chrome :is(.topbar,.image-workspace-header,.compact-titlebar,.dialog-title) :is(button,input,select,a,[role=button]),
+.native-chrome .top-actions,
+.native-chrome .workspace-header-actions { -webkit-app-region: no-drag; app-region: no-drag; }
+.native-chrome .topbar { height:48px; padding:0 calc(var(--caption-inset) + 14px) 0 26px; gap:24px; background:var(--paper); }
+.native-chrome .wordmark { font-size:23px; line-height:1; white-space:nowrap; }
+.native-chrome .wordmark span { font-size:12px; margin-left:18px; }
+.native-chrome .top-actions { gap:18px; flex-shrink:0; }
+.native-chrome .top-actions .connection { font-size:10px; }
+.native-chrome .command-trigger { font-size:11px; }
+.native-chrome .command-trigger kbd { font-size:10px; padding:2px 5px; }
+.native-chrome .rail { padding-top:8px; }
+.native-chrome .brand-mark { height:32px; margin-bottom:8px; }
+.native-chrome .image-workspace-header { height:48px; padding:0 calc(var(--caption-inset) + 12px) 0 14px; gap:10px; }
+.native-chrome .image-workspace-header .button { padding:7px 11px; font-size:11px; }
+.native-chrome .workspace-header-actions { gap:6px; }
+.native-chrome .workspace-document-name b { font-size:12px; }
+.native-chrome .workspace-document-name span { font-size:9px; }
+.native-chrome .workspace-signal { font-size:10px; }
+.compact-titlebar { height:32px; flex-shrink:0; display:flex; align-items:center; gap:7px; padding:0 calc(var(--caption-inset, 0px) + 8px) 0 12px; color:var(--ink); background:var(--paper); overflow:hidden; white-space:nowrap; }
+.compact-titlebar > svg { color:var(--focus); flex-shrink:0; }
+.compact-titlebar > span:first-of-type { font-family:'Outfit Variable',sans-serif; font-weight:600; font-size:13px; letter-spacing:-.4px; }
+.compact-titlebar > i { font-style:normal; font-size:11px; color:var(--line-strong); margin:0 1px; }
+.compact-titlebar .compact-title { color:var(--muted); font-size:10px; overflow:hidden; text-overflow:ellipsis; }
+.ocr-popup.ocr-with-chrome { height:calc(100dvh - 32px); }
+[data-window-active=false] :is(.wordmark,.compact-titlebar > span,.workspace-document-name) { opacity:.65; }
+@media(max-width:1000px) {
+  .native-chrome .topbar { padding-left:21px; gap:12px; }
+  .native-chrome .top-actions { gap:10px; }
+  .native-chrome .top-actions .connection { display:none; }
+}
+@media(max-width:780px) {
+  .native-chrome .wordmark span { margin-left:10px; }
+  .native-chrome .command-trigger :is(span,kbd) { display:none; }
+  .native-chrome .workspace-signal { display:none; }
+  .native-chrome .workspace-header-actions .button { font-size:10px; gap:5px; padding:7px 8px; }
+}

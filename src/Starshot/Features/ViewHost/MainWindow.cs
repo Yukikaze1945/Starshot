@@ -73,6 +73,11 @@ public sealed class MainWindow : CpuCaptureNativeWindow
                 style: 0x02CF0000, extendedStyle: ocrPopup ? 0x80u : 0u, excludeFromCapture: false);
             _windowId = Win32Interop.GetWindowIdFromWindow(Hwnd);
             AppWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(_windowId);
+            bool integrated = WindowChrome.Configure(AppWindow, compact: ocrPopup);
+            // WebView2 app-region owns only the actual HTML drag areas. Leave
+            // native caption buttons intact; do not cover all header controls.
+            if (integrated) AppWindow.TitleBar.SetDragRectangles([]);
+            AppWindow.Changed += AppWindowChanged;
             if (!ocrPopup) WindowEx.RegisterMainWindow(_windowId);
             var width = (int)((ocrPopup ? 460 : 1180) * UIScale);
             var height = (int)((ocrPopup ? 300 : 760) * UIScale);
@@ -101,6 +106,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
         if (AppConfig.Theme == 0)
             dark = (int?)Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme", 1) == 0 ? 1u : 0u;
         CpuCaptureNative.DwmSetWindowAttribute(Hwnd, 20, ref dark, 4);
+        WindowChrome.ApplyTheme(AppWindow, dark == 1);
         if (_controller is { } controller)
             controller.DefaultBackgroundColor = dark == 1 ? Windows.UI.Color.FromArgb(255, 24, 27, 25)
                 : Windows.UI.Color.FromArgb(255, 245, 246, 239);
@@ -133,6 +139,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
             core.Settings.IsStatusBarEnabled = false;
             core.Settings.IsZoomControlEnabled = false;
             core.Settings.AreBrowserAcceleratorKeysEnabled = false;
+            core.Settings.IsNonClientRegionSupportEnabled = true;
             core.SetVirtualHostNameToFolderMapping("starshot.local", assets, CoreWebView2HostResourceAccessKind.Deny);
             core.NavigationStarting += (_, e) => { if (!WebUiBridge.IsTrustedSource(e.Uri)) e.Cancel = true; };
             core.NewWindowRequested += (_, e) => e.Handled = true;
@@ -185,6 +192,21 @@ public sealed class MainWindow : CpuCaptureNativeWindow
         if (_pendingOcr is { } data) { _pendingOcr = null; Emit("ocr.result", data); }
         if (_pendingWorkspace) { _pendingWorkspace=false; Emit("workspace.capture",new{}); }
         RequestWebFocus();
+        PublishChrome();
+    }
+
+    internal object ChromeState() => new {
+        enabled = AppWindow.TitleBar.ExtendsContentIntoTitleBar,
+        inset = AppWindow.TitleBar.RightInset / UIScale,
+        height = _isOcrPopup ? 32 : 48,
+        active = CpuCaptureNative.GetForegroundWindow() == Hwnd,
+        maximized = AppWindow.Presenter is OverlappedPresenter p && p.State == OverlappedPresenterState.Maximized
+    };
+    private void PublishChrome() => Emit("window.chrome", ChromeState());
+    private void AppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
+    {
+        if (ForceExit || _webUiClosed) return;
+        UpdateWebBounds(); PublishChrome();
     }
 
     private static async Task TryCheckUpdateOnStartupAsync()
@@ -374,6 +396,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
     protected override void OnNativeClosed()
     {
         ForceExit = true;
+        AppWindow.Changed -= AppWindowChanged;
         if (!_isOcrPopup)
         {
             WindowEx.UnregisterMainWindow(_windowId);
@@ -397,7 +420,10 @@ public sealed class MainWindow : CpuCaptureNativeWindow
                 return 0;
             case 0x03: _controller?.NotifyParentWindowPositionChanged(); break;
             case 0x07: RequestWebFocus(); break; // WM_SETFOCUS: never call WebView2 reentrantly.
-            case 0x06: if (wparam != 0 && _ready) Emit("library.changed", new { }); break;
+            case 0x06:
+                PublishChrome();
+                if (wparam != 0 && _ready) Emit("library.changed", new { });
+                break;
             case 0x24:
                 var info = (User32.MINMAXINFO*)lparam;
                 info->minTrackSize = new SIZE((int)((_isOcrPopup ? 360 : 760) * UIScale), (int)((_isOcrPopup ? 230 : 540) * UIScale));
@@ -407,7 +433,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
                 CpuCaptureNative.SetWindowPos(Hwnd, 0, rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top, 0x14);
                 if (_font != 0) CpuCaptureGdi.DeleteObject(_font);
                 _font = CpuCaptureGdi.Font((int)(15 * UIScale));
-                UpdateWebBounds(); return 0;
+                UpdateWebBounds(); PublishChrome(); return 0;
             case 0x100 when wparam == 0x74:
                 if (_initializing) return 0;
                 if (_ready && _core is { } core) core.Reload();

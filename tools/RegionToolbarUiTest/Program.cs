@@ -62,6 +62,14 @@ public sealed partial class ToolbarTestApp : Starshot.App
         try
         {
             ((System.Timers.Timer)typeof(Starshot.App).GetField("_gcTimer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(this)!).Stop();
+            if (Environment.GetEnvironmentVariable("STARSHOT_CHROME_ONLY") == "1")
+            {
+                typeof(Starshot.AppConfig).GetProperty("LogFile", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!
+                    .SetValue(null, Path.Combine(report, "native-chrome-app.log"));
+                ValidateWindowChrome();
+                File.WriteAllText(Path.Combine(report, "xaml-interaction.log"), $"PASS {_checks} window chrome checks; hidden HWNDs; no WebView startup, capture, textures, model inference or desktop input.\n");
+                Environment.Exit(0); return;
+            }
             window = new RegionCaptureWindow();
             Call(window, "MoveOffscreen"); // Never Show/Activate this synthetic test overlay.
             if (Environment.GetEnvironmentVariable("STARSHOT_POINTER_CLOSE_ONLY") == "1")
@@ -135,6 +143,45 @@ public sealed partial class ToolbarTestApp : Starshot.App
             window?.Close(); Environment.Exit(1);
         }
     }
+
+    private void ValidateWindowChrome()
+    {
+        foreach (bool compact in new[] { false, true })
+        {
+            using var host = new Starshot.Features.ViewHost.MainWindow(ocrPopup: compact);
+            var bar = host.AppWindow.TitleBar;
+            Check(bar.ExtendsContentIntoTitleBar, "WebUI content extends into native title bar");
+            Check(bar.IconShowOptions == Microsoft.UI.Windowing.IconShowOptions.HideIconAndSystemMenu, "Duplicate system title and icon removed");
+            Check(bar.PreferredHeightOption == (compact ? Microsoft.UI.Windowing.TitleBarHeightOption.Standard : Microsoft.UI.Windowing.TitleBarHeightOption.Tall), "OCR stays compact; main header matches 48 DIP caption controls");
+            Check(!host.AppWindow.IsVisible, "Constructing native host does not show it");
+            GetWindowRect(host.WindowHandle, out var outer); GetClientRect(host.WindowHandle, out var client);
+            Check((outer.Bottom - outer.Top) - (client.Bottom - client.Top) < 16 * host.UIScale,
+                "Native client extends into the old title strip; only resize borders remain");
+            Check(typeof(Starshot.Features.ViewHost.MainWindow).GetField("_controller", Flags)!.GetValue(host) is null, "No browser initialized for chrome-only validation");
+            using var state = System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(typeof(Starshot.Features.ViewHost.MainWindow).GetMethod("ChromeState", Flags)!.Invoke(host, null)));
+            Check(state.RootElement.GetProperty("enabled").GetBoolean() && state.RootElement.GetProperty("height").GetInt32() == (compact ? 32 : 48), "Bootstrap carries actual native chrome mode");
+            Check(state.RootElement.GetProperty("inset").GetDouble() > 0, "Actual system caption inset is supplied in DIP");
+        }
+        var utility = new Window { Content = new Grid() };
+        try
+        {
+            Type chrome = WindowType.Assembly.GetType("Starshot.Frameworks.WindowChrome")!;
+            chrome.GetMethod("AddHeader", BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, new object[] { utility, "测试工具" });
+            var shell = (Grid)utility.Content;
+            Check(utility.AppWindow.TitleBar.ExtendsContentIntoTitleBar && shell.RowDefinitions[0].Height.Value == 48, "Utility content and title share one native header");
+            Check(shell.Children.Count == 2 && !utility.AppWindow.IsVisible, "Utility keeps original content; remains hidden");
+            var conversion = new ImageBatchConvertWindow();
+            Check(conversion.FindName("ConversionDragArea") is FrameworkElement, "Batch conversion exposes a separate drag region");
+        }
+        finally { utility.Close(); }
+    }
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct ChromeRect { public int Left, Top, Right, Bottom; }
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool GetWindowRect(nint hwnd, out ChromeRect rect);
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool GetClientRect(nint hwnd, out ChromeRect rect);
 
     private void ValidateClosedPointerEvents(RegionCaptureWindow window)
     {

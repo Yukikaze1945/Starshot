@@ -13,8 +13,13 @@ function FormatBubble({ editor }: { editor: Editor }) {
       const start = editor.view.coordsAtPos(from), end = editor.view.coordsAtPos(to), host = (editor.view.dom.closest('.editor-body') || editor.view.dom).getBoundingClientRect()
       if (end.bottom < host.top || start.top > host.bottom) { setPosition(null); return }
       const width = Math.min(560, window.innerWidth - 26)
-      const anchor = Math.max(start.top, host.top)
-      setPosition({ left: Math.max(13, Math.min((start.left + end.left) / 2 - width / 2, window.innerWidth - width - 13)), top: Math.max(12, Math.min(anchor >= 70 ? anchor - 58 : Math.min(start.bottom, host.bottom) + 9, window.innerHeight - 64)) }); refresh(value => value + 1)
+      const bubbleHeight = bubble.current?.offsetHeight || 46
+      const above = start.top - bubbleHeight - 8
+      const desired = above >= host.top + 4 ? above : Math.min(end.bottom, host.bottom) + 8
+      // Keep the floating controls inside the editor viewport. A fixed 70px
+      // threshold overlapped OCR tabs after integrating the window title bar.
+      const top = Math.max(host.top + 2, Math.min(desired, host.bottom - bubbleHeight - 2, window.innerHeight - bubbleHeight - 8))
+      setPosition({ left: Math.max(13, Math.min((start.left + end.left) / 2 - width / 2, window.innerWidth - width - 13)), top }); refresh(value => value + 1)
     }
     const delayed = () => window.setTimeout(update, 0)
     editor.on('selectionUpdate', update).on('transaction', update).on('focus', update).on('blur', delayed)

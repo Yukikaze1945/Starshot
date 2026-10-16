@@ -102,6 +102,7 @@ public sealed partial class UpdateWindow : WindowEx
         RootGrid.RequestedTheme = ElementTheme.Default;
         SystemBackdrop = new DesktopAcrylicBackdrop();
         AdaptTitleBarButtonColorToActuallTheme();
+        WindowChrome.AddHeader(this, "软件更新");
         CenterInScreen(1000, 680);
         this.Closed += (_, _) =>
         {

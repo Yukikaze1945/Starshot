@@ -147,6 +147,9 @@ internal sealed partial class CpuRegionCaptureWindow : CpuCaptureNativeWindow
             nint dc = _backBuffer.Dc;
             var full = new Rectangle(0, 0, _desktop.Width, _desktop.Height);
             CpuCaptureGdi.Blit(dc, _dark, _desktop.Width, _desktop.Height, full, full);
+            // Passive hints belong to the dimmed surroundings. Restoring the
+            // selection below must cover them, including partial intersections.
+            PaintShortcutHints(dc);
             Rectangle r = _selected || _dragging ? _selection : HoverRectangle();
             if (r.Width > 1 && r.Height > 1)
             {
@@ -168,14 +171,23 @@ internal sealed partial class CpuRegionCaptureWindow : CpuCaptureNativeWindow
             if (_selected) PaintToolbar(dc);
             if (!_selected || _dragging) PaintMagnifier(dc);
             if (!_selected && _toolbarHelp) PaintHelp(dc, ToolbarLayout());
-            var hints = new Rectangle(Dip(12), Math.Max(0, _desktop.Height - Dip(82)), Math.Min(Dip(640), _desktop.Width - Dip(24)), Dip(66));
-            CpuCaptureGdi.Fill(dc, hints, Paper, Dip(10));
-            CpuCaptureGdi.Text(dc, "方向键 移动 · Shift 缩小 · Ctrl 扩大 · C 复制颜色", new(hints.X + Dip(12), hints.Y + Dip(7), hints.Width - Dip(24), Dip(23)), _smallFont, Ink);
-            CpuCaptureGdi.Text(dc, "Ctrl+Z/Y 撤销/重做 · Ctrl+C/S 复制/保存 · Ctrl+Q 翻译 · Esc 退出 · F1 快捷键", new(hints.X + Dip(12), hints.Y + Dip(32), hints.Width - Dip(24), Dip(23)), _smallFont, Ink);
             if (!CpuCaptureGdi.BitBlt(targetDc, 0, 0, _desktop.Width, _desktop.Height, dc, 0, 0, CpuCaptureGdi.Copy))
                 throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
         }
         finally { CpuCaptureNative.EndPaint(Hwnd, ref paint); }
+    }
+
+    private Rectangle ShortcutHintBounds() => new(Dip(12), Math.Max(0, _desktop.Height - Dip(82)),
+        Math.Max(0, Math.Min(Dip(640), _desktop.Width - Dip(24))), Dip(66));
+
+    private void PaintShortcutHints(nint dc)
+    {
+        Rectangle hints = ShortcutHintBounds();
+        if (hints.Width <= Dip(24) || Rectangle.Inflate(hints, Dip(24), Dip(24)).Contains(_mouse))
+            return;
+        CpuCaptureGdi.Fill(dc, hints, Paper, Dip(10));
+        CpuCaptureGdi.Text(dc, "方向键 移动 · Shift 缩小 · Ctrl 扩大 · C 复制颜色", new(hints.X + Dip(12), hints.Y + Dip(7), hints.Width - Dip(24), Dip(23)), _smallFont, Ink);
+        CpuCaptureGdi.Text(dc, "Ctrl+Z/Y 撤销/重做 · Ctrl+C/S 复制/保存 · Ctrl+Q 翻译 · Esc 退出 · F1 快捷键", new(hints.X + Dip(12), hints.Y + Dip(32), hints.Width - Dip(24), Dip(23)), _smallFont, Ink);
     }
 
     private Rectangle HoverRectangle() => _windows.FirstOrDefault(r => r.Contains(_mouse), new Rectangle(0, 0, _desktop.Width, _desktop.Height));

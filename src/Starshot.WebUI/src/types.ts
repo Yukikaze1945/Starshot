@@ -15,7 +15,8 @@ export interface OcrModelsStatus {
   installed: boolean; downloadedBytes: number; totalBytes: number; error: string | null; directory: string; version: string;
 }
 export interface Hotkey { id: number; modifiers: number; key: number; text: string; registered: boolean; error: boolean }
-export interface Bootstrap { version: string; protocol: number; settings: Settings; hotkeys: Hotkey[]; hasApiKey: boolean }
+export interface ChromeState { enabled: boolean; inset: number; height: number; active: boolean; maximized: boolean }
+export interface Bootstrap { version: string; protocol: number; settings: Settings; hotkeys: Hotkey[]; hasApiKey: boolean; chrome?: ChromeState }
 export interface Shot { id: string; name: string; format: string; bytes: number; timestamp: string; kind?: 'image' | 'video'; codec?: string | null; hdr?: boolean | null }
 export interface Library { total: number; items: Shot[]; offset: number }
 export interface Thumbnail { src: string; width: number; height: number }

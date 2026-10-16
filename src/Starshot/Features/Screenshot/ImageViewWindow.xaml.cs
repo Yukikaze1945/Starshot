@@ -69,6 +69,9 @@ public sealed partial class ImageViewWindow : Window
         AppWindow.TitleBar.IconShowOptions = IconShowOptions.ShowIconAndSystemMenu;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
         AdaptTitleBarButtonColorToActuallTheme();
+        Starshot.Frameworks.WindowChrome.Configure(AppWindow);
+        Starshot.Frameworks.WindowChrome.ApplyTheme(AppWindow, RootGrid.ActualTheme == ElementTheme.Dark);
+        RootGrid.ActualThemeChanged += ImageChromeThemeChanged;
         SetIcon();
         ScrollViewer_Image.SetArePointerWheelEventsIgnored(true);
     }
@@ -102,6 +105,7 @@ public sealed partial class ImageViewWindow : Window
     {
         try
         {
+            RootGrid.ActualThemeChanged -= ImageChromeThemeChanged;
             WeakReferenceMessenger.Default.UnregisterAll(this);
             _loadImageCts?.Cancel();
             _loadImageCts?.Dispose();
@@ -158,6 +162,9 @@ public sealed partial class ImageViewWindow : Window
         }
         catch { }
     }
+
+    private void ImageChromeThemeChanged(FrameworkElement sender, object args) =>
+        Starshot.Frameworks.WindowChrome.ApplyTheme(AppWindow, sender.ActualTheme == ElementTheme.Dark);
 
     private void ResetState()
     {

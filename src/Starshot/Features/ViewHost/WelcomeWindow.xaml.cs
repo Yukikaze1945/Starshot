@@ -52,7 +52,7 @@ public sealed partial class WelcomeWindow : WindowEx
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
         CenterInScreen(1020, 630);
         AdaptTitleBarButtonColorToActuallTheme();
-        SetDragRectangles(new RectInt32(0, 0, 100000, (int)(48 * UIScale)));
+        WindowChrome.AddHeader(this, "欢迎");
         if (AppWindow.Presenter is OverlappedPresenter p)
         {
             p.IsMaximizable = false;

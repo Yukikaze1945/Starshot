@@ -26,6 +26,14 @@ internal static class Program
         using var source = Pattern(80, 60);
         var crop = new Rectangle(17, 11, 36, 28);
         using var plain = source.Crop(crop);
+        using (var blit = new CpuCaptureSurface(crop.Width, crop.Height))
+        {
+            CpuCaptureGdi.Blit(blit.Dc, source.Pixels, source.Width, source.Height,
+                new Rectangle(0, 0, crop.Width, crop.Height), crop);
+            using var actual = blit.ToImage();
+            Check(actual.Pixels.SequenceEqual(plain.Pixels),
+                $"Partial top-down DIB must read the requested crop: first source pixel expected B={plain.Pixels[0]},G={plain.Pixels[1]}, actual B={actual.Pixels[0]},G={actual.Pixels[1]}");
+        }
         Check(plain.Pixels[0] == 17 && plain.Pixels[1] == 11 && plain.Pixels[^4] == 52 && plain.Pixels[^3] == 38, "Top-down BGRA crop must retain row/channel orientation");
         var rgba = plain.RgbaPixels();
         Check(rgba[0] == 28 && rgba[1] == 11 && rgba[2] == 17 && rgba[3] == 255, "JXL conversion must swap R/B without changing alpha");
@@ -70,6 +78,34 @@ internal static class Program
         var clone = marker.Clone(); clone.Translate(10, 20);
         Check(marker.Start == new Point(29, 23) && clone.Start == new Point(39, 43), "Undo snapshots must own their annotation coordinates");
     }
+
+    private static void PartialBlitChecks()
+    {
+        var mismatches = new List<string>();
+        using var source = Pattern(130, 97);
+        Rectangle[] crops = [new(0,0,26,19), new(79,0,51,27), new(0,65,32,32), new(91,70,39,27),
+            new(17,11,36,28), new(0,0,130,97), new(0,0,1,1), new(129,96,1,1)];
+        foreach (Rectangle crop in crops)
+        foreach (int scale in new[] { 1, 2 })
+        {
+            var target = new Rectangle(7, 9, crop.Width * scale, crop.Height * scale);
+            using var surface = new CpuCaptureSurface(target.Right + 7, target.Bottom + 9);
+            CpuCaptureGdi.Fill(surface.Dc, new Rectangle(0, 0, surface.Width, surface.Height), Color.FromArgb(19, 23, 29));
+            CpuCaptureGdi.Blit(surface.Dc, source.Pixels, source.Width, source.Height, target, crop);
+            using var actual = surface.ToImage();
+            bool matches = true;
+            for (int y = 0; y < target.Height; y++) for (int x = 0; x < target.Width; x++)
+            {
+                int s = ((crop.Y + y / scale) * source.Width + crop.X + x / scale) * 4;
+                int d = ((target.Y + y) * actual.Width + target.X + x) * 4;
+                matches &= actual.Pixels.AsSpan(d, 3).SequenceEqual(source.Pixels.AsSpan(s, 3));
+            }
+            if (!matches) mismatches.Add($"{crop}, scale {scale}, first=({actual.Pixels[(target.Y * actual.Width + target.X) * 4]},{actual.Pixels[(target.Y * actual.Width + target.X) * 4 + 1]}), expected=({crop.X},{crop.Y})");
+            Check(actual.Pixels[0] == 29 && actual.Pixels[1] == 23 && actual.Pixels[2] == 19,
+                "Source-coordinate fix must preserve the destination origin and surrounding backdrop");
+        }
+        Check(mismatches.Count == 0, "Top-down partial blit matches every pixel: " + string.Join("; ", mismatches));
+    }
     private static void WindowChecks()
     {
         using var source = Pattern(720, 480);
@@ -78,6 +114,12 @@ internal static class Program
             using var window = new CpuRegionCaptureWindow(source, -1920, -100, action, moveOnscreen: false);
             nint hwnd = Handle(window);
             Field("_selected").SetValue(window, true); Field("_selection").SetValue(window, new Rectangle(100, 120, 240, 180));
+            Paint(window);
+            var plainBuffer = (CpuCaptureSurface)Field("_backBuffer").GetValue(window)!;
+            CpuCaptureGdi.GdiFlush();
+            int plainPixel = (220 * 720 + 220) * 4;
+            Check(plainBuffer.Pixels.Slice(plainPixel, 3).SequenceEqual(source.Pixels.AsSpan(plainPixel, 3)),
+                "Unannotated selection shows the exact source coordinate before any preview surface exists");
             var annotations = (List<CpuAnnotation>)Field("_annotations").GetValue(window)!;
             annotations.Add(new() { Tool = CpuAnnotationTool.Rectangle, Start = new(110, 130), End = new(180, 160), Color = Color.Red });
             CpuCaptureNative.InvalidateRect(hwnd, 0, false); CpuCaptureNative.UpdateWindow(hwnd);
@@ -97,6 +139,9 @@ internal static class Program
                 if (action != RegionCaptureAction.Cancel)
                 {
                     Check(result.Image is { Width: 240, Height: 180 }, $"{action} must transfer an independently owned crop");
+                    int savedPixel = ((220 - 120) * 240 + 220 - 100) * 4;
+                    Check(result.Image!.Pixels.AsSpan(savedPixel, 3).SequenceEqual(source.Pixels.AsSpan(plainPixel, 3)),
+                        "Selection preview, annotated preview and exported crop retain the same physical source pixel");
                     bool layerExpected = action is RegionCaptureAction.RecordGif or RegionCaptureAction.LongCapture;
                     Check((result.AnnotationLayer is not null) == layerExpected, "Only recording tools need a separate annotation layer");
                 }
@@ -145,6 +190,44 @@ internal static class Program
         var hwnd = Handle(window);
         CpuCaptureNative.InvalidateRect(hwnd, 0, false);
         CpuCaptureNative.UpdateWindow(hwnd);
+    }
+
+    private static void ShortcutHintChecks()
+    {
+        using var source = Pattern(1024, 768);
+        foreach (float scale in new[] { 1f, 2f })
+        {
+            using var window = new CpuRegionCaptureWindow(source, -1920, -100, RegionCaptureAction.Save, false);
+            Field("_scale").SetValue(window, scale);
+            Field("_selected").SetValue(window, true);
+            Field("_selection").SetValue(window, new Rectangle(760, 90, 180, 130));
+            Field("_mouse").SetValue(window, new Point(1000, 0));
+            Rectangle hint = (Rectangle)Call(window, "ShortcutHintBounds");
+            int y = hint.Bottom - (int)(5 * scale), left = hint.Left + (int)(20 * scale), right = hint.Right - (int)(20 * scale);
+            Paint(window);
+            var buffer = (CpuCaptureSurface)Field("_backBuffer").GetValue(window)!;
+            byte[] Pixel(int x) { CpuCaptureGdi.GdiFlush(); return buffer.Pixels.Slice((y * source.Width + x) * 4, 3).ToArray(); }
+            byte[] Source(int x) => source.Pixels.AsSpan((y * source.Width + x) * 4, 3).ToArray();
+            Check(Pixel(left).SequenceEqual(new byte[] { 243, 250, 249 }), "Passive hint remains visible away from pointer and selection");
+            Field("_mouse").SetValue(window, new Point(hint.Left - (int)(10 * scale), hint.Top + hint.Height / 2));
+            Paint(window);
+            Check(Pixel(left).SequenceEqual(Source(left).Select(v => (byte)(v * 58 / 100))),
+                "Approaching within 24 DIP hides the entire hint, including its background");
+            Field("_mouse").SetValue(window, new Point(1000, 0)); Paint(window);
+            Check(Pixel(left).SequenceEqual(new byte[] { 243, 250, 249 }), "Moving away restores the passive hint without timers");
+            var selection = new Rectangle(hint.Left - 8, hint.Top - 8, hint.Width / 2, hint.Height + 16);
+            Field("_selection").SetValue(window, selection); Paint(window);
+            Check(Pixel(left).SequenceEqual(Source(left)), "Selection restores clean source pixels over the overlapping half of the hint");
+            Check(Pixel(right).SequenceEqual(new byte[] { 243, 250, 249 }), "Non-overlapping half of the hint remains visible");
+            selection = new Rectangle(hint.Left - 8, hint.Top - 8, hint.Width + 16, hint.Height + 16);
+            Field("_selection").SetValue(window, selection); Paint(window);
+            Check(Pixel(left).SequenceEqual(Source(left)) && Pixel(right).SequenceEqual(Source(right)), "Selection covering the whole hint has no hint background or text");
+            Finish(window, RegionCaptureAction.Save);
+            var result = window.Completion.Task.GetAwaiter().GetResult();
+            using var image = result.Image;
+            using var expected = source.Crop(selection);
+            Check(image is not null && image.Pixels.SequenceEqual(expected.Pixels), "Saved image never contains hint UI pixels");
+        }
     }
     private static void ToolbarInteractionChecks()
     {
@@ -285,7 +368,7 @@ internal static class Program
             if (native is not null) NativeLibrary.SetDllImportResolver(typeof(Program).Assembly,
                 (name, _, _) => name == "GpuMemory" ? NativeLibrary.Load(native) : 0);
             if (args.Length == 2 && args[0] == "--pid") { Console.WriteLine(JsonSerializer.Serialize(Read(int.Parse(args[1])), new JsonSerializerOptions { IncludeFields = true })); return 0; }
-            RasterChecks(); WindowChecks(); ToolbarInteractionChecks();
+            RasterChecks(); PartialBlitChecks(); WindowChecks(); ShortcutHintChecks(); ToolbarInteractionChecks();
             Console.WriteLine($"PASS: {_checks} raster/geometry/window/toolbar/ownership checks; no desktop input, screenshot, clipboard or image files.");
             if (args.Length == 2 && args[0] == "--memory") MemoryChecks(args[1]);
             return 0;

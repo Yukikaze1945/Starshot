@@ -1,0 +1,14 @@
+  Pinned HEVC / AV1 video encoder ready.
+  Local CPU inference runtime verified.
+  Starshot.Language -> D:\coding\Starshot\build\source-run\app\Starshot.Language.dll
+  0 IID calculations/fetches patched
+  Starshot -> D:\coding\Starshot\build\source-run\app\Starshot.dll
+  Verified x64 uhdr.dll: D:\coding\Starshot\third_party\libultrahdr\v2.0.2\win-x64\uhdr.dll (1541632 bytes, SHA-256 415EE12ED6E979D1A96A495AFCB634D54FBACF69E5B9E45C95C38793C737384B)
+  Verified x64 uhdr.dll: D:\coding\Starshot\build\source-run\app\uhdr.dll (1541632 bytes, SHA-256 415EE12ED6E979D1A96A495AFCB634D54FBACF69E5B9E45C95C38793C737384B)
+  Video encoder verified.
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:22.98

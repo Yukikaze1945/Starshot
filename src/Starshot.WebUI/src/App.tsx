@@ -10,6 +10,7 @@ import { restoreWorkspace, snapshotWorkspace } from './workspace'
 import { ImageWorkspace } from './ImageWorkspace'
 import { ModelLibrary } from './ModelLibrary'
 import { Package } from 'lucide-react'
+import { useWindowChrome } from './WindowChrome'
 
 export const modes: { id: CaptureMode; label: string; caption: string; icon: typeof Crop; hotkey?: number }[] = [
   { id: 'region', label: '区域截图', caption: '框选，标注，然后定格。', icon: Crop, hotkey: 44446 },
@@ -85,6 +86,7 @@ function Viewfinder() {
 
 export function App() {
   const [boot, setBoot] = useState<Bootstrap | null>(null)
+  useWindowChrome(boot)
   const [fatal, setFatal] = useState('')
   const [page, setPage] = useState<Page>('studio')
   const [mode, setMode] = useState<CaptureMode>('region')

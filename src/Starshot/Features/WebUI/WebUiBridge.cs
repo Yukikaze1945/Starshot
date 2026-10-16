@@ -101,6 +101,7 @@ internal sealed partial class WebUiBridge : IDisposable
         {
             case "app.bootstrap":
                 return new { version = AppConfig.AppVersion, protocol = ProtocolVersion,
+                    chrome = _window.ChromeState(),
                     settings = Settings(), hotkeys = Hotkeys(),
                     hasApiKey = OcrTranslationClient.HasApiKey };
             case "app.ready": _window.FrontendReady(); return null;
@@ -284,6 +285,8 @@ internal sealed partial class WebUiBridge : IDisposable
                 utility.Closed += (_, _) => _utilityWindows.Remove(utility);
                 var ids = p.GetProperty("ids").EnumerateArray().Select(x => x.GetString()!).ToList();
                 frame.Navigate(typeof(ImageBatchConvertWindow), ids.Select(x => new ScreenshotItem(ResolveId(x))).ToList());
+                if (frame.Content is ImageBatchConvertWindow conversion)
+                    Starshot.Frameworks.WindowChrome.Attach(utility, conversion.ChromeDragArea);
                 utility.AppWindow.Resize(new Windows.Graphics.SizeInt32((int)(980 * _window.UIScale), (int)(680 * _window.UIScale)));
                 utility.Activate(); return null;
             default: throw new ArgumentException("未知操作。");

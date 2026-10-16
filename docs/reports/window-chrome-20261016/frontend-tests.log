@@ -1,0 +1,110 @@
+
+> starshot-webui@0.1.0 test
+> node --experimental-strip-types --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: concurrent RPC responses resolve by request identity, not arrival order
+ok 1 - concurrent RPC responses resolve by request identity, not arrival order
+  ---
+  duration_ms: 7.6462
+  type: 'test'
+  ...
+# Subtest: native failure is surfaced and unknown responses cannot resolve a request
+ok 2 - native failure is surfaced and unknown responses cannot resolve a request
+  ---
+  duration_ms: 0.8736
+  type: 'test'
+  ...
+# Subtest: cancelling a request rejects the caller and releases the native operation
+ok 3 - cancelling a request rejects the caller and releases the native operation
+  ---
+  duration_ms: 0.6674
+  type: 'test'
+  ...
+# Subtest: event subscriptions unsubscribe without duplicate delivery
+ok 4 - event subscriptions unsubscribe without duplicate delivery
+  ---
+  duration_ms: 0.2613
+  type: 'test'
+  ...
+# Subtest: log capacity mapping preserves 14x and stays within the supported endpoints
+ok 5 - log capacity mapping preserves 14x and stays within the supported endpoints
+  ---
+  duration_ms: 1.955
+  type: 'test'
+  ...
+# Subtest: committed masks can undo and redo without dropping older contours
+ok 6 - committed masks can undo and redo without dropping older contours
+  ---
+  duration_ms: 2.1653
+  type: 'test'
+  ...
+# Subtest: history is bounded and branching clears redo
+ok 7 - history is bounded and branching clears redo
+  ---
+  duration_ms: 0.7391
+  type: 'test'
+  ...
+# Subtest: cursor maps CSS/DPI/zoom rectangle to original source pixels
+ok 8 - cursor maps CSS/DPI/zoom rectangle to original source pixels
+  ---
+  duration_ms: 0.2025
+  type: 'test'
+  ...
+# Subtest: unfinished polygon and history survive draft serialization
+ok 9 - unfinished polygon and history survive draft serialization
+  ---
+  duration_ms: 0.5051
+  type: 'test'
+  ...
+# Subtest: invalid and oversized drafts are rejected
+ok 10 - invalid and oversized drafts are rejected
+  ---
+  duration_ms: 0.2592
+  type: 'test'
+  ...
+# Subtest: image replacement waits for a draft flush and respects a refused handoff
+ok 11 - image replacement waits for a draft flush and respects a refused handoff
+  ---
+  duration_ms: 7.5672
+  type: 'test'
+  ...
+# Subtest: translation replaces only text and preserves nested lists, headings, alignments and marks
+ok 12 - translation replaces only text and preserves nested lists, headings, alignments and marks
+  ---
+  duration_ms: 2.785
+  type: 'test'
+  ...
+# Subtest: missing, duplicate or unrecognized translated segments cannot silently destroy formatting
+ok 13 - missing, duplicate or unrecognized translated segments cannot silently destroy formatting
+  ---
+  duration_ms: 1.374
+  type: 'test'
+  ...
+# Subtest: model output is literal text and not HTML instructions
+ok 14 - model output is literal text and not HTML instructions
+  ---
+  duration_ms: 0.3212
+  type: 'test'
+  ...
+# Subtest: hidden GUI preserves rich text and excludes settings secrets
+ok 15 - hidden GUI preserves rich text and excludes settings secrets
+  ---
+  duration_ms: 1.5553
+  type: 'test'
+  ...
+# Subtest: busy translation defers teardown and version mismatches are rejected
+ok 16 - busy translation defers teardown and version mismatches are rejected
+  ---
+  duration_ms: 0.1386
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 422.0644

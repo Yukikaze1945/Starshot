@@ -1,0 +1,202 @@
+{
+  "ok": true,
+  "report": [
+    {
+      "width": 444,
+      "height": 270,
+      "scale": 2,
+      "theme": "light",
+      "resultBeforeReady": true,
+      "firstVisibleEditorMs": 266,
+      "initialJsDecodedBytes": 642654,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BA3TJoOm.js",
+          "bytes": 642654
+        }
+      ],
+      "settingsMeasure": {
+        "width": 420,
+        "height": 246,
+        "scrollWidth": 420,
+        "contentWidth": 420,
+        "contentScrollWidth": 420,
+        "left": 12,
+        "right": 432,
+        "top": 12,
+        "bottom": 258,
+        "viewport": 444,
+        "viewportHeight": 270
+      },
+      "calls": [
+        "app.bootstrap",
+        "app.ready",
+        "clipboard.copyRichText",
+        "settings.set",
+        "translation.formatted",
+        "ocr.models.status",
+        "settings.set"
+      ]
+    },
+    {
+      "width": 444,
+      "height": 240,
+      "scale": 2,
+      "theme": "dark",
+      "resultBeforeReady": true,
+      "firstVisibleEditorMs": 199,
+      "initialJsDecodedBytes": 642654,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BA3TJoOm.js",
+          "bytes": 642654
+        }
+      ],
+      "settingsMeasure": {
+        "width": 420,
+        "height": 216,
+        "scrollWidth": 420,
+        "contentWidth": 420,
+        "contentScrollWidth": 420,
+        "left": 12,
+        "right": 432,
+        "top": 12,
+        "bottom": 228,
+        "viewport": 444,
+        "viewportHeight": 240
+      },
+      "calls": [
+        "app.bootstrap",
+        "app.ready",
+        "clipboard.copyRichText",
+        "settings.set",
+        "translation.formatted",
+        "ocr.models.status",
+        "settings.set"
+      ]
+    },
+    {
+      "width": 344,
+      "height": 198,
+      "scale": 2,
+      "theme": "light",
+      "resultBeforeReady": true,
+      "firstVisibleEditorMs": 199,
+      "initialJsDecodedBytes": 642654,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BA3TJoOm.js",
+          "bytes": 642654
+        }
+      ],
+      "settingsMeasure": {
+        "width": 320,
+        "height": 174,
+        "scrollWidth": 320,
+        "contentWidth": 320,
+        "contentScrollWidth": 320,
+        "left": 12,
+        "right": 332,
+        "top": 12,
+        "bottom": 186,
+        "viewport": 344,
+        "viewportHeight": 198
+      },
+      "calls": [
+        "app.bootstrap",
+        "app.ready",
+        "clipboard.copyRichText",
+        "settings.set",
+        "translation.formatted",
+        "ocr.models.status",
+        "settings.set"
+      ]
+    },
+    {
+      "width": 584,
+      "height": 391,
+      "scale": 2,
+      "theme": "dark",
+      "resultBeforeReady": true,
+      "firstVisibleEditorMs": 184,
+      "initialJsDecodedBytes": 642654,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BA3TJoOm.js",
+          "bytes": 642654
+        }
+      ],
+      "settingsMeasure": {
+        "width": 560,
+        "height": 367,
+        "scrollWidth": 560,
+        "contentWidth": 560,
+        "contentScrollWidth": 560,
+        "left": 12,
+        "right": 572,
+        "top": 12,
+        "bottom": 379,
+        "viewport": 584,
+        "viewportHeight": 391
+      },
+      "calls": [
+        "app.bootstrap",
+        "app.ready",
+        "clipboard.copyRichText",
+        "settings.set",
+        "translation.formatted",
+        "ocr.models.status",
+        "settings.set"
+      ]
+    }
+  ],
+  "benchmarkOrder": [
+    "current/previous",
+    "previous/current",
+    "current/previous"
+  ],
+  "benchmark": {
+    "current": {
+      "samples": 3,
+      "firstVisibleEditorMs": [
+        184,
+        189,
+        186
+      ],
+      "medianFirstVisibleEditorMs": 186,
+      "initialJsDecodedBytes": [
+        642654,
+        642654,
+        642654
+      ],
+      "medianInitialJsDecodedBytes": 642654,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BA3TJoOm.js",
+          "bytes": 642654
+        }
+      ]
+    },
+    "previous": {
+      "samples": 3,
+      "firstVisibleEditorMs": [
+        183,
+        187,
+        234
+      ],
+      "medianFirstVisibleEditorMs": 187,
+      "initialJsDecodedBytes": [
+        693820,
+        693820,
+        693820
+      ],
+      "medianInitialJsDecodedBytes": 693820,
+      "initialJsResources": [
+        {
+          "name": "/previous/assets/index-CK-jL-98.js",
+          "bytes": 693820
+        }
+      ]
+    }
+  }
+}

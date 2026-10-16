@@ -29,6 +29,11 @@ hidden XAML window. This mode skips HDR analysis/benchmarking and creates no cap
 textures. It verifies late press/move/release callbacks in Completing/Closed states
 and cancellation during a drag, without event data, desktop input or model inference.
 
+Set `STARSHOT_CHROME_ONLY=1` for 19 native window chrome checks. Main/OCR HWNDs stay
+hidden and are destroyed before their deferred WebView initialization runs. The
+suite checks client/non-client geometry, caption insets, compact/tall title bars,
+and utility-page integration. No browser, capture texture or model is initialized.
+
 `-HdrDiagnostics` runs 15 complete 4K FP16 analysis open/close cycles plus cancellation,
 exception, selection-change and optional-view cleanup checks. It records weak references,
 process/GC/LOH/KMT memory and readback/CPU/dispatcher timings. Only this diagnostic process

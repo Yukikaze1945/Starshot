@@ -1,0 +1,4 @@
+System.InvalidOperationException: Partial top-down DIB must read the requested crop: first source pixel expected B=17,G=11, actual B=17,G=21
+   at Program.Check(Boolean value, String label) in D:\coding\Starshot\tools\LightweightCaptureTest\Program.cs:line 12
+   at Program.RasterChecks() in D:\coding\Starshot\tools\LightweightCaptureTest\Program.cs:line 34
+   at Program.Main(String[] args) in D:\coding\Starshot\tools\LightweightCaptureTest\Program.cs:line 296
