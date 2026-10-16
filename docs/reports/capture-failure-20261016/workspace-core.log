@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "checks": 42,
+  "rows": [
+    {
+      "kind": "math-and-store",
+      "checks": 42
+    }
+  ]
+}

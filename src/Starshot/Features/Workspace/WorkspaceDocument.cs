@@ -69,13 +69,24 @@ internal sealed class WorkspaceDocument : IDisposable
 
     private static async Task<byte[]> ReadStripesAsync(CanvasBitmap source,int stride,CancellationToken ct)
     {
+        // TonemapToSdr returns RGBA8; WIC, OCR, pixel readouts and workspace
+        // exports all consume BGRA8. Normalize bytes without another GPU target.
+        WorkspacePixels.ByteOrder? order=source.Format switch
+        {
+            DirectXPixelFormat.B8G8R8A8UIntNormalized when stride==4=>WorkspacePixels.ByteOrder.Bgra8,
+            DirectXPixelFormat.R8G8B8A8UIntNormalized when stride==4=>WorkspacePixels.ByteOrder.Rgba8,
+            DirectXPixelFormat.R16G16B16A16Float when stride==8=>null,
+            _=>throw new ArgumentException("工作区像素格式与 stride 不匹配")
+        };
         int w=(int)source.SizeInPixels.Width,h=(int)source.SizeInPixels.Height,row=w*stride;
         byte[] output=new byte[checked(row*h)];
         int rows=Math.Max(1,1024*1024/row);
         for(int y=0;y<h;y+=rows)
         {
             ct.ThrowIfCancellationRequested(); int count=Math.Min(rows,h-y);
-            byte[] stripe=source.GetPixelBytes(0,y,w,count); System.Buffer.BlockCopy(stripe,0,output,y*row,stripe.Length);
+            byte[] stripe=source.GetPixelBytes(0,y,w,count);
+            if(order.HasValue)WorkspacePixels.CopyBgra8(stripe,output.AsSpan(y*row,stripe.Length),order.Value);
+            else System.Buffer.BlockCopy(stripe,0,output,y*row,stripe.Length); // Raw FP16 RGBA stays untouched.
             await Task.Delay(1,ct);
         }
         return output;

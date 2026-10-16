@@ -121,3 +121,20 @@ nits/channel，SDR 则是线性相对 RGB。尺寸或信号类型不同会说明
 ![浅色工作区](analysis-1280.png)
 
 ![窄窗口深色工作区](analysis-960.png)
+
+## 2026-10-16：修复工作区 SDR 预览红蓝通道互换
+
+真实用户截图暴露了原软件界面测试未覆盖的像素边界问题：`TonemapToSdr` 输出
+`R8G8B8A8UIntNormalized`，工作区却直接把读回字节交给要求 BGRA8 的 PNG/OCR/GDI。
+因此暖白变青、红蓝互换；这是实现错误，不是合理的 HDR→SDR 色彩差异。
+
+修复仅涉及 `WorkspaceDocument.ReadStripesAsync` 的格式检查和新增纯 CPU
+`WorkspacePixels.CopyBgra8`：RGBA8 读回时按条带转成 BGRA8；已有 BGRA 不重复交换；
+FP16 原始 HDR 缓冲不作交换。不创建额外 GPU 渲染目标，不改 tone mapping、HDR 编码或 WGC。
+
+本轮 33 项 CPU 核心检查通过；新 `tools/WorkspacePreviewTest` 使用真实 WIC 在内存中
+进行 6 项 PNG 往返检查，覆盖红绿蓝、暖白、品牌强调色及暗部中性色。没有模型推理、
+GPU 测试、桌面捕获或测试图像落盘。Debug 源码构建 0 警告、0 错误（29.70 秒）。
+
+之前从错误工作区导出的 PNG/复制图像也可能已包含交换后的通道，需从原始源图重新
+生成；修复不会自动改写既有文件。安装版进程不会自动更新，需要退出后运行源码版。

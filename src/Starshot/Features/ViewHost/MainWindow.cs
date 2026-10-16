@@ -40,13 +40,15 @@ public sealed class MainWindow : CpuCaptureNativeWindow
     private WebUiBridge? _bridge;
     private CoreWebView2? _core;
     private CoreWebView2Controller? _controller;
+    private readonly DeferredWebFocus _webFocus=new();
     private IDisposable? _toastHost;
     private bool _initializing, _ready, _startupChecked, _webUiClosed;
     private object? _pendingOcr;
     private bool _pendingWorkspace;
     internal void ShowWorkspaceCapture()
     {
-        _pendingWorkspace=true;Show();Activate();
+        _pendingWorkspace=true;Activate();
+        AppConfig.GetLogger<MainWindow>().LogInformation("Workspace capture queued: frontendReady={Ready}",_ready);
         if(_ready){_pendingWorkspace=false;Emit("workspace.capture",new{});}
     }
     private string? _loadingOcrText;
@@ -165,6 +167,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
     private void CoreProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e)
     {
         if (ForceExit) return;
+        _webFocus.Cancel();
         _ready = false; _loadMessage = "界面进程已停止。按 F5 重试，托盘与快捷键仍可使用。";
         if (_controller is { } controller) controller.IsVisible = false;
         Redraw(); AppConfig.GetLogger<MainWindow>().LogError("WebView2 process failed: {Kind}", e.ProcessFailedKind);
@@ -181,6 +184,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
         if (!_isOcrPopup && !_startupChecked) { _startupChecked = true; _ = TryCheckUpdateOnStartupAsync(); }
         if (_pendingOcr is { } data) { _pendingOcr = null; Emit("ocr.result", data); }
         if (_pendingWorkspace) { _pendingWorkspace=false; Emit("workspace.capture",new{}); }
+        RequestWebFocus();
     }
 
     private static async Task TryCheckUpdateOnStartupAsync()
@@ -255,7 +259,27 @@ public sealed class MainWindow : CpuCaptureNativeWindow
 
     public void ApplyTheme() => RefreshSettings();
     public void ApplyBackdrop() { }
-    public void Activate() { Show(); CpuCaptureNative.SetForegroundWindow(Hwnd); _controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic); }
+    public void Activate()
+    {
+        if(ForceExit || _webUiClosed || Hwnd==0)return;
+        Show();CpuCaptureNative.SetForegroundWindow(Hwnd);RequestWebFocus();
+    }
+    private void RequestWebFocus()
+    {
+        if(ForceExit || _webUiClosed || !_ready || _controller is not { } controller)return;
+        // Show/activation can synchronously deliver WM_SETFOCUS before the hidden
+        // controller is made visible. Leave that native call stack first, then
+        // check the current window/controller rather than focusing a stale one.
+        _webFocus.Request(
+            callback=>DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low,()=>callback()),
+            ()=>!ForceExit && !_webUiClosed && _ready && ReferenceEquals(controller,_controller) && Hwnd!=0
+                && AppWindow.IsVisible && !CpuCaptureNative.IsIconic(Hwnd)
+                && CpuCaptureNative.GetForegroundWindow()==Hwnd && controller.IsVisible
+                && controller.Bounds.Width>0 && controller.Bounds.Height>0,
+            ()=>controller.MoveFocus(CoreWebView2MoveFocusReason.Programmatic),
+            ex=>AppConfig.GetLogger<MainWindow>().LogWarning(ex,
+                "WebUI focus handoff skipped: HRESULT={HResult:X8}; capture/workspace delivery continues",ex.HResult));
+    }
     public void Show()
     {
         if (ForceExit) return;
@@ -266,6 +290,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
     public void Hide()
     {
         if (ForceExit) return;
+        _webFocus.Cancel();
         if (_controller is { } controller) controller.IsVisible = false;
         AppWindow.Hide();
         WeakReferenceMessenger.Default.Send(new MainWindowStateChangedMessage { Hide = true });
@@ -328,6 +353,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
     }
     private void CloseWebController()
     {
+        _webFocus.Cancel();
         _ready = false;
         if (_core is { } core) core.ProcessFailed -= CoreProcessFailed;
         try { _bridge?.Dispose(); }
@@ -370,7 +396,7 @@ public sealed class MainWindow : CpuCaptureNativeWindow
                 UpdateWebBounds(); if (_controller is { } controller) controller.IsVisible = wparam != 1 && AppWindow.IsVisible && (!_isOcrPopup || _ready);
                 return 0;
             case 0x03: _controller?.NotifyParentWindowPositionChanged(); break;
-            case 0x07: if (_ready) _controller?.MoveFocus(CoreWebView2MoveFocusReason.Programmatic); break;
+            case 0x07: RequestWebFocus(); break; // WM_SETFOCUS: never call WebView2 reentrantly.
             case 0x06: if (wparam != 0 && _ready) Emit("library.changed", new { }); break;
             case 0x24:
                 var info = (User32.MINMAXINFO*)lparam;

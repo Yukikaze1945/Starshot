@@ -7,6 +7,7 @@ using System.Text.Json;
 using Starshot;
 using Starshot.Features.Codec;
 using Starshot.Features.Workspace;
+using Starshot.Features.ViewHost;
 using Starshot.Helpers;
 
 string temp=Path.Combine(Path.GetTempPath(),"StarshotWorkspaceCore-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(temp);
@@ -16,6 +17,38 @@ async Task<DlcModelStore.Status> Wait(DlcModelStore store,string id){for(int i=0
 try
 {
     AppConfig.UserDataFolder=Path.Combine(temp,"data");Directory.CreateDirectory(AppConfig.UserDataFolder);
+    // Focus follows the native show message; controller exceptions are isolated
+    // from capture publication. No WebView, HWND or model is created here.
+    var focus=new DeferredWebFocus();var callbacks=new Queue<Action>();int focused=0,focusErrors=0;
+    bool visible=false;bool Enqueue(Action callback){callbacks.Enqueue(callback);return true;}
+    void RequestFocus()=>focus.Request(Enqueue,()=>visible,()=>focused++,ex=>focusErrors++);
+    RequestFocus();RequestFocus();Check(callbacks.Count==1&&focused==0,"Native Show focus requests coalesce and never run inline");
+    visible=true;callbacks.Dequeue()();Check(focused==1,"Deferred handoff observes visibility after Show finishes");
+    RequestFocus();visible=false;callbacks.Dequeue()();Check(focused==1,"Hidden/minimized/unready controller is not focused");
+    visible=true;RequestFocus();focus.Cancel();RequestFocus();callbacks.Dequeue()();Check(focused==1,"Old controller generation is ignored");
+    callbacks.Dequeue()();Check(focused==2,"Old callback cannot clear a newer pending handoff");
+    foreach(var failure in new Exception[]{new ArgumentException("MoveFocus E_INVALIDARG"),new InvalidOperationException("Controller closed"),new System.Runtime.InteropServices.COMException("Disconnected")})
+    {
+        focus.Request(Enqueue,()=>true,()=>throw failure,ex=>focusErrors++);callbacks.Dequeue()();
+        RequestFocus();callbacks.Dequeue()();
+    }
+    Check(focusErrors==3&&focused==5,"Focus errors do not escape capture flow or block later activation");
+    focus.Request(Enqueue,()=>throw new InvalidOperationException("Stale controller property"),()=>focused++,ex=>focusErrors++);callbacks.Dequeue()();
+    Check(focusErrors==4&&focused==5,"Stale property access is isolated as well");
+    focus.Request(_=>false,()=>true,()=>focused++,ex=>focusErrors++);RequestFocus();callbacks.Dequeue()();
+    Check(focused==6,"Rejected enqueue does not leave focus stuck pending");
+    focus.Request(Enqueue,()=>true,()=>{focused++;RequestFocus();},ex=>focusErrors++);callbacks.Dequeue()();
+    Check(callbacks.Count==0&&focused==7,"Reentrant native focus notification cannot schedule a focus loop");
+    // Actual workspace consumers (PNG, OCR, GDI and pixel readouts) require BGRA.
+    byte[] rgba={255,0,0,255,0,255,0,128,0,0,255,200,245,244,235,255,221,243,105,255};
+    byte[] before=(byte[])rgba.Clone(),bgra=new byte[rgba.Length];
+    WorkspacePixels.CopyBgra8(rgba,bgra,WorkspacePixels.ByteOrder.Rgba8);
+    Check(bgra.SequenceEqual(new byte[]{0,0,255,255,0,255,0,128,255,0,0,200,235,244,245,255,105,243,221,255}),"RGBA preview becomes BGRA: primaries, warm paper and Starshot accent");
+    Check(rgba.SequenceEqual(before),"Preview normalization does not mutate source pixels");
+    byte[] copy=new byte[bgra.Length];WorkspacePixels.CopyBgra8(bgra,copy,WorkspacePixels.ByteOrder.Bgra8);
+    Check(copy.SequenceEqual(bgra),"Existing SDR BGRA must not be swapped twice");
+    Check(copy[7]==128&&copy[11]==200,"Alpha survives channel normalization");
+    try{WorkspacePixels.CopyBgra8(new byte[3],new byte[3],WorkspacePixels.ByteOrder.Rgba8);throw new Exception("Invalid packing accepted");}catch(ArgumentException){Check(true,"Reject incomplete pixels");}
     foreach(float white in new[]{80f,203f,320f,1000f})Check(Math.Abs(UhdrReferenceWhite.Read(UhdrReferenceWhite.CreateExif(white))-white)<.001,"UHDR reference-white EXIF roundtrip");
     Check(UhdrReferenceWhite.Read([])==203,"External UHDR reference default");
     var corrupt=UhdrReferenceWhite.CreateExif(320);corrupt[24]=255;Check(UhdrReferenceWhite.Read(corrupt)==203,"Untrusted EXIF offset must be bounded");

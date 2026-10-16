@@ -64,6 +64,12 @@ public sealed partial class ToolbarTestApp : Starshot.App
             ((System.Timers.Timer)typeof(Starshot.App).GetField("_gcTimer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(this)!).Stop();
             window = new RegionCaptureWindow();
             Call(window, "MoveOffscreen"); // Never Show/Activate this synthetic test overlay.
+            if (Environment.GetEnvironmentVariable("STARSHOT_POINTER_CLOSE_ONLY") == "1")
+            {
+                ValidateClosedPointerEvents(window);
+                File.WriteAllText(Path.Combine(report, "xaml-interaction.log"), $"PASS {_checks} pointer teardown checks; hidden HWND; no capture, textures, model inference or desktop input.\n");
+                window.Close(); Environment.Exit(0); return;
+            }
             if (Environment.GetEnvironmentVariable("STARSHOT_HDR_DIAGNOSTICS") == "1")
             {
                 await ValidateHdrLifecycle(window, report);
@@ -128,6 +134,33 @@ public sealed partial class ToolbarTestApp : Starshot.App
             File.WriteAllText(Path.Combine(report, "xaml-interaction.log"), ex.ToString());
             window?.Close(); Environment.Exit(1);
         }
+    }
+
+    private void ValidateClosedPointerEvents(RegionCaptureWindow window)
+    {
+        // No event data or bitmap is available after teardown. A queued event
+        // must return before querying either, including while completion runs.
+        foreach (string state in new[] { "Completing", "Closed" })
+        {
+            State(window, state);
+            foreach (string handler in new[] { "Canvas_PointerPressed", "Canvas_PointerMoved", "Canvas_PointerReleased" })
+            {
+                Call(window, handler, window, null);
+                Check(Field(window, "_state")!.ToString() == state, $"Late {handler} cannot resurrect {state} session");
+            }
+        }
+        State(window, "Selecting"); Set(window, "_isClosed", false);
+        var dragType = WindowType.GetNestedType("DragMode", BindingFlags.NonPublic)!;
+        Set(window, "_dragMode", Enum.Parse(dragType, "Creating"));
+        Set(window, "_toolbarDismissedPointer", true);
+        Call(window, "CancelCapture");
+        Check(Field(window, "_state")!.ToString() == "Closed" && Field(window, "_dragMode")!.ToString() == "None",
+            "Cancel during drag clears pending selection ownership");
+        Check(!(bool)Field(window, "_toolbarDismissedPointer")! && Field(window, "_canvasOriginal") is null,
+            "Close releases gesture flags without constructing a capture texture");
+        Call(window, "Canvas_PointerReleased", window, null);
+        Call(window, "Canvas_PointerMoved", window, null);
+        Check(Field(window, "_state")!.ToString() == "Closed", "Release/move after cancellation leave closed session intact");
     }
 
     private void AnalysisMonitors(object window, params (Rect Bounds, bool Hdr, float White, float Peak)[] monitors)

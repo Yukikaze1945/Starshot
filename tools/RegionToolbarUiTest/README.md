@@ -24,6 +24,11 @@ Neither this test suite nor its build updates the installed application or publi
 anything. The GDI suite deliberately attempts one cross-thread DestroyWindow and
 checks that the original thread can retry; its expected warning is not a failed test.
 
+Set `STARSHOT_POINTER_CLOSE_ONLY=1` for nine focused pointer teardown checks in the
+hidden XAML window. This mode skips HDR analysis/benchmarking and creates no capture
+textures. It verifies late press/move/release callbacks in Completing/Closed states
+and cancellation during a drag, without event data, desktop input or model inference.
+
 `-HdrDiagnostics` runs 15 complete 4K FP16 analysis open/close cycles plus cancellation,
 exception, selection-change and optional-view cleanup checks. It records weak references,
 process/GC/LOH/KMT memory and readback/CPU/dispatcher timings. Only this diagnostic process

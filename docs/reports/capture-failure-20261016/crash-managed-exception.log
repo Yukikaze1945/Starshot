@@ -1,0 +1,34 @@
+Loading core dump: C:/Users/18392/AppData/Local/CrashDumps/Starshot.exe.26952.dmp ...
+Name:        System.NullReferenceException
+MethodTable: 00007ff95ff2a6a8
+Size:        120(0x78) bytes
+File:        C:\Users\18392\AppData\Local\Programs\Starshot Fork\app-2.6.0-preview.10\System.Private.CoreLib.dll
+Fields:
+              MT    Field   Offset                 Type   VT     Attr            Value Name
+0000000000000000 040002a2        8 ...ection.MethodBase   No instance 0000000000000000 _exceptionMethod
+0000000000000000 040002a3       10        System.String   No instance 000001cbd5497a70 _message
+0000000000000000 040002a4       18 ...tions.IDictionary   No instance 000001cbd5497c48 _data
+00007ff95f4405d8 040002a5       20     System.Exception   No instance 0000000000000000 _innerException
+0000000000000000 040002a6       28        System.String   No instance 0000000000000000 _helpURL
+0000000000000000 040002a7       30        System.Object   No instance 000001cbd5497ba0 _stackTrace
+0000000000000000 040002a8       38              SZARRAY   No instance 0000000000000000 _watsonBuckets
+0000000000000000 040002a9       40        System.String   No instance 0000000000000000 _stackTraceString
+0000000000000000 040002aa       48        System.String   No instance 0000000000000000 _remoteStackTraceString
+0000000000000000 040002ab       50        System.String   No instance 0000000000000000 _source
+0000000000000000 040002ac       58       System.UIntPtr  Yes instance 00007FF960A2E2CF _ipForWatsonBuckets
+0000000000000000 040002ad       60        System.IntPtr  Yes instance 0000000000000000 _xptrs
+0000000000000000 040002ae       68         System.Int32  Yes instance       -532462766 _xcode
+0000000000000000 040002af       6c         System.Int32  Yes instance      -2147467261 _HResult
+Exception object: 000001cbd54979f8
+Exception type:   System.NullReferenceException
+Message:          Object reference not set to an instance of an object.
+InnerException:   <none>
+StackTrace (generated):
+    SP               IP               Function
+    0000005FD639BEC0 00007FF960A2E2D0 Starshot!Starshot.Features.Screenshot.RegionCaptureWindow.ComputePhysicalRect(Windows.Foundation.Rect, Boolean)+0x60
+    0000005FD639BFB0 00007FF9BE7F7D17 Starshot!Starshot.Features.Screenshot.RegionCaptureWindow.EnterSelectedState()+0x47
+    0000005FD639C020 00007FF9BE7F6F1D Starshot!Starshot.Features.Screenshot.RegionCaptureWindow.Canvas_PointerReleased(System.Object, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs)+0x28d
+    0000005FD639C0A0 00007FF98D6B426D Microsoft.WinUI!ABI.Microsoft.UI.Xaml.Input.PointerEventHandler.Do_Abi_Invoke(IntPtr, IntPtr, IntPtr)+0x6d
+
+StackTraceString: <none>
+HResult: 80004003

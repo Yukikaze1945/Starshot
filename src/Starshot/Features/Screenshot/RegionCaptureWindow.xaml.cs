@@ -970,6 +970,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
     private void Canvas_PointerMoved(object sender, PointerRoutedEventArgs e)
     {
+        if (_state is RegionCaptureState.Completing or RegionCaptureState.Closed)
+            return;
         var pos = e.GetCurrentPoint(Canvas).Position;
         if (_captureCursorActive && User32.GetCursorPos(out var cursorPosition))
         {
@@ -1022,6 +1024,10 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
     private void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
+        // A release can arrive after Esc/another completion has already closed
+        // this session and released its bitmap. Do not re-enter selection code.
+        if (_state is RegionCaptureState.Completing or RegionCaptureState.Closed)
+            return;
         if (_toolbarDismissedPointer) { _toolbarDismissedPointer = false; e.Handled = true; return; }
         var pt = e.GetCurrentPoint(Canvas);
         Serilog.Log.Information("Region overlay pointer release: generation={Generation}, state={State}, drag={Drag}, pos={X},{Y}",
@@ -1238,14 +1244,22 @@ public sealed partial class RegionCaptureWindow : WindowEx
         if (_state == RegionCaptureState.Closed)
             return;
         _state = RegionCaptureState.Closed;
+        _isClosed = true;
+        _pendingMoveIn = false;
         ++_captureGeneration;
+        _dragMode = DragMode.None;
+        _activeHandle = ResizeHandle.None;
+        _toolbarDismissedPointer = false;
+        // Publish the closed state before releasing capture: WinUI may deliver
+        // pointer notifications synchronously while ownership changes.
+        try { Canvas.ReleasePointerCaptures(); }
+        catch (Exception ex) when (ex is COMException or InvalidOperationException)
+        { Serilog.Log.Warning(ex, "Region overlay pointer capture release failed during close"); }
         StopMoveInTimer();
         SelectionToolbar.Visibility = Visibility.Collapsed;
         HideToolbarAuxiliary();
         AnnotationTextEditor.Visibility = Visibility.Collapsed;
         ReleaseCaptureCursor();
-        _isClosed = true;
-        _pendingMoveIn = false;
         // 不 Hide：移到屏外保持 IsWindowVisible，合成管线不停摆，
         // 否则下次 Show 瞬间 DWM 先合成保留的旧会话帧（启动闪上次截图的完整界面）
         MoveOffscreen();
