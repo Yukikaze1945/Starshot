@@ -21,7 +21,7 @@ internal sealed class SubtitleOcrWindow : CpuCaptureNativeWindow
     private const uint WsPopup = 0x80000000;
     private const uint WsThickFrame = 0x00040000;
     private const uint ExLayeredTopmostTool = 0x00080088;
-    private const nint TransparentHit = -1;
+    private static readonly nint TransparentHit = -1;
     private static SubtitleOcrWindow? _current;
     private static string? _lastTranscriptPath;
 
@@ -133,9 +133,9 @@ internal sealed class SubtitleOcrWindow : CpuCaptureNativeWindow
     private void SetPassThrough(bool enable)
     {
         if (Hwnd == 0) return;
-        const nint TransparentStyle = 0x20; // WS_EX_TRANSPARENT
+        nint transparentStyle = 0x20; // WS_EX_TRANSPARENT
         nint old = GetWindowLongPtrW(Hwnd, -20);
-        nint next = enable ? old | TransparentStyle : old & ~TransparentStyle;
+        nint next = enable ? old | transparentStyle : old & ~transparentStyle;
         CpuCaptureNative.SetWindowLongPtrW(Hwnd, -20, next);
         CpuCaptureNative.SetWindowPos(Hwnd, -1, 0, 0, 0, 0, 0x0010 | 0x0002 | 0x0001 | 0x0020);
     }
