@@ -80,8 +80,7 @@
       </Button>
       <DropDownButton Height="36" HorizontalAlignment="Stretch"
                       HorizontalContentAlignment="Left"
-                      Content="固定字幕 OCR（点击不挡视频）"
-                      Style="{ThemeResource DateTimePickerFlyoutButtonStyle}">
+                      Content="固定字幕 OCR（点击不挡视频）">
         <DropDownButton.Flyout>
           <MenuFlyout>
             <MenuFlyoutItem Text="创建 / 调整字幕框" Click="SubtitleConfigure_Click" />
