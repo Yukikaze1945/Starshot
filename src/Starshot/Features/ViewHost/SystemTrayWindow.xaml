@@ -78,6 +78,22 @@
           <TextBlock VerticalAlignment="Center" Text="{x:Bind lang:Lang.ImageViewWindow_Ocr}" />
         </StackPanel>
       </Button>
+      <DropDownButton Height="36" HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Left"
+                      Content="固定字幕 OCR（点击不挡视频）"
+                      Style="{ThemeResource DateTimePickerFlyoutButtonStyle}">
+        <DropDownButton.Flyout>
+          <MenuFlyout>
+            <MenuFlyoutItem Text="创建 / 调整字幕框" Click="SubtitleConfigure_Click" />
+            <MenuFlyoutItem Text="锁定并开始识别" Click="SubtitleStart_Click" />
+            <MenuFlyoutItem Text="暂停 / 继续" Click="SubtitlePause_Click" />
+            <MenuFlyoutSeparator />
+            <MenuFlyoutItem Text="复制已识别文案" Click="SubtitleCopy_Click" />
+            <MenuFlyoutItem Text="打开字幕文本文件" Click="SubtitleOpen_Click" />
+            <MenuFlyoutItem Text="结束字幕识别" Click="SubtitleStop_Click" />
+          </MenuFlyout>
+        </DropDownButton.Flyout>
+      </DropDownButton>
       <MenuFlyoutSeparator />
       <TextBlock Margin="12,6,12,4" FontSize="12"
                  Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="截图模式" />
