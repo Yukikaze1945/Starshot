@@ -85,6 +85,11 @@ internal sealed class SubtitleOcrWindow : CpuCaptureNativeWindow
         _current.Redraw();
         if (_current._loop is null)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(_current._transcriptPath)!);
+            File.WriteAllText(_current._transcriptPath,
+                "# Starshot fixed subtitle OCR" + Environment.NewLine +
+                "# Times are computer local clock times, not player timecodes." + Environment.NewLine,
+                new UTF8Encoding(false));
             var window = _current;
             CancellationToken token = window._cancel.Token;
             window._loop = Task.Run(() => window.RunAsync(token), token);
@@ -101,7 +106,7 @@ internal sealed class SubtitleOcrWindow : CpuCaptureNativeWindow
     public static bool CopyTranscript()
     {
         if (_current is not { } window) return false;
-        string text = window._collector.CopyAll();
+        string text = window._collector.CopyTextOnly();
         if (string.IsNullOrWhiteSpace(text)) return false;
         ClipboardHelper.SetText(text);
         return true;
