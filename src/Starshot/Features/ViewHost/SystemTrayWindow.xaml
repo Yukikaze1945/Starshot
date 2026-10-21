@@ -87,7 +87,7 @@
             <MenuFlyoutItem Text="锁定并开始识别" Click="SubtitleStart_Click" />
             <MenuFlyoutItem Text="暂停 / 继续" Click="SubtitlePause_Click" />
             <MenuFlyoutSeparator />
-            <MenuFlyoutItem Text="复制已识别文案" Click="SubtitleCopy_Click" />
+            <MenuFlyoutItem Text="复制文案（不带时间）" Click="SubtitleCopy_Click" />
             <MenuFlyoutItem Text="打开字幕文本文件" Click="SubtitleOpen_Click" />
             <MenuFlyoutItem Text="结束字幕识别" Click="SubtitleStop_Click" />
           </MenuFlyout>
