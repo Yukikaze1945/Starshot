@@ -65,6 +65,12 @@ internal sealed class SubtitleOcrCollector
             return string.Join(Environment.NewLine, _cues.Select(Format));
     }
 
+    public string CopyTextOnly()
+    {
+        lock (_sync)
+            return string.Join(Environment.NewLine, _cues.Select(cue => cue.Text));
+    }
+
     public static string Format(Cue cue) => $"[{cue.CapturedAt:HH:mm:ss}] {cue.Text}";
 
     private static string Normalize(string text)
