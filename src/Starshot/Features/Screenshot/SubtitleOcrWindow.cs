@@ -29,7 +29,7 @@ internal sealed class SubtitleOcrWindow : CpuCaptureNativeWindow
     private readonly CancellationTokenSource _cancel = new();
     private readonly string _transcriptPath;
     private nint _font;
-    private bool _editing = true, _paused = true;
+    private volatile bool _editing = true, _paused = true;
     private Task? _loop;
     private int _failures;
 
@@ -86,7 +86,8 @@ internal sealed class SubtitleOcrWindow : CpuCaptureNativeWindow
         if (_current._loop is null)
         {
             var window = _current;
-            window._loop = Task.Run(() => window.RunAsync(window._cancel.Token));
+            CancellationToken token = window._cancel.Token;
+            window._loop = Task.Run(() => window.RunAsync(token), token);
         }
     }
 
@@ -197,7 +198,7 @@ internal sealed class SubtitleOcrWindow : CpuCaptureNativeWindow
                         .ConfigureAwait(false);
                 }
                 _failures = 0;
-                await Task.Delay(700, token).ConfigureAwait(false);
+                await Task.Delay(450, token).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested) { break; }
             catch (Exception ex)
