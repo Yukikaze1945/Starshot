@@ -252,6 +252,46 @@ public sealed partial class SystemTrayWindow : WindowEx
         PinnedCaptureWindow.ReopenLast();
     }
 
+    private void SubtitleConfigure_Click(object sender, RoutedEventArgs e)
+    {
+        Hide();
+        try { SubtitleOcrWindow.Configure(); }
+        catch (Exception ex) { Serilog.Log.Error(ex, "Failed to create subtitle OCR window"); }
+    }
+
+    private void SubtitleStart_Click(object sender, RoutedEventArgs e)
+    {
+        Hide();
+        try { SubtitleOcrWindow.LockAndStart(); }
+        catch (Exception ex) { Serilog.Log.Error(ex, "Failed to start subtitle OCR"); }
+    }
+
+    private void SubtitlePause_Click(object sender, RoutedEventArgs e)
+    {
+        Hide();
+        SubtitleOcrWindow.TogglePause();
+    }
+
+    private void SubtitleCopy_Click(object sender, RoutedEventArgs e)
+    {
+        Hide();
+        try { SubtitleOcrWindow.CopyTranscript(); }
+        catch (Exception ex) { Serilog.Log.Warning(ex, "Failed to copy subtitle OCR text"); }
+    }
+
+    private void SubtitleOpen_Click(object sender, RoutedEventArgs e)
+    {
+        Hide();
+        try { SubtitleOcrWindow.OpenTranscript(); }
+        catch (Exception ex) { Serilog.Log.Warning(ex, "Failed to open subtitle OCR file"); }
+    }
+
+    private void SubtitleStop_Click(object sender, RoutedEventArgs e)
+    {
+        Hide();
+        SubtitleOcrWindow.Stop();
+    }
+
     private void WindowEx_Closed(object sender, WindowEventArgs args)
     {
         CaptureModeController.ModeChanged -= CaptureModeChanged;

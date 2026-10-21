@@ -31,6 +31,9 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
 
+      - name: Test subtitle OCR collector
+        run: dotnet run --project tools/SubtitleOcrTest/SubtitleOcrTest.csproj -c Release
+
       - name: Build launcher
         run: msbuild src/Starshot.Launcher/Starshot.Launcher.vcxproj -p:Configuration=Release -p:Platform=x64
 
