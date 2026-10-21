@@ -119,6 +119,7 @@ public partial class App : Application
 
     public new void Exit()
     {
+        SubtitleOcrWindow.Stop();
         OcrHelper.Dispose();
         ScreenCaptureHelper.DisposeMonitorContexts();
         if (m_MainWindow is not null)
