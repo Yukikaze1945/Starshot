@@ -20,5 +20,6 @@ Check(collector.Observe(["abc123"], baseTime.AddSeconds(19)).Count == 0, "Unicod
 Check(collector.Observe([""], baseTime.AddSeconds(20)).Count == 0, "Empty strings");
 Check(collector.CopyAll().Split(Environment.NewLine).Length == 5, "Five captured cues");
 Check(collector.CopyAll().Contains("[10:00:00] 第一句话"), "Wall clock timestamp");
+Check(!collector.CopyTextOnly().Contains("[10:"), "Clipboard text omits timestamps");
 
 Console.WriteLine("Subtitle OCR collector: PASS");
