@@ -1,0 +1,1095 @@
+[
+  {
+    "kind": "inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "720p",
+    "input": "1280x140",
+    "cold": true,
+    "ms": 339.1376,
+    "initMs": 99,
+    "initCount": 1,
+    "privateBytes": 111935488,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "fixture": "720p",
+    "input": "1280x140",
+    "ms": 50.5591,
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "720p",
+    "input": "1280x140",
+    "cold": false,
+    "ms": 33.1346,
+    "initMs": 99,
+    "initCount": 1,
+    "privateBytes": 112775168,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "fixture": "720p",
+    "input": "1280x140",
+    "ms": 34.0052,
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "1080p",
+    "input": "1920x180",
+    "cold": false,
+    "ms": 65.6437,
+    "initMs": 99,
+    "initCount": 1,
+    "privateBytes": 127438848,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "background-inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "fixture": "1080p",
+    "input": "1920x180",
+    "ms": 64.798,
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "1080p",
+    "input": "1920x180",
+    "cold": false,
+    "ms": 53.2793,
+    "initMs": 99,
+    "initCount": 1,
+    "privateBytes": 132313088,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "background-inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "fixture": "1080p",
+    "input": "1920x180",
+    "ms": 65.9621,
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "4k",
+    "input": "3840x360",
+    "cold": false,
+    "ms": 92.3948,
+    "initMs": 99,
+    "initCount": 1,
+    "privateBytes": 135426048,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "fixture": "4k",
+    "input": "3840x360",
+    "ms": 67.0593,
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "4k",
+    "input": "3840x360",
+    "cold": false,
+    "ms": 57.5777,
+    "initMs": 99,
+    "initCount": 1,
+    "privateBytes": 135593984,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "tiny",
+    "gpuRequested": false,
+    "fixture": "4k",
+    "input": "3840x360",
+    "ms": 59.0983,
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "timeline",
+    "model": "tiny",
+    "elapsedMs": 3704,
+    "Captures": 19,
+    "Recognitions": 5,
+    "Skipped": 14,
+    "Count": 4,
+    "text": "\u8FD9\u662F\u7B2C\u4E00\u53E5\u5B57\u5E55\r\nThe first subtitle is visible.\r\n\u8FD9\u662F\u77ED\u6682\u7684\u7B2C\u4E8C\u53E5\r\nA short second subtitle.\r\n\u8FD9\u662F\u7B2C\u4E09\u53E5\u5B57\u5E55\r\nThe third subtitle follows.\r\n\u8FD9\u662F\u7B2C\u4E00\u53E5\u5B57\u5E55\r\nThe first subtitle is visible.",
+    "expected": [
+      "\u7B2C\u4E00\u53E5",
+      "\u7B2C\u4E8C\u53E5",
+      "\u7B2C\u4E09\u53E5"
+    ],
+    "found": [
+      true,
+      true,
+      true
+    ],
+    "shortCaptionMs": 400,
+    "observedOcrMs": [
+      23.4847,
+      54.1747,
+      67.1768,
+      16.8455,
+      27.8978
+    ]
+  },
+  {
+    "kind": "summary",
+    "model": "tiny",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "memoryBefore": 23085056,
+    "gpuBefore": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "privateAfter": 138194944,
+    "gpuAfter": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "warmMedianMs": 57.5777,
+    "warmMaxMs": 92.3948,
+    "initializations": 1,
+    "foregroundBusyReturnMs": 0.0409,
+    "fallbacks": 0
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "720p",
+    "input": "1280x140",
+    "cold": true,
+    "ms": 400.788,
+    "initMs": 178,
+    "initCount": 2,
+    "privateBytes": 256417792,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": false,
+    "fixture": "720p",
+    "input": "1280x140",
+    "ms": 76.1381,
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "720p",
+    "input": "1280x140",
+    "cold": false,
+    "ms": 181.2893,
+    "initMs": 178,
+    "initCount": 2,
+    "privateBytes": 256491520,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": false,
+    "fixture": "720p",
+    "input": "1280x140",
+    "ms": 86.3851,
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "1080p",
+    "input": "1920x180",
+    "cold": false,
+    "ms": 221.549,
+    "initMs": 178,
+    "initCount": 2,
+    "privateBytes": 273797120,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": false,
+    "fixture": "1080p",
+    "input": "1920x180",
+    "ms": 145.3767,
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "1080p",
+    "input": "1920x180",
+    "cold": false,
+    "ms": 199.7349,
+    "initMs": 178,
+    "initCount": 2,
+    "privateBytes": 274071552,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": false,
+    "fixture": "1080p",
+    "input": "1920x180",
+    "ms": 126.3752,
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "4k",
+    "input": "3840x360",
+    "cold": false,
+    "ms": 220.1197,
+    "initMs": 178,
+    "initCount": 2,
+    "privateBytes": 281190400,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": false,
+    "fixture": "4k",
+    "input": "3840x360",
+    "ms": 128.6504,
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "4k",
+    "input": "3840x360",
+    "cold": false,
+    "ms": 209.1109,
+    "initMs": 178,
+    "initCount": 2,
+    "privateBytes": 281325568,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": false,
+    "fixture": "4k",
+    "input": "3840x360",
+    "ms": 139.0577,
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "timeline",
+    "model": "small",
+    "elapsedMs": 3700,
+    "Captures": 19,
+    "Recognitions": 5,
+    "Skipped": 14,
+    "Count": 4,
+    "text": "\u8FD9\u662F\u7B2C\u4E00\u53E5\u5B57\u5E55\r\nThe first subtitle is visible.\r\n\u8FD9\u662F\u77ED\u6682\u7684\u7B2C\u4E8C\u53E5\r\nA short second subtitle.\r\n\u8FD9\u662F\u7B2C\u4E09\u53E5\u5B57\u5E55\r\nThe third subtitle follows.\r\n\u8FD9\u662F\u7B2C\u4E00\u53E5\u5B57\u5E55\r\nThe first subtitle is visible.",
+    "expected": [
+      "\u7B2C\u4E00\u53E5",
+      "\u7B2C\u4E8C\u53E5",
+      "\u7B2C\u4E09\u53E5"
+    ],
+    "found": [
+      true,
+      true,
+      true
+    ],
+    "shortCaptionMs": 400,
+    "observedOcrMs": [
+      56.3182,
+      73.8713,
+      64.5361,
+      43.9887,
+      64.4105
+    ]
+  },
+  {
+    "kind": "summary",
+    "model": "small",
+    "gpuRequested": false,
+    "actual": {
+      "requested": "Cpu",
+      "device": null,
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            },
+            {
+              "type": "Sdcb.SimdPaddleOCR.OnnxSharp.InferenceSession",
+              "gpuAlive": null
+            }
+          ]
+        }
+      ]
+    },
+    "memoryBefore": 109056000,
+    "gpuBefore": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "privateAfter": 281317376,
+    "gpuAfter": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "warmMedianMs": 209.1109,
+    "warmMaxMs": 221.549,
+    "initializations": 1,
+    "foregroundBusyReturnMs": 0.0053,
+    "fallbacks": 0
+  },
+  {
+    "kind": "engines-retired",
+    "privateBytes": 229888000,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "loadedModel": null
+  }
+]

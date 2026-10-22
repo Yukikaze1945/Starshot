@@ -13,8 +13,16 @@
   <ItemGroup>
     <Reference Include="Starshot"><HintPath>$(StarshotTestAppPath)</HintPath><Private>false</Private></Reference>
     <Reference Include="Microsoft.Graphics.Canvas.Interop"><HintPath>$([System.IO.Path]::GetDirectoryName('$(StarshotTestAppPath)'))/Microsoft.Graphics.Canvas.Interop.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Starward.Codec"><HintPath>$([System.IO.Path]::GetDirectoryName('$(StarshotTestAppPath)'))/Starward.Codec.dll</HintPath><Private>false</Private></Reference>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260529003" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.31.0" />
     <PackageReference Include="Vanara.PInvoke.User32" Version="5.0.5" />
   </ItemGroup>
+  <Target Name="MatchStarshotTestResources" AfterTargets="Build" Condition="Exists('$(TargetDir)Starshot.pri')">
+    <!-- The test inherits Starshot.App. Its ms-appx connection IDs must use
+         the same PRI as the referenced DLL (also done by Run.ps1). -->
+    <Copy SourceFiles="$(TargetDir)Starshot.pri" DestinationFiles="$(TargetDir)resources.pri" />
+    <Copy SourceFiles="$(TargetDir)Starshot.pri" DestinationFiles="$(TargetDir)RegionToolbarUiTest.pri" />
+  </Target>
 </Project>

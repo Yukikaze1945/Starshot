@@ -1,13 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/Starshot/Helpers/DocumentModelStore.cs" Link="DocumentModelStore.cs" />
+    <Compile Include="../TestSupport/DocumentInferenceBoundary.cs" Link="DocumentInferenceBoundary.cs" />
     <Compile Include="../../src/Starshot/Features/Workspace/ImageMask.cs" Link="ImageMask.cs" />
     <Compile Include="../../src/Starshot/Features/Workspace/WorkspacePixels.cs" Link="WorkspacePixels.cs" />
     <Compile Include="../../src/Starshot/Features/ViewHost/DeferredWebFocus.cs" Link="DeferredWebFocus.cs" />
     <Compile Include="../../src/Starshot/Features/Workspace/GamutAnalysis.cs" Link="GamutAnalysis.cs" />
     <Compile Include="../../src/Starshot/Features/Codec/UhdrReferenceWhite.cs" Link="UhdrReferenceWhite.cs" />
     <Compile Include="../../src/Starshot/Helpers/DlcModelStore.cs" Link="DlcModelStore.cs" />
+    <Compile Include="../../src/Starshot/Helpers/DlcModelStore.Local.cs" Link="DlcModelStore.Local.cs" />
+    <Compile Include="../../src/Starshot/Helpers/ModelDownloadSources.cs" Link="ModelDownloadSources.cs" />
+    <Compile Include="../../src/Starshot/Helpers/LocalModelFiles.cs" Link="LocalModelFiles.cs" />
     <Compile Include="../../src/Starshot/Helpers/OfflineTranslation.cs" Link="OfflineTranslation.cs" />
+    <Compile Include="../../src/Starshot/Helpers/LocalTranslationApi*.cs" Link="%(Filename)%(Extension)" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Compile Include="../../src/Starshot/Helpers/BackgroundRemoval.cs" Link="BackgroundRemoval.cs" />
     <Compile Include="../../src/Starshot/Helpers/OcrTranslationClient.cs" Link="OcrTranslationClient.cs" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.31.0" />

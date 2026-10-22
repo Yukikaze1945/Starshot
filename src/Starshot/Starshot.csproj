@@ -71,10 +71,9 @@
     <!-- FluentIcons 2.1.329：最后一个依赖 Win2D 1.3.2 的版本 -->
     <PackageReference Include="FluentIcons.WinUI" Version="2.1.329" />
     <PackageReference Include="H.NotifyIcon.WinUI" Version="2.4.1" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.9" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.9" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.3.2" ExcludeAssets="all" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.31.0" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260529003" />
@@ -89,6 +88,7 @@
     <PackageReference Include="Starward.Win2D" Version="1.3.2-release.1" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.9" />
     <PackageReference Include="TaskScheduler" Version="2.12.2" />
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
     <PackageReference Include="Vanara.PInvoke.DwmApi" Version="5.0.5" />
     <PackageReference Include="Vanara.PInvoke.Ole" Version="5.0.5" />
     <PackageReference Include="Vanara.PInvoke.Shell32" Version="5.0.5" />
@@ -103,6 +103,8 @@
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\third_party\workspace-models\*" Link="ThirdParty\WorkspaceModels\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\document-ocr\*" Link="ThirdParty\DocumentOcr\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\zxing\*" Link="ThirdParty\ZXing\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\logo.png" Link="Assets\logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -201,12 +203,19 @@
     <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\scripts\Restore-LocalInference.ps1&quot;" />
     <ItemGroup><_LocalInference Include="$(MSBuildThisFileDirectory)..\..\third_party\local-inference\win-x64\*" /></ItemGroup>
     <Copy SourceFiles="@(_LocalInference)" DestinationFolder="$(TargetDir)LocalInference" SkipUnchangedFiles="true" />
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\scripts\Restore-LocalInference.ps1&quot; -Backend vulkan" />
+    <ItemGroup><_LocalInferenceVulkan Include="$(MSBuildThisFileDirectory)..\..\third_party\local-inference\win-vulkan-x64\*" /></ItemGroup>
+    <Copy SourceFiles="@(_LocalInferenceVulkan)" DestinationFolder="$(TargetDir)LocalInferenceVulkan" SkipUnchangedFiles="true" />
   </Target>
   <Target Name="CopyVideoEncoderForBuild" AfterTargets="Build" DependsOnTargets="PrepareVideoEncoder"
           Condition="'$(DesignTimeBuild)' != 'true' and '$(RuntimeIdentifier)' == 'win-x64'">
     <ItemGroup><_VideoBuild Include="$(MSBuildThisFileDirectory)..\..\third_party\ffmpeg\7.1.1\win-x64\*" /></ItemGroup>
     <Copy SourceFiles="@(_VideoBuild)" DestinationFolder="$(TargetDir)VideoEncoder" SkipUnchangedFiles="true" />
     <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\scripts\Restore-VideoEncoder.ps1&quot; -VerifyOnly &quot;$(TargetDir)VideoEncoder&quot;" />
+  </Target>
+  <Target Name="CopyLocalInferenceForPublish" AfterTargets="Publish" DependsOnTargets="PrepareLocalInference" Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <Copy SourceFiles="@(_LocalInference)" DestinationFolder="$(PublishDir)LocalInference" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_LocalInferenceVulkan)" DestinationFolder="$(PublishDir)LocalInferenceVulkan" SkipUnchangedFiles="true" />
   </Target>
   <Target Name="CopyVideoEncoderForPublish" AfterTargets="Publish" DependsOnTargets="PrepareVideoEncoder"
           Condition="'$(RuntimeIdentifier)' == 'win-x64'">

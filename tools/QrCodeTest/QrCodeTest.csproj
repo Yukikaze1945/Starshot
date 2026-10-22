@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
+    <Compile Include="../../src/Starshot/Helpers/QrCodeHelper.cs" Link="QrCodeHelper.cs" />
+    <Compile Include="../../src/Starshot/Features/Screenshot/QrCodeResultWindow.cs" Link="QrCodeResultWindow.cs" />
+    <Compile Include="../../src/Starshot/Features/Screenshot/CpuCaptureNativeWindow.cs" Link="CpuCaptureNativeWindow.cs" />
+    <Compile Include="../../src/Starshot/Features/Screenshot/CpuCaptureGdi.cs" Link="CpuCaptureGdi.cs" />
+    <Compile Include="../../src/Starshot/Features/Screenshot/CpuCaptureImage.cs" Link="CpuCaptureImage.cs" />
+    <Compile Include="../../src/Starshot/Features/Screenshot/RegionToolbar*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../LightweightCaptureTest/TestBoundaries.cs" Link="TestBoundaries.cs" />
+  </ItemGroup>
+</Project>

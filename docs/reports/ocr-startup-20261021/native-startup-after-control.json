@@ -1,0 +1,30 @@
+{
+  "checks": 18,
+  "rows": [
+    {
+      "cycle": 0,
+      "readyMs": 1659.6069,
+      "textMs": 1669.16,
+      "layout": "\u0022{\\\u0022text\\\u0022:\\\u0022\u51B7\u542F\u52A8\u6587\u5B57 / First OCR result\\\u0022,\\\u0022fonts\\\u0022:\\\u0022loaded\\\u0022,\\\u0022animations\\\u0022:0}\u0022",
+      "privateBytes": 154116096
+    },
+    {
+      "cycle": 1,
+      "readyMs": 1406.7741,
+      "textMs": 1407.827,
+      "layout": "\u0022{\\\u0022text\\\u0022:\\\u0022\u51B7\u542F\u52A8\u6587\u5B57 / First OCR result\\\u0022,\\\u0022fonts\\\u0022:\\\u0022loaded\\\u0022,\\\u0022animations\\\u0022:0}\u0022",
+      "privateBytes": 155545600
+    },
+    {
+      "cycle": 2,
+      "readyMs": 1667.828,
+      "textMs": 1668.6916,
+      "layout": "\u0022{\\\u0022text\\\u0022:\\\u0022\u51B7\u542F\u52A8\u6587\u5B57 / First OCR result\\\u0022,\\\u0022fonts\\\u0022:\\\u0022loaded\\\u0022,\\\u0022animations\\\u0022:0}\u0022",
+      "privateBytes": 156459008
+    },
+    {
+      "phase": "prepared-result",
+      "postOcrMs": 10.6096
+    }
+  ]
+}

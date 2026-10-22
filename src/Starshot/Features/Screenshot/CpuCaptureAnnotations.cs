@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Starshot.Features.Screenshot;
 
-internal enum CpuAnnotationTool { Select, Rectangle, Ellipse, Line, Arrow, Number, Pen, Highlighter, Mosaic, Blur, Text, Eraser }
+internal enum CpuAnnotationTool { Select, Rectangle, Ellipse, Line, Arrow, Number, Pen, Highlighter, Mosaic, Blur, Text, Eraser, Translation }
 
 internal sealed class CpuAnnotation
 {
@@ -15,8 +15,9 @@ internal sealed class CpuAnnotation
     public int Width = 3;
     public string Text = "";
     public List<Point> Points = new();
+    public RegionTranslatedText[] Translation=[];
     public CpuAnnotation Clone() => new() { Tool = Tool, Start = Start, End = End,
-        Color = Color, Width = Width, Text = Text, Points = new(Points) };
+        Color = Color, Width = Width, Text = Text, Points = new(Points),Translation=Translation };
     public void Translate(int x, int y)
     {
         Start.Offset(x, y); End.Offset(x, y);
@@ -104,6 +105,14 @@ internal static class CpuCaptureRaster
         nint dc = surface.Dc;
         switch (stroke.Tool)
         {
+            case CpuAnnotationTool.Translation:
+                foreach(var line in stroke.Translation)
+                {
+                    var b=line.Bounds;var target=Rectangle.Round(new RectangleF(start.X+b.X,start.Y+b.Y,b.Width,b.Height));
+                    CpuCaptureGdi.Fill(dc,target,Color.FromArgb(unchecked((int)line.Background)));
+                    DrawText(dc,line.Text,target,(int)Math.Round(line.FontSize),Color.FromArgb(unchecked((int)line.Foreground)));
+                }
+                break;
             case CpuAnnotationTool.Rectangle: CpuCaptureGdi.Shape(dc, r, stroke.Color, stroke.Width); break;
             case CpuAnnotationTool.Ellipse: CpuCaptureGdi.Shape(dc, r, stroke.Color, stroke.Width, ellipse: true); break;
             case CpuAnnotationTool.Line: CpuCaptureGdi.Line(dc, start, end, stroke.Color, stroke.Width); break;

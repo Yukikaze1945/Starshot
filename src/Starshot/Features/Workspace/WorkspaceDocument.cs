@@ -124,14 +124,3 @@ internal sealed class WorkspaceDocument : IDisposable
     }
     public void Dispose(){ Analysis?.Dispose(); Analysis=null; Mask=null; _bgra=null; _hdr=null; }
 }
-
-internal static class WorkspaceCaptureBroker
-{
-    private static WorkspaceDocument? _pending;
-    public static void Publish(WorkspaceDocument document)
-    {
-        System.Threading.Interlocked.Exchange(ref _pending,document)?.Dispose();
-        App.Current.EnsureMainWindow(); App.Current.MainWindow?.ShowWorkspaceCapture();
-    }
-    public static WorkspaceDocument? Take()=>System.Threading.Interlocked.Exchange(ref _pending,null);
-}

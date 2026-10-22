@@ -61,7 +61,7 @@ internal static class OcrTranslationClient
         }
     }
 
-    private static byte[] Protect(byte[] bytes)
+    internal static byte[] Protect(byte[] bytes)
     {
         var input = new DataBlob { Length = bytes.Length, Data = Marshal.AllocHGlobal(bytes.Length) };
         try
@@ -75,7 +75,7 @@ internal static class OcrTranslationClient
         finally { Marshal.FreeHGlobal(input.Data); Array.Clear(bytes); }
     }
 
-    private static byte[] Unprotect(byte[] bytes)
+    internal static byte[] Unprotect(byte[] bytes)
     {
         var input = new DataBlob { Length = bytes.Length, Data = Marshal.AllocHGlobal(bytes.Length) };
         try

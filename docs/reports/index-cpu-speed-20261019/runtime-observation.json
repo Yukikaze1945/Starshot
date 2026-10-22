@@ -1,0 +1,11 @@
+{
+  "pid": 43292,
+  "privateMiB": 823.26,
+  "workingSetMiB": 1717.43,
+  "backendModules": [
+    "ggml-base.dll",
+    "ggml.dll",
+    "ggml-rpc.dll",
+    "ggml-cpu-haswell.dll"
+  ]
+}

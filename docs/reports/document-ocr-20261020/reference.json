@@ -1,0 +1,844 @@
+{
+  "inputNote": "Both runners receive correctly composited BT.601 grayscale; upstream RGB-to-BGR loader quirk is intentionally bypassed.",
+  "formula": [
+    {
+      "name": "fraction",
+      "upstream": "\\frac{x^{2}+1}{\\sqrt{y}}",
+      "csharp": "\\frac{x^{2}+1}{\\sqrt{y}}",
+      "equal": true,
+      "referenceMs": 200.76479999988806,
+      "referenceShape": [
+        1,
+        1,
+        64,
+        64
+      ],
+      "csharpShape": [
+        1,
+        1,
+        64,
+        64
+      ],
+      "tensorMaxError": 4.76837158203125e-07,
+      "initialShapes": [
+        [
+          128,
+          128
+        ],
+        [
+          128,
+          128
+        ]
+      ],
+      "initialMaxError": 0,
+      "trace": [
+        {
+          "referenceShape": [
+            128,
+            128
+          ],
+          "csharp": {
+            "height": 128,
+            "width": 128,
+            "predicted": 96
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            96,
+            96
+          ],
+          "csharp": {
+            "height": 96,
+            "width": 96,
+            "predicted": 64
+          },
+          "maxError": 1
+        },
+        {
+          "referenceShape": [
+            64,
+            64
+          ],
+          "csharp": {
+            "height": 64,
+            "width": 64,
+            "predicted": 64
+          },
+          "maxError": 0
+        }
+      ]
+    },
+    {
+      "name": "sum",
+      "upstream": "\\sum_{i=1}^{n}i={\\frac{n(n+1)}{2}}\\,.",
+      "csharp": "\\sum_{i=1}^{n}i={\\frac{n(n+1)}{2}}\\,.",
+      "equal": true,
+      "referenceMs": 432.3333000065759,
+      "referenceShape": [
+        1,
+        1,
+        64,
+        160
+      ],
+      "csharpShape": [
+        1,
+        1,
+        64,
+        160
+      ],
+      "tensorMaxError": 4.76837158203125e-07,
+      "initialShapes": [
+        [
+          128,
+          288
+        ],
+        [
+          128,
+          288
+        ]
+      ],
+      "initialMaxError": 0,
+      "trace": [
+        {
+          "referenceShape": [
+            128,
+            288
+          ],
+          "csharp": {
+            "height": 128,
+            "width": 288,
+            "predicted": 224
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            96,
+            224
+          ],
+          "csharp": {
+            "height": 96,
+            "width": 224,
+            "predicted": 192
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            96,
+            192
+          ],
+          "csharp": {
+            "height": 96,
+            "width": 192,
+            "predicted": 160
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            64,
+            160
+          ],
+          "csharp": {
+            "height": 64,
+            "width": 160,
+            "predicted": 160
+          },
+          "maxError": 0
+        }
+      ]
+    },
+    {
+      "name": "integral",
+      "upstream": "\\int_{0}^{1}x^{2}\\,d x=\\frac{1}{3}",
+      "csharp": "\\int_{0}^{1}x^{2}\\,d x=\\frac{1}{3}",
+      "equal": true,
+      "referenceMs": 319.83259999833535,
+      "referenceShape": [
+        1,
+        1,
+        64,
+        128
+      ],
+      "csharpShape": [
+        1,
+        1,
+        64,
+        128
+      ],
+      "tensorMaxError": 0.022563934326171875,
+      "initialShapes": [
+        [
+          128,
+          224
+        ],
+        [
+          128,
+          224
+        ]
+      ],
+      "initialMaxError": 0,
+      "trace": [
+        {
+          "referenceShape": [
+            128,
+            224
+          ],
+          "csharp": {
+            "height": 128,
+            "width": 224,
+            "predicted": 192
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            96,
+            192
+          ],
+          "csharp": {
+            "height": 96,
+            "width": 192,
+            "predicted": 160
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            96,
+            160
+          ],
+          "csharp": {
+            "height": 96,
+            "width": 160,
+            "predicted": 128
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            64,
+            128
+          ],
+          "csharp": {
+            "height": 64,
+            "width": 128,
+            "predicted": 128
+          },
+          "maxError": 1
+        }
+      ]
+    },
+    {
+      "name": "matrix",
+      "upstream": "\\binom{a}{c}\\begin{array}{\\begin{array}{c}{{b}}\\\\ {{c}}\\end{array}\\begin{array}{c}{{b}}\\\\ {{c}}\\end{array}",
+      "csharp": "\\binom{a}{c}\\begin{array}{\\begin{array}{c}{{b}}\\\\ {{c}}\\end{array}\\begin{array}{c}{{b}}\\\\ {{c}}\\end{array}",
+      "equal": true,
+      "referenceMs": 763.5052999976324,
+      "referenceShape": [
+        1,
+        1,
+        64,
+        64
+      ],
+      "csharpShape": [
+        1,
+        1,
+        64,
+        64
+      ],
+      "tensorMaxError": 4.76837158203125e-07,
+      "initialShapes": [
+        [
+          96,
+          128
+        ],
+        [
+          96,
+          128
+        ]
+      ],
+      "initialMaxError": 0,
+      "trace": [
+        {
+          "referenceShape": [
+            96,
+            128
+          ],
+          "csharp": {
+            "height": 96,
+            "width": 128,
+            "predicted": 96
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            96,
+            96
+          ],
+          "csharp": {
+            "height": 96,
+            "width": 96,
+            "predicted": 64
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            64,
+            64
+          ],
+          "csharp": {
+            "height": 64,
+            "width": 64,
+            "predicted": 64
+          },
+          "maxError": 0
+        }
+      ]
+    },
+    {
+      "name": "multiline",
+      "upstream": "\\begin{array}{c}{{\\omega\\;\\mp1\\;{\\mathcal U}\\;\\longrightarrow\\;\\stackrel{\\alpha}{\\mathcal D}}}\\\\ {{\\alpha\\;\\longrightarrow\\;{\\mathcal U}\\;\\longrightarrow\\;\\n}}\\end{array}",
+      "csharp": "\\begin{array}{c}{{\\omega\\;\\mp1\\;{\\mathcal U}\\;\\longrightarrow\\;\\stackrel{\\alpha}{\\mathcal D}}}\\\\ {{\\alpha\\;\\longrightarrow\\;{\\mathcal U}\\;\\longrightarrow\\;\\n}}\\end{array}",
+      "equal": true,
+      "referenceMs": 873.69760000729,
+      "referenceShape": [
+        1,
+        1,
+        96,
+        160
+      ],
+      "csharpShape": [
+        1,
+        1,
+        96,
+        160
+      ],
+      "tensorMaxError": 4.76837158203125e-07,
+      "initialShapes": [
+        [
+          96,
+          160
+        ],
+        [
+          96,
+          160
+        ]
+      ],
+      "initialMaxError": 0,
+      "trace": [
+        {
+          "referenceShape": [
+            96,
+            160
+          ],
+          "csharp": {
+            "height": 96,
+            "width": 160,
+            "predicted": 160
+          },
+          "maxError": 0
+        }
+      ]
+    },
+    {
+      "name": "roots",
+      "upstream": "{\\sqrt{x}}+{\\sqrt{y}}=\\alpha",
+      "csharp": "{\\sqrt{x}}+{\\sqrt{y}}=\\alpha",
+      "equal": true,
+      "referenceMs": 198.8470999931451,
+      "referenceShape": [
+        1,
+        1,
+        32,
+        160
+      ],
+      "csharpShape": [
+        1,
+        1,
+        32,
+        160
+      ],
+      "tensorMaxError": 4.76837158203125e-07,
+      "initialShapes": [
+        [
+          64,
+          256
+        ],
+        [
+          64,
+          256
+        ]
+      ],
+      "initialMaxError": 0,
+      "trace": [
+        {
+          "referenceShape": [
+            64,
+            256
+          ],
+          "csharp": {
+            "height": 64,
+            "width": 256,
+            "predicted": 224
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            64,
+            224
+          ],
+          "csharp": {
+            "height": 64,
+            "width": 224,
+            "predicted": 192
+          },
+          "maxError": 0
+        },
+        {
+          "referenceShape": [
+            32,
+            192
+          ],
+          "csharp": {
+            "height": 32,
+            "width": 192,
+            "predicted": 160
+          },
+          "maxError": 1
+        },
+        {
+          "referenceShape": [
+            32,
+            160
+          ],
+          "csharp": {
+            "height": 32,
+            "width": 160,
+            "predicted": 160
+          },
+          "maxError": 0
+        }
+      ]
+    }
+  ],
+  "table": [
+    {
+      "name": "table-wired",
+      "referenceCells": 13,
+      "csharpCells": 13,
+      "sameCellCount": true,
+      "preprocessMaxError": 0.017507314682006836,
+      "structureEqual": true,
+      "structure": [
+        "<html>",
+        "<body>",
+        "<table>",
+        "<tr>",
+        "<td",
+        " colspan=\"3\"",
+        ">",
+        "</td>",
+        "</tr>",
+        "<tr>",
+        "<td",
+        " colspan=\"3\"",
+        ">",
+        "</td>",
+        "</tr>",
+        "<tr>",
+        "<td></td>",
+        "<td></td>",
+        "<td></td>",
+        "</tr>",
+        "<tr>",
+        "<td></td>",
+        "<td></td>",
+        "<td></td>",
+        "</tr>",
+        "<tr>",
+        "<td",
+        " rowspan=\"2\"",
+        ">",
+        "</td>",
+        "<td></td>",
+        "<td></td>",
+        "</tr>",
+        "<tr>",
+        "<td></td>",
+        "<td></td>",
+        "</tr>",
+        "</table>",
+        "</body>",
+        "</html>"
+      ],
+      "boxes": [
+        [
+          6,
+          3,
+          303,
+          3,
+          304,
+          51,
+          5,
+          50
+        ],
+        [
+          8,
+          38,
+          274,
+          38,
+          275,
+          82,
+          8,
+          83
+        ],
+        [
+          22,
+          79,
+          126,
+          79,
+          124,
+          126,
+          22,
+          127
+        ],
+        [
+          124,
+          80,
+          211,
+          79,
+          209,
+          124,
+          123,
+          125
+        ],
+        [
+          213,
+          79,
+          285,
+          78,
+          284,
+          125,
+          211,
+          126
+        ],
+        [
+          8,
+          120,
+          135,
+          118,
+          131,
+          176,
+          7,
+          177
+        ],
+        [
+          125,
+          122,
+          212,
+          121,
+          212,
+          170,
+          125,
+          171
+        ],
+        [
+          213,
+          123,
+          284,
+          122,
+          284,
+          169,
+          214,
+          171
+        ],
+        [
+          6,
+          172,
+          131,
+          171,
+          130,
+          256,
+          6,
+          257
+        ],
+        [
+          123,
+          168,
+          209,
+          168,
+          209,
+          216,
+          122,
+          217
+        ],
+        [
+          214,
+          172,
+          282,
+          171,
+          282,
+          216,
+          214,
+          217
+        ],
+        [
+          126,
+          218,
+          212,
+          217,
+          214,
+          264,
+          128,
+          264
+        ],
+        [
+          215,
+          216,
+          285,
+          215,
+          286,
+          263,
+          215,
+          264
+        ]
+      ]
+    },
+    {
+      "name": "table-wireless",
+      "referenceCells": 9,
+      "csharpCells": 9,
+      "sameCellCount": true,
+      "preprocessMaxError": 0.017507314682006836,
+      "structureEqual": true,
+      "structure": [
+        "<html>",
+        "<body>",
+        "<table>",
+        "<tr>",
+        "<td",
+        " colspan=\"2\"",
+        ">",
+        "</td>",
+        "</tr>",
+        "<tr>",
+        "<td></td>",
+        "<td></td>",
+        "</tr>",
+        "<tr>",
+        "<td></td>",
+        "<td></td>",
+        "</tr>",
+        "<tr>",
+        "<td></td>",
+        "<td></td>",
+        "</tr>",
+        "<tr>",
+        "<td></td>",
+        "<td></td>",
+        "</tr>",
+        "</table>",
+        "</body>",
+        "</html>"
+      ],
+      "boxes": [
+        [
+          2,
+          2,
+          301,
+          2,
+          301,
+          65,
+          1,
+          65
+        ],
+        [
+          2,
+          45,
+          216,
+          45,
+          218,
+          108,
+          3,
+          109
+        ],
+        [
+          143,
+          48,
+          290,
+          48,
+          291,
+          108,
+          145,
+          109
+        ],
+        [
+          1,
+          107,
+          135,
+          107,
+          136,
+          153,
+          1,
+          154
+        ],
+        [
+          128,
+          107,
+          267,
+          107,
+          268,
+          149,
+          130,
+          150
+        ],
+        [
+          5,
+          153,
+          151,
+          152,
+          152,
+          228,
+          5,
+          228
+        ],
+        [
+          135,
+          154,
+          278,
+          153,
+          279,
+          209,
+          136,
+          209
+        ],
+        [
+          24,
+          200,
+          183,
+          199,
+          185,
+          260,
+          25,
+          260
+        ],
+        [
+          171,
+          201,
+          301,
+          200,
+          301,
+          254,
+          172,
+          254
+        ]
+      ]
+    }
+  ],
+  "layout": {
+    "passed": true,
+    "officialRevision": "8ac289e66575bb9bba6e15c53719d8b15cc9b3b2",
+    "paddleCount": 18,
+    "csharpCount": 18,
+    "matches": [
+      {
+        "id": "region-3",
+        "iou": 0.9999993989014933,
+        "scoreError": 8.789924621499523e-08
+      },
+      {
+        "id": "region-84",
+        "iou": 0.9999991180380934,
+        "scoreError": 4.174047851801532e-07
+      },
+      {
+        "id": "region-24",
+        "iou": 0.9999993455044516,
+        "scoreError": 1.1540878297466861e-07
+      },
+      {
+        "id": "region-0",
+        "iou": 0.9999991234976454,
+        "scoreError": 4.5227055434082786e-10
+      },
+      {
+        "id": "region-25",
+        "iou": 0.9999997436582364,
+        "scoreError": 2.3716964725473133e-07
+      },
+      {
+        "id": "region-23",
+        "iou": 0.9999996522736904,
+        "scoreError": 4.016441345067179e-07
+      },
+      {
+        "id": "region-22",
+        "iou": 0.9999997103605632,
+        "scoreError": 2.7387084955421415e-07
+      },
+      {
+        "id": "region-1",
+        "iou": 0.9999996379068652,
+        "scoreError": 3.529167175164716e-07
+      },
+      {
+        "id": "region-21",
+        "iou": 0.9999994339330364,
+        "scoreError": 5.821441650954995e-08
+      },
+      {
+        "id": "region-29",
+        "iou": 0.9999998185425337,
+        "scoreError": 5.971763611389846e-08
+      },
+      {
+        "id": "region-28",
+        "iou": 0.9999995328193366,
+        "scoreError": 9.299346925839558e-08
+      },
+      {
+        "id": "region-31",
+        "iou": 0.9999988612133794,
+        "scoreError": 3.246868896522592e-07
+      },
+      {
+        "id": "region-30",
+        "iou": 0.9999993130018029,
+        "scoreError": 5.996109009309691e-08
+      },
+      {
+        "id": "region-27",
+        "iou": 0.9999993703377925,
+        "scoreError": 1.0267639183325628e-08
+      },
+      {
+        "id": "region-26",
+        "iou": 0.9999997717829234,
+        "scoreError": 2.532081604389447e-07
+      },
+      {
+        "id": "region-32",
+        "iou": 0.999998668584594,
+        "scoreError": 9.233451842005636e-08
+      },
+      {
+        "id": "region-2",
+        "iou": 0.9999969611348578,
+        "scoreError": 5.591995239084824e-07
+      },
+      {
+        "id": "region-75",
+        "iou": 0.9999995713124066,
+        "scoreError": 5.409379577603346e-07
+      }
+    ]
+  },
+  "ok": true
+}

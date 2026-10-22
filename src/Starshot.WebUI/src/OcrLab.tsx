@@ -13,10 +13,10 @@ import { paragraphText, textDocument, translatedDocument, translationSegments, t
 import { registerTextWorkspace, savedTextWorkspace } from './workspace'
 export const languages = ['简体中文','繁体中文','英语','日语','韩语','法语','德语','西班牙语','葡萄牙语','俄语','意大利语','泰语','越南语','阿拉伯语']
 const extensions = () => [StarterKit.configure({ link: { openOnClick: false } }), TextStyleKit, TextAlign.configure({ types: ['heading','paragraph'] }), Highlight.configure({ multicolor: true })]
-export function OcrLab({ boot, result = null, configure, notify, compact = false, update }: { boot: Bootstrap; result?: OcrResult | null; configure: () => void; notify: (text: string, error?: boolean) => void; compact?: boolean; update: (boot: Bootstrap) => void }) {
+export function OcrLab({ boot, result = null, configure, notify, compact = false, update, onContentReady }: { boot: Bootstrap; result?: OcrResult | null; configure: () => void; notify: (text: string, error?: boolean) => void; compact?: boolean; update: (boot: Bootstrap) => void; onContentReady?: (id: string | null) => void }) {
   const restored = useRef(compact ? undefined : savedTextWorkspace())
   const [, refresh] = useState(0), [target, setTarget] = useState(restored.current?.target || boot.settings.targetLanguage), [busy, setBusy] = useState(false), [tab, setTab] = useState<'source'|'translation'>(restored.current?.tab || 'source'), [copied, setCopied] = useState(false)
-  const source = useEditor({ extensions: extensions(), content: restored.current?.source || textDocument(''), editorProps: { attributes: { role: 'textbox', 'aria-label': '可编辑的原文', 'aria-multiline': 'true', spellcheck: 'false' } }, onTransaction: () => refresh(value => value + 1) })
+  const source = useEditor({ extensions: extensions(), content: restored.current?.source || textDocument(result?.text || ''), editorProps: { attributes: { role: 'textbox', 'aria-label': '可编辑的原文', 'aria-multiline': 'true', spellcheck: 'false' } }, onTransaction: () => refresh(value => value + 1) })
   const translated = useEditor({ extensions: extensions(), content: restored.current?.translated || textDocument(''), editorProps: { attributes: { role: 'textbox', 'aria-label': '可编辑的译文', 'aria-multiline': 'true', spellcheck: 'false' } }, onTransaction: () => refresh(value => value + 1) })
   const workspace = useRef({ source, translated, target, tab, busy })
   workspace.current = { source, translated, target, tab, busy }
@@ -53,6 +53,13 @@ export function OcrLab({ boot, result = null, configure, notify, compact = false
     if (result.autoCopied) notify('识别结果已按设置自动复制。')
     if (result.translate) void translate()
   }, [result, source, translated, translate, notify])
+  useEffect(() => {
+    if (!source || !translated || !onContentReady) return
+    // A task after React commit and synchronous editor document application;
+    // unlike requestAnimationFrame, this also runs in a hidden prepared WebView.
+    const timer = window.setTimeout(() => onContentReady(result?.id ?? null), 0)
+    return () => window.clearTimeout(timer)
+  }, [source, translated, result?.id, onContentReady])
   useEffect(() => { source?.setEditable(!busy); translated?.setEditable(!busy) }, [busy, source, translated])
   useEffect(() => () => job.current?.abort(), [])
   if (!source || !translated) return <div className="loading">正在准备文字编辑器…</div>

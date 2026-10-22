@@ -36,14 +36,18 @@
         Padding="12,6"
         Visibility="Collapsed"
       >
-        <TextBlock
+        <StackPanel x:Name="FrameMetricsRow" Orientation="Horizontal" Spacing="10">
+          <TextBlock
           x:Name="SelectionMetricsText"
           Foreground="#242B24"
           FontFamily="Segoe UI Variable"
           FontSize="14"
-          Text="0,0  0 × 0 px"
+          Text="0,0  0 × 0 px" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
         />
+        <Button x:Name="FrameStyleButton" Content="画面样式 ⌄" Click="FrameStyleButton_Click" MinHeight="0" Padding="8,2" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="圆角、阴影与边框"/>
+        </StackPanel>
       </Border>
+      <Border x:Name="FrameStylePanel" Canvas.ZIndex="100" Visibility="Collapsed" Background="#FFF9FAF3" BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="12"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Canvas x:Name="FrameStyleChoices"/></ScrollViewer></Border>
       <Border x:Name="SelectionToolbar" Visibility="Collapsed" Background="#FFF9FAF3"
               BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="10">
         <Canvas x:Name="ToolbarButtons" />
@@ -62,9 +66,19 @@
           <TextBlock x:Name="ShortcutHintText" Foreground="#242B24" FontSize="12" TextWrapping="Wrap" />
         </ScrollViewer>
       </Border>
+      <Border x:Name="TranslationNotice" Visibility="Collapsed" Background="#FFF9FAF3" BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="8" Padding="8,3">
+        <Grid ColumnSpacing="6"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <TextBlock x:Name="TranslationNoticeLabel" Foreground="#242B24" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center"/>
+          <Button Grid.Column="1" Content="×" Click="TranslationCancel_Click" ToolTipService.ToolTip="取消翻译 / 隐藏提示" Background="Transparent" BorderThickness="0" Padding="6"/>
+        </Grid>
+      </Border>
       <Border x:Name="HdrAnalysisPanel" Visibility="Collapsed" Background="#FFF9FAF3"
               BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="12">
         <ScrollViewer x:Name="HdrAnalysisScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" />
+      </Border>
+      <Border x:Name="GamutAnalysisPanel" Visibility="Collapsed" Background="#FFF9FAF3"
+              BorderBrush="#D7DDCE" BorderThickness="1" CornerRadius="12">
+        <ScrollViewer x:Name="GamutAnalysisScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" />
       </Border>
       <TextBox x:Name="AnnotationTextEditor" Width="240" MinHeight="36" Visibility="Collapsed"
                Background="#FAF9FAF3" Foreground="#242B24" BorderBrush="#DDF369"

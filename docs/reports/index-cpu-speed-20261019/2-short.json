@@ -1,0 +1,36 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "截图应保留可读性文本、准确的色彩以及平滑的高亮细节。编辑器允许用户选择区域、翻译其标签并复制最终图像。当面板关闭时，临时分析缓冲区将被释放。"
+      }
+    }
+  ],
+  "created": 1792425248,
+  "model": "Index-Translate-2B",
+  "system_fingerprint": "b11429-d81235049",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 41,
+    "prompt_tokens": 110,
+    "total_tokens": 151,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  "id": "chatcmpl-dmD0u7uHakfK5d7IQd79gnoMJ6pCOJJR",
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 110,
+    "prompt_ms": 980.482,
+    "prompt_per_token_ms": 8.913472727272728,
+    "prompt_per_second": 112.18971893415687,
+    "predicted_n": 41,
+    "predicted_ms": 3089.692,
+    "predicted_per_token_ms": 77.2423,
+    "predicted_per_second": 12.946274256463104
+  }
+}

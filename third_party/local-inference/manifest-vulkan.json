@@ -1,0 +1,7 @@
+{
+  "version": "b11429",
+  "packageUrl": "https://github.com/ggml-org/llama.cpp/releases/download/b11429/llama-b11429-bin-win-vulkan-x64.zip",
+  "packageSha256": "1BFE78AD9168B79FA02BF67F6AF9F5E17A966D824D77238517F7BEF12AC73B36",
+  "source": "https://github.com/ggml-org/llama.cpp/tree/b11429",
+  "license": "MIT"
+}

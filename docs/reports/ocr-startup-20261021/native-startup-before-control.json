@@ -1,0 +1,26 @@
+{
+  "checks": 3,
+  "rows": [
+    {
+      "cycle": 0,
+      "readyMs": 2871.246,
+      "textMs": 2944.2761,
+      "layout": "\u0022{\\\u0022text\\\u0022:\\\u0022\u51B7\u542F\u52A8\u6587\u5B57 / First OCR result\\\u0022,\\\u0022fonts\\\u0022:\\\u0022loading\\\u0022,\\\u0022animations\\\u0022:1}\u0022",
+      "privateBytes": 153133056
+    },
+    {
+      "cycle": 1,
+      "readyMs": 1393.3687,
+      "textMs": 1495.8974,
+      "layout": "\u0022{\\\u0022text\\\u0022:\\\u0022\u51B7\u542F\u52A8\u6587\u5B57 / First OCR result\\\u0022,\\\u0022fonts\\\u0022:\\\u0022loading\\\u0022,\\\u0022animations\\\u0022:1}\u0022",
+      "privateBytes": 154370048
+    },
+    {
+      "cycle": 2,
+      "readyMs": 1242.1945,
+      "textMs": 1307.3354,
+      "layout": "\u0022{\\\u0022text\\\u0022:\\\u0022\u51B7\u542F\u52A8\u6587\u5B57 / First OCR result\\\u0022,\\\u0022fonts\\\u0022:\\\u0022loading\\\u0022,\\\u0022animations\\\u0022:1}\u0022",
+      "privateBytes": 155394048
+    }
+  ]
+}

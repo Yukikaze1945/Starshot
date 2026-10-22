@@ -97,14 +97,15 @@ internal sealed partial class WebUiBridge : IDisposable
     {
         if (method.StartsWith("workspace.", StringComparison.Ordinal)) return await WorkspaceAsync(method,p,ct);
         if (method.StartsWith("models.", StringComparison.Ordinal)) return await ModelLibraryAsync(method,p,ct);
+        if (method.StartsWith("subtitles.", StringComparison.Ordinal)) return await SubtitlesAsync(method,p,ct);
         switch (method)
         {
             case "app.bootstrap":
                 return new { version = AppConfig.AppVersion, protocol = ProtocolVersion,
                     chrome = _window.ChromeState(),
                     settings = Settings(), hotkeys = Hotkeys(),
-                    hasApiKey = OcrTranslationClient.HasApiKey };
-            case "app.ready": _window.FrontendReady(); return null;
+                    hasApiKey = OcrTranslationClient.HasApiKey, ocr = _window.PendingOcr };
+            case "app.ready": _window.FrontendReady(p.TryGetProperty("ocrResultId",out var rendered)&&rendered.ValueKind==JsonValueKind.String?rendered.GetString():null); return null;
             case "request.cancel":
                 if (_requests.TryGetValue(Text(p, "requestId", 100), out var request)) request.Cancel();
                 return null;
@@ -175,14 +176,30 @@ internal sealed partial class WebUiBridge : IDisposable
                 using (var sdr = image.CanvasBitmap.Format is DirectXPixelFormat.B8G8R8A8UIntNormalized or DirectXPixelFormat.R8G8B8A8UIntNormalized
                     ? null : ScreenCaptureService.TonemapToSdr(image.CanvasBitmap, AppConfig.SdrWhiteLevel))
                 {
+                    using var editorPreparation=OcrResultWindow.Prepare();
                     var prepared = OcrHelper.PreparePixels(sdr ?? image.CanvasBitmap);
                     var lines = await Task.Run(() => OcrHelper.RecognizeAsync(prepared.Pixels, prepared.Width, prepared.Height, prepared.Scale, ct), ct);
                     if (lines is null) throw new InvalidOperationException("内置 OCR 运行失败，系统回退也缺少语言支持；请查看日志并重试。");
                     if (lines.Count == 0) throw new InvalidOperationException("这张图片中没有识别到文字。");
-                    _window.ShowOcr(lines, false);
+                    editorPreparation.Show(lines, false);
                 }
                 return null;
             case "clipboard.read": return await ReadClipboardAsync(ct);
+            case "clipboard.qr":
+            {
+                var content = Clipboard.GetContent();
+                if(!content.Contains(StandardDataFormats.Bitmap)) throw new InvalidOperationException("请先复制一张包含二维码的图片。");
+                var reference = await content.GetBitmapAsync();
+                using var input = await reference.OpenReadAsync();
+                var decoder = await BitmapDecoder.CreateAsync(input);
+                if((long)decoder.PixelWidth*decoder.PixelHeight>QrCodeHelper.MaxPixels)
+                    throw new InvalidOperationException("剪贴板图片过大，请先框选二维码附近。");
+                ct.ThrowIfCancellationRequested();
+                var pixels = await decoder.GetPixelDataAsync(BitmapPixelFormat.Bgra8,BitmapAlphaMode.Premultiplied,
+                    new BitmapTransform(),ExifOrientationMode.RespectExifOrientation,ColorManagementMode.ColorManageToSRgb);
+                await QrCodeResultWindow.ShowAsync(pixels.DetachPixelData(),(int)decoder.OrientedPixelWidth,(int)decoder.OrientedPixelHeight,ct);
+                return null;
+            }
             case "clipboard.readText":
                 var clipboardText = Clipboard.GetContent();
                 return clipboardText.Contains(StandardDataFormats.Text) ? await clipboardText.GetTextAsync() : "";
@@ -458,7 +475,7 @@ internal sealed partial class WebUiBridge : IDisposable
         }
         return new { selected = AppConfig.OcrModel, state = status.State, installed = status.Installed,
             downloadedBytes = status.DownloadedBytes, totalBytes = status.TotalBytes, error = status.Error,
-            directory = status.Directory, version = status.Version };
+            directory = status.Directory, version = status.Version, warning=status.Warning,activeSource=status.ActiveSource,sources=status.Sources,actualHashes=status.ActualHashes };
     }
 
     private static object Settings() => new

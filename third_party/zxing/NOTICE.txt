@@ -1,0 +1,6 @@
+ZXing.Net 0.16.11
+Copyright ZXing authors and ZXing.Net contributors.
+https://github.com/micjahn/ZXing.Net
+https://www.nuget.org/packages/ZXing.Net/0.16.11
+Licensed under the Apache License, Version 2.0. See LICENSE.txt.
+Starshot uses the managed core decoder only; no image bindings or native runtime.

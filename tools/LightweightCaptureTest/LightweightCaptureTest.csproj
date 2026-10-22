@@ -8,5 +8,8 @@
     <Compile Include="../../src/Starshot/Features/Screenshot/CpuCapture*.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="../../src/Starshot/Features/Screenshot/CpuRegionCaptureWindow*.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="../../src/Starshot/Features/Screenshot/RegionToolbar*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../../src/Starshot/Features/Screenshot/RegionTranslation.cs" Link="RegionTranslation.cs" />
+    <Compile Include="../../src/Starshot/Features/Screenshot/RegionFrameStyle.cs" Link="RegionFrameStyle.cs" />
+    <Compile Include="../../src/Starshot/Features/Subtitles/SubtitleRegionOutline.cs" Link="SubtitleRegionOutline.cs" />
   </ItemGroup>
 </Project>

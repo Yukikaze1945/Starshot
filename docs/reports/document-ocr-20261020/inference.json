@@ -1,0 +1,1654 @@
+{
+  "ok": true,
+  "checks": 65,
+  "baselinePrivateBytes": 13451264,
+  "finalPrivateBytes": 221884416,
+  "weakBuffersAlive": 0,
+  "rows": [
+    {
+      "Name": "fraction",
+      "formula": {
+        "Latex": "\\frac{x^{2}\u002B1}{\\sqrt{y}}",
+        "Complete": true,
+        "Tokens": 19,
+        "ElapsedMs": 1739
+      },
+      "privateBytes": 325177344
+    },
+    {
+      "Name": "sum",
+      "formula": {
+        "Latex": "\\sum_{i=1}^{n}i={\\frac{n(n\u002B1)}{2}}\\,.",
+        "Complete": true,
+        "Tokens": 32,
+        "ElapsedMs": 456
+      },
+      "privateBytes": 328310784
+    },
+    {
+      "Name": "integral",
+      "formula": {
+        "Latex": "\\int_{0}^{1}x^{2}\\,d x=\\frac{1}{3}",
+        "Complete": true,
+        "Tokens": 28,
+        "ElapsedMs": 358
+      },
+      "privateBytes": 331005952
+    },
+    {
+      "Name": "matrix",
+      "formula": {
+        "Latex": "\\binom{a}{c}\\begin{array}{\\begin{array}{c}{{b}}\\\\ {{c}}\\end{array}\\begin{array}{c}{{b}}\\\\ {{c}}\\end{array}",
+        "Complete": true,
+        "Tokens": 63,
+        "ElapsedMs": 755
+      },
+      "privateBytes": 406994944
+    },
+    {
+      "Name": "multiline",
+      "formula": {
+        "Latex": "\\begin{array}{c}{{\\omega\\;\\mp1\\;{\\mathcal U}\\;\\longrightarrow\\;\\stackrel{\\alpha}{\\mathcal D}}}\\\\ {{\\alpha\\;\\longrightarrow\\;{\\mathcal U}\\;\\longrightarrow\\;\\n}}\\end{array}",
+        "Complete": true,
+        "Tokens": 67,
+        "ElapsedMs": 821
+      },
+      "privateBytes": 416972800
+    },
+    {
+      "Name": "roots",
+      "formula": {
+        "Latex": "{\\sqrt{x}}\u002B{\\sqrt{y}}=\\alpha",
+        "Complete": true,
+        "Tokens": 19,
+        "ElapsedMs": 245
+      },
+      "privateBytes": 418836480
+    },
+    {
+      "Name": "table-wired",
+      "table": {
+        "Rows": 6,
+        "Columns": 3,
+        "Cells": [
+          {
+            "Row": 0,
+            "Column": 0,
+            "RowSpan": 1,
+            "ColSpan": 3,
+            "Box": {
+              "X": 5.3097095,
+              "Y": 3.1760406,
+              "Width": 298.92697,
+              "Height": 48.111336,
+              "Right": 304.2367,
+              "Bottom": 51.287376,
+              "Area": 14381.776
+            },
+            "Text": ""
+          },
+          {
+            "Row": 1,
+            "Column": 0,
+            "RowSpan": 1,
+            "ColSpan": 3,
+            "Box": {
+              "X": 8.444762,
+              "Y": 38.045708,
+              "Width": 266.53882,
+              "Height": 44.964325,
+              "Right": 274.98358,
+              "Bottom": 83.01003,
+              "Area": 11984.738
+            },
+            "Text": "Measurement results"
+          },
+          {
+            "Row": 2,
+            "Column": 0,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 22.304157,
+              "Y": 79.198364,
+              "Width": 104.32051,
+              "Height": 48.649696,
+              "Right": 126.624664,
+              "Bottom": 127.84806,
+              "Area": 5075.161
+            },
+            "Text": "Sample"
+          },
+          {
+            "Row": 2,
+            "Column": 1,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 123.25262,
+              "Y": 79.40719,
+              "Width": 87.97715,
+              "Height": 46.58132,
+              "Right": 211.22977,
+              "Bottom": 125.98851,
+              "Area": 4098.092
+            },
+            "Text": "Value"
+          },
+          {
+            "Row": 2,
+            "Column": 2,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 211.9179,
+              "Y": 78.90352,
+              "Width": 73.2375,
+              "Height": 47.68367,
+              "Right": 285.1554,
+              "Bottom": 126.58719,
+              "Area": 3492.233
+            },
+            "Text": "Unit"
+          },
+          {
+            "Row": 3,
+            "Column": 0,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 7.797372,
+              "Y": 118.945724,
+              "Width": 127.33517,
+              "Height": 58.608337,
+              "Right": 135.13254,
+              "Bottom": 177.55406,
+              "Area": 7462.9023
+            },
+            "Text": "Alpha"
+          },
+          {
+            "Row": 3,
+            "Column": 1,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 125.12529,
+              "Y": 121.081314,
+              "Width": 87.44893,
+              "Height": 50.534714,
+              "Right": 212.57422,
+              "Bottom": 171.61603,
+              "Area": 4419.2065
+            },
+            "Text": "80"
+          },
+          {
+            "Row": 3,
+            "Column": 2,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 213.79309,
+              "Y": 122.1434,
+              "Width": 71.02313,
+              "Height": 49.153183,
+              "Right": 284.81622,
+              "Bottom": 171.29659,
+              "Area": 3491.013
+            },
+            "Text": "nits"
+          },
+          {
+            "Row": 4,
+            "Column": 0,
+            "RowSpan": 2,
+            "ColSpan": 1,
+            "Box": {
+              "X": 6.438749,
+              "Y": 171.09277,
+              "Width": 124.764084,
+              "Height": 86.24835,
+              "Right": 131.20284,
+              "Bottom": 257.34113,
+              "Area": 10760.696
+            },
+            "Text": "Beta"
+          },
+          {
+            "Row": 4,
+            "Column": 1,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 122.27279,
+              "Y": 167.99702,
+              "Width": 87.43459,
+              "Height": 49.625595,
+              "Right": 209.70738,
+              "Bottom": 217.62262,
+              "Area": 4338.9937
+            },
+            "Text": "200"
+          },
+          {
+            "Row": 4,
+            "Column": 2,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 214.5415,
+              "Y": 171.59853,
+              "Width": 68.42566,
+              "Height": 46.086243,
+              "Right": 282.96716,
+              "Bottom": 217.68477,
+              "Area": 3153.4814
+            },
+            "Text": "nits"
+          },
+          {
+            "Row": 5,
+            "Column": 1,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 126.51961,
+              "Y": 217.67184,
+              "Width": 87.69377,
+              "Height": 47.225006,
+              "Right": 214.21338,
+              "Bottom": 264.89685,
+              "Area": 4141.339
+            },
+            "Text": "800"
+          },
+          {
+            "Row": 5,
+            "Column": 2,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 215.33444,
+              "Y": 215.46503,
+              "Width": 71.02719,
+              "Height": 48.701416,
+              "Right": 286.36163,
+              "Bottom": 264.16644,
+              "Area": 3459.1248
+            },
+            "Text": "nits"
+          }
+        ],
+        "Score": 0.99742275,
+        "CoordinateSpace": "input"
+      },
+      "elapsedMs": 1043
+    },
+    {
+      "Name": "table-wireless",
+      "table": {
+        "Rows": 5,
+        "Columns": 2,
+        "Cells": [
+          {
+            "Row": 0,
+            "Column": 0,
+            "RowSpan": 1,
+            "ColSpan": 2,
+            "Box": {
+              "X": 1.9343516,
+              "Y": 2.3964367,
+              "Width": 299.85712,
+              "Height": 63.485283,
+              "Right": 301.79147,
+              "Bottom": 65.88172,
+              "Area": 19036.514
+            },
+            "Text": "Measurement results"
+          },
+          {
+            "Row": 1,
+            "Column": 0,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 2.9114454,
+              "Y": 45.634605,
+              "Width": 215.03723,
+              "Height": 64.05329,
+              "Right": 217.94867,
+              "Bottom": 109.6879,
+              "Area": 13773.843
+            },
+            "Text": "Sample\nValue"
+          },
+          {
+            "Row": 1,
+            "Column": 1,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 143.86942,
+              "Y": 48.4596,
+              "Width": 147.57983,
+              "Height": 60.65521,
+              "Right": 291.44925,
+              "Bottom": 109.11481,
+              "Area": 8951.485
+            },
+            "Text": "Unit"
+          },
+          {
+            "Row": 2,
+            "Column": 0,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 1.8560574,
+              "Y": 107.52404,
+              "Width": 134.92322,
+              "Height": 46.474297,
+              "Right": 136.77928,
+              "Bottom": 153.99834,
+              "Area": 6270.4614
+            },
+            "Text": "Alpha"
+          },
+          {
+            "Row": 2,
+            "Column": 1,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 128.93149,
+              "Y": 107.20212,
+              "Width": 139.86246,
+              "Height": 43.2034,
+              "Right": 268.79395,
+              "Bottom": 150.40552,
+              "Area": 6042.5337
+            },
+            "Text": "80\nnits"
+          },
+          {
+            "Row": 3,
+            "Column": 0,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 4.982623,
+              "Y": 152.85748,
+              "Width": 147.15681,
+              "Height": 75.64578,
+              "Right": 152.13943,
+              "Bottom": 228.50327,
+              "Area": 11131.792
+            },
+            "Text": "Beta"
+          },
+          {
+            "Row": 3,
+            "Column": 1,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 135.86055,
+              "Y": 153.83862,
+              "Width": 143.54842,
+              "Height": 55.628784,
+              "Right": 279.40897,
+              "Bottom": 209.4674,
+              "Area": 7985.424
+            },
+            "Text": "200\nnits"
+          },
+          {
+            "Row": 4,
+            "Column": 0,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 24.759262,
+              "Y": 199.7305,
+              "Width": 160.40315,
+              "Height": 60.94168,
+              "Right": 185.16241,
+              "Bottom": 260.67218,
+              "Area": 9775.237
+            },
+            "Text": "800"
+          },
+          {
+            "Row": 4,
+            "Column": 1,
+            "RowSpan": 1,
+            "ColSpan": 1,
+            "Box": {
+              "X": 171.06804,
+              "Y": 200.57474,
+              "Width": 130.75737,
+              "Height": 54.02719,
+              "Right": 301.8254,
+              "Bottom": 254.60193,
+              "Area": 7064.4536
+            },
+            "Text": "nits"
+          }
+        ],
+        "Score": 0.9900412,
+        "CoordinateSpace": "input"
+      },
+      "elapsedMs": 340
+    },
+    {
+      "Name": "page",
+      "regions": [
+        {
+          "Id": "region-3",
+          "ClassId": 0,
+          "Label": "paragraph_title",
+          "Score": 0.42321354,
+          "Box": {
+            "X": 57.13182,
+            "Y": 91.43482,
+            "Width": 579.98785,
+            "Height": 32.26461,
+            "Right": 637.1197,
+            "Bottom": 123.69943,
+            "Area": 18713.082
+          },
+          "ParentId": null,
+          "Order": 1,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-84",
+          "ClassId": 11,
+          "Label": "doc_title",
+          "Score": 0.55199486,
+          "Box": {
+            "X": 60.260105,
+            "Y": 92.065094,
+            "Width": 581.5509,
+            "Height": 28.983559,
+            "Right": 641.81104,
+            "Bottom": 121.04865,
+            "Area": 16855.414
+          },
+          "ParentId": null,
+          "Order": 2,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-24",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.62248737,
+          "Box": {
+            "X": 53.856277,
+            "Y": 158.65237,
+            "Width": 561.5119,
+            "Height": 18.228409,
+            "Right": 615.36816,
+            "Bottom": 176.88078,
+            "Area": 10235.469
+          },
+          "ParentId": null,
+          "Order": 3,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-0",
+          "ClassId": 0,
+          "Label": "paragraph_title",
+          "Score": 0.84213376,
+          "Box": {
+            "X": 55.606804,
+            "Y": 229.50798,
+            "Width": 175.95938,
+            "Height": 19.534546,
+            "Right": 231.5662,
+            "Bottom": 249.04253,
+            "Area": 3437.2866
+          },
+          "ParentId": null,
+          "Order": 4,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-25",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.6143021,
+          "Box": {
+            "X": 55.532177,
+            "Y": 288.57355,
+            "Width": 407.96716,
+            "Height": 136.20572,
+            "Right": 463.49933,
+            "Bottom": 424.77927,
+            "Area": 55567.46
+          },
+          "ParentId": null,
+          "Order": 5,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-23",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.7121744,
+          "Box": {
+            "X": 53.987293,
+            "Y": 448.5139,
+            "Width": 428.03192,
+            "Height": 128.5961,
+            "Right": 482.01923,
+            "Bottom": 577.11,
+            "Area": 55043.234
+          },
+          "ParentId": null,
+          "Order": 6,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-22",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.7229931,
+          "Box": {
+            "X": 55.247017,
+            "Y": 607.4229,
+            "Width": 430.73416,
+            "Height": 132.13306,
+            "Right": 485.98117,
+            "Bottom": 739.55597,
+            "Area": 56914.223
+          },
+          "ParentId": null,
+          "Order": 7,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-1",
+          "ClassId": 0,
+          "Label": "paragraph_title",
+          "Score": 0.80477875,
+          "Box": {
+            "X": 55.573883,
+            "Y": 778.88696,
+            "Width": 121.147415,
+            "Height": 20.216187,
+            "Right": 176.7213,
+            "Bottom": 799.10315,
+            "Area": 2449.1387
+          },
+          "ParentId": null,
+          "Order": 8,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-21",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.82872826,
+          "Box": {
+            "X": 54.225662,
+            "Y": 839.3951,
+            "Width": 429.34296,
+            "Height": 77.191284,
+            "Right": 483.5686,
+            "Bottom": 916.58636,
+            "Area": 33141.535
+          },
+          "ParentId": null,
+          "Order": 9,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-29",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.40871498,
+          "Box": {
+            "X": 523.50793,
+            "Y": 201.82228,
+            "Width": 360.15222,
+            "Height": 47.999924,
+            "Right": 883.66016,
+            "Bottom": 249.8222,
+            "Area": 17287.28
+          },
+          "ParentId": null,
+          "Order": 10,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-28",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.41303828,
+          "Box": {
+            "X": 533.05945,
+            "Y": 201.87364,
+            "Width": 352.01758,
+            "Height": 14.498749,
+            "Right": 885.077,
+            "Bottom": 216.37239,
+            "Area": 5103.8145
+          },
+          "ParentId": null,
+          "Order": 11,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-31",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.30174962,
+          "Box": {
+            "X": 525.5565,
+            "Y": 233.1258,
+            "Width": 97.15216,
+            "Height": 17.721115,
+            "Right": 622.7087,
+            "Bottom": 250.84691,
+            "Area": 1721.6447
+          },
+          "ParentId": null,
+          "Order": 12,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-30",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.37138176,
+          "Box": {
+            "X": 711.18396,
+            "Y": 270.52737,
+            "Width": 64.355774,
+            "Height": 56.221832,
+            "Right": 775.53973,
+            "Bottom": 326.7492,
+            "Area": 3618.1995
+          },
+          "ParentId": null,
+          "Order": 13,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-27",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.5398239,
+          "Box": {
+            "X": 519.9312,
+            "Y": 349.39413,
+            "Width": 436.7384,
+            "Height": 131.99423,
+            "Right": 956.6696,
+            "Bottom": 481.38837,
+            "Area": 57646.95
+          },
+          "ParentId": null,
+          "Order": 14,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-26",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.556217,
+          "Box": {
+            "X": 518.9047,
+            "Y": 509.61072,
+            "Width": 429.32367,
+            "Height": 129.6977,
+            "Right": 948.2284,
+            "Bottom": 639.3084,
+            "Area": 55682.29
+          },
+          "ParentId": null,
+          "Order": 15,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-32",
+          "ClassId": 2,
+          "Label": "text",
+          "Score": 0.30037224,
+          "Box": {
+            "X": 525.3076,
+            "Y": 680.0537,
+            "Width": 114.6745,
+            "Height": 21.20697,
+            "Right": 639.9821,
+            "Bottom": 701.2607,
+            "Area": 2431.8987
+          },
+          "ParentId": null,
+          "Order": 16,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-2",
+          "ClassId": 0,
+          "Label": "paragraph_title",
+          "Score": 0.6815143,
+          "Box": {
+            "X": 525.2524,
+            "Y": 680.142,
+            "Width": 115.08276,
+            "Height": 21.342102,
+            "Right": 640.33514,
+            "Bottom": 701.48413,
+            "Area": 2456.1082
+          },
+          "ParentId": null,
+          "Order": 17,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": false,
+          "IsImage": false
+        },
+        {
+          "Id": "region-75",
+          "ClassId": 8,
+          "Label": "table",
+          "Score": 0.85257494,
+          "Box": {
+            "X": 531.6688,
+            "Y": 741.4827,
+            "Width": 260.114,
+            "Height": 235.8935,
+            "Right": 791.78284,
+            "Bottom": 977.3762,
+            "Area": 61359.203
+          },
+          "ParentId": null,
+          "Order": 18,
+          "State": "pending",
+          "Error": null,
+          "Text": "",
+          "Formula": null,
+          "Table": null,
+          "IsFormula": false,
+          "IsTable": true,
+          "IsImage": false
+        }
+      ],
+      "elapsedMs": 288
+    },
+    {
+      "fullPage": {
+        "Id": "8049534cc7fb40948857c5c0f0bab2f3",
+        "Width": 1020,
+        "Height": 1034,
+        "State": "done",
+        "Stage": "\u63D0\u53D6\u5B8C\u6210",
+        "Error": null,
+        "ElapsedMs": 1031,
+        "TimingsMs": {
+          "prepare": 3,
+          "layout": 141,
+          "text": 496,
+          "formula": 0,
+          "table": 389
+        },
+        "Regions": [
+          {
+            "Id": "region-3",
+            "ClassId": 0,
+            "Label": "paragraph_title",
+            "Score": 0.42321354,
+            "Box": {
+              "X": 57.13182,
+              "Y": 91.43482,
+              "Width": 579.98785,
+              "Height": 32.26461,
+              "Right": 637.1197,
+              "Bottom": 123.69943,
+              "Area": 18713.082
+            },
+            "ParentId": null,
+            "Order": 1,
+            "State": "done",
+            "Error": null,
+            "Text": "",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-84",
+            "ClassId": 11,
+            "Label": "doc_title",
+            "Score": 0.55199486,
+            "Box": {
+              "X": 60.260105,
+              "Y": 92.065094,
+              "Width": 581.5509,
+              "Height": 28.983559,
+              "Right": 641.81104,
+              "Bottom": 121.04865,
+              "Area": 16855.414
+            },
+            "ParentId": null,
+            "Order": 2,
+            "State": "done",
+            "Error": null,
+            "Text": "",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-24",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.62248737,
+            "Box": {
+              "X": 53.856277,
+              "Y": 158.65237,
+              "Width": 561.5119,
+              "Height": 18.228409,
+              "Right": 615.36816,
+              "Bottom": 176.88078,
+              "Area": 10235.469
+            },
+            "ParentId": null,
+            "Order": 3,
+            "State": "done",
+            "Error": null,
+            "Text": "",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-0",
+            "ClassId": 0,
+            "Label": "paragraph_title",
+            "Score": 0.84213376,
+            "Box": {
+              "X": 55.606804,
+              "Y": 229.50798,
+              "Width": 175.95938,
+              "Height": 19.534546,
+              "Right": 231.5662,
+              "Bottom": 249.04253,
+              "Area": 3437.2866
+            },
+            "ParentId": null,
+            "Order": 4,
+            "State": "done",
+            "Error": null,
+            "Text": "",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-25",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.6143021,
+            "Box": {
+              "X": 55.532177,
+              "Y": 288.57355,
+              "Width": 407.96716,
+              "Height": 136.20572,
+              "Right": 463.49933,
+              "Bottom": 424.77927,
+              "Area": 55567.46
+            },
+            "ParentId": null,
+            "Order": 5,
+            "State": "done",
+            "Error": null,
+            "Text": "Document analysis identifies the reading order of scient\narticles. It preserves text, equations and tables while\nkeeping the original image unchanged. This example\ndescribes a mathematical model and its measured\nperformance.",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-23",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.7121744,
+            "Box": {
+              "X": 53.987293,
+              "Y": 448.5139,
+              "Width": 428.03192,
+              "Height": 128.5961,
+              "Right": 482.01923,
+              "Bottom": 577.11,
+              "Area": 55043.234
+            },
+            "ParentId": null,
+            "Order": 6,
+            "State": "done",
+            "Error": null,
+            "Text": "Document analysis identifies the reading order of scientifi\narticles. It preserves text, equations and tables while\nkeeping the original image unchanged. This example\ndescribes a mathematical model and its measured\nSuehroj.let",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-22",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.7229931,
+            "Box": {
+              "X": 55.247017,
+              "Y": 607.4229,
+              "Width": 430.73416,
+              "Height": 132.13306,
+              "Right": 485.98117,
+              "Bottom": 739.55597,
+              "Area": 56914.223
+            },
+            "ParentId": null,
+            "Order": 7,
+            "State": "done",
+            "Error": null,
+            "Text": "Document analysis identifies the reading order of scientific\narticles. It preserves text, equations and tables while\nkeeping the original image unchanged. This example\ndescribes a mathematical model and its measured\nperformance.",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-1",
+            "ClassId": 0,
+            "Label": "paragraph_title",
+            "Score": 0.80477875,
+            "Box": {
+              "X": 55.573883,
+              "Y": 778.88696,
+              "Width": 121.147415,
+              "Height": 20.216187,
+              "Right": 176.7213,
+              "Bottom": 799.10315,
+              "Area": 2449.1387
+            },
+            "ParentId": null,
+            "Order": 8,
+            "State": "done",
+            "Error": null,
+            "Text": "",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-21",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.82872826,
+            "Box": {
+              "X": 54.225662,
+              "Y": 839.3951,
+              "Width": 429.34296,
+              "Height": 77.191284,
+              "Right": 483.5686,
+              "Bottom": 916.58636,
+              "Area": 33141.535
+            },
+            "ParentId": null,
+            "Order": 9,
+            "State": "done",
+            "Error": null,
+            "Text": "Document analysis identifies the reading order of scientifio\narticles. It preserves text, equations and tables while\nkeeping the original image unchanged. This example",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-29",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.40871498,
+            "Box": {
+              "X": 523.50793,
+              "Y": 201.82228,
+              "Width": 360.15222,
+              "Height": 47.999924,
+              "Right": 883.66016,
+              "Bottom": 249.8222,
+              "Area": 17287.28
+            },
+            "ParentId": null,
+            "Order": 10,
+            "State": "done",
+            "Error": null,
+            "Text": "describes a mathematical model and its measured\nperformance.",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-28",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.41303828,
+            "Box": {
+              "X": 533.05945,
+              "Y": 201.87364,
+              "Width": 352.01758,
+              "Height": 14.498749,
+              "Right": 885.077,
+              "Bottom": 216.37239,
+              "Area": 5103.8145
+            },
+            "ParentId": null,
+            "Order": 11,
+            "State": "done",
+            "Error": null,
+            "Text": "",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-31",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.30174962,
+            "Box": {
+              "X": 525.5565,
+              "Y": 233.1258,
+              "Width": 97.15216,
+              "Height": 17.721115,
+              "Right": 622.7087,
+              "Bottom": 250.84691,
+              "Area": 1721.6447
+            },
+            "ParentId": null,
+            "Order": 12,
+            "State": "done",
+            "Error": null,
+            "Text": "performance",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-30",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.37138176,
+            "Box": {
+              "X": 711.18396,
+              "Y": 270.52737,
+              "Width": 64.355774,
+              "Height": 56.221832,
+              "Right": 775.53973,
+              "Bottom": 326.7492,
+              "Area": 3618.1995
+            },
+            "ParentId": null,
+            "Order": 13,
+            "State": "done",
+            "Error": null,
+            "Text": "\u002Bzc",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-27",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.5398239,
+            "Box": {
+              "X": 519.9312,
+              "Y": 349.39413,
+              "Width": 436.7384,
+              "Height": 131.99423,
+              "Right": 956.6696,
+              "Bottom": 481.38837,
+              "Area": 57646.95
+            },
+            "ParentId": null,
+            "Order": 14,
+            "State": "done",
+            "Error": null,
+            "Text": "Document analysis identifies the reading order of scientific\narticles. It preserves text, equations and tables while\nkeeping the original image unchanged. This example\ndescribes a mathematical model and its measured\nperformance",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-26",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.556217,
+            "Box": {
+              "X": 518.9047,
+              "Y": 509.61072,
+              "Width": 429.32367,
+              "Height": 129.6977,
+              "Right": 948.2284,
+              "Bottom": 639.3084,
+              "Area": 55682.29
+            },
+            "ParentId": null,
+            "Order": 15,
+            "State": "done",
+            "Error": null,
+            "Text": "Document analysis identifies the reading order of scientifi\narticles. It preserves text, equations and tables while\nkeeping the original image unchanged. This example\ndescribes a mathematical model and its measured\nperformance",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-32",
+            "ClassId": 2,
+            "Label": "text",
+            "Score": 0.30037224,
+            "Box": {
+              "X": 525.3076,
+              "Y": 680.0537,
+              "Width": 114.6745,
+              "Height": 21.20697,
+              "Right": 639.9821,
+              "Bottom": 701.2607,
+              "Area": 2431.8987
+            },
+            "ParentId": null,
+            "Order": 16,
+            "State": "done",
+            "Error": null,
+            "Text": "",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-2",
+            "ClassId": 0,
+            "Label": "paragraph_title",
+            "Score": 0.6815143,
+            "Box": {
+              "X": 525.2524,
+              "Y": 680.142,
+              "Width": 115.08276,
+              "Height": 21.342102,
+              "Right": 640.33514,
+              "Bottom": 701.48413,
+              "Area": 2456.1082
+            },
+            "ParentId": null,
+            "Order": 17,
+            "State": "done",
+            "Error": null,
+            "Text": "",
+            "Formula": null,
+            "Table": null,
+            "IsFormula": false,
+            "IsTable": false,
+            "IsImage": false
+          },
+          {
+            "Id": "region-75",
+            "ClassId": 8,
+            "Label": "table",
+            "Score": 0.85257494,
+            "Box": {
+              "X": 531.6688,
+              "Y": 741.4827,
+              "Width": 260.114,
+              "Height": 235.8935,
+              "Right": 791.78284,
+              "Bottom": 977.3762,
+              "Area": 61359.203
+            },
+            "ParentId": null,
+            "Order": 18,
+            "State": "done",
+            "Error": null,
+            "Text": "Measurement results\t\t\nSample\tValue\tUnit\nAlpha\t80\tnits\nBeta\t200\tnits\n\t800\tnits",
+            "Formula": null,
+            "Table": {
+              "Rows": 5,
+              "Columns": 3,
+              "Cells": [
+                {
+                  "Row": 0,
+                  "Column": 0,
+                  "RowSpan": 1,
+                  "ColSpan": 3,
+                  "Box": {
+                    "X": 532.6061,
+                    "Y": 742.525,
+                    "Width": 251.69589,
+                    "Height": 36.580185,
+                    "Right": 784.302,
+                    "Bottom": 779.1052,
+                    "Area": 9207.082
+                  },
+                  "Text": "Measurement results"
+                },
+                {
+                  "Row": 1,
+                  "Column": 0,
+                  "RowSpan": 1,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 532.08044,
+                    "Y": 780.5937,
+                    "Width": 105.10897,
+                    "Height": 51.425766,
+                    "Right": 637.1894,
+                    "Bottom": 832.0195,
+                    "Area": 5405.3096
+                  },
+                  "Text": "Sample"
+                },
+                {
+                  "Row": 1,
+                  "Column": 1,
+                  "RowSpan": 1,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 629.99133,
+                    "Y": 781.83514,
+                    "Width": 88.28509,
+                    "Height": 50.40305,
+                    "Right": 718.2764,
+                    "Bottom": 832.2382,
+                    "Area": 4449.8374
+                  },
+                  "Text": "Value"
+                },
+                {
+                  "Row": 1,
+                  "Column": 2,
+                  "RowSpan": 1,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 715.5229,
+                    "Y": 783.8441,
+                    "Width": 73.54607,
+                    "Height": 49.67026,
+                    "Right": 789.069,
+                    "Bottom": 833.5144,
+                    "Area": 3653.0522
+                  },
+                  "Text": "Unit"
+                },
+                {
+                  "Row": 2,
+                  "Column": 0,
+                  "RowSpan": 1,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 531.69946,
+                    "Y": 829.3421,
+                    "Width": 100.189995,
+                    "Height": 50.16073,
+                    "Right": 631.88947,
+                    "Bottom": 879.5028,
+                    "Area": 5025.603
+                  },
+                  "Text": "Alpha"
+                },
+                {
+                  "Row": 2,
+                  "Column": 1,
+                  "RowSpan": 1,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 628.71875,
+                    "Y": 830.9723,
+                    "Width": 90.77997,
+                    "Height": 48.37623,
+                    "Right": 719.4987,
+                    "Bottom": 879.3485,
+                    "Area": 4391.5923
+                  },
+                  "Text": "80"
+                },
+                {
+                  "Row": 2,
+                  "Column": 2,
+                  "RowSpan": 1,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 718.3914,
+                    "Y": 831.8554,
+                    "Width": 69.85004,
+                    "Height": 47.20849,
+                    "Right": 788.24146,
+                    "Bottom": 879.0639,
+                    "Area": 3297.5146
+                  },
+                  "Text": "nits"
+                },
+                {
+                  "Row": 3,
+                  "Column": 0,
+                  "RowSpan": 2,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 532.03485,
+                    "Y": 875.84656,
+                    "Width": 100.7853,
+                    "Height": 88.95885,
+                    "Right": 632.8201,
+                    "Bottom": 964.8054,
+                    "Area": 8965.744
+                  },
+                  "Text": "Beta"
+                },
+                {
+                  "Row": 3,
+                  "Column": 1,
+                  "RowSpan": 1,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 626.2694,
+                    "Y": 876.65216,
+                    "Width": 89.62404,
+                    "Height": 47.27861,
+                    "Right": 715.89343,
+                    "Bottom": 923.9308,
+                    "Area": 4237.3
+                  },
+                  "Text": "200"
+                },
+                {
+                  "Row": 3,
+                  "Column": 2,
+                  "RowSpan": 1,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 718.7583,
+                    "Y": 880.3814,
+                    "Width": 69.783676,
+                    "Height": 42.79416,
+                    "Right": 788.542,
+                    "Bottom": 923.17554,
+                    "Area": 2986.3337
+                  },
+                  "Text": "nits"
+                },
+                {
+                  "Row": 4,
+                  "Column": 1,
+                  "RowSpan": 1,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 627.9568,
+                    "Y": 925.7324,
+                    "Width": 89.44832,
+                    "Height": 43.2368,
+                    "Right": 717.4051,
+                    "Bottom": 968.96924,
+                    "Area": 3867.4592
+                  },
+                  "Text": "800"
+                },
+                {
+                  "Row": 4,
+                  "Column": 2,
+                  "RowSpan": 1,
+                  "ColSpan": 1,
+                  "Box": {
+                    "X": 720.8888,
+                    "Y": 923.9103,
+                    "Width": 66.9523,
+                    "Height": 46.958496,
+                    "Right": 787.84106,
+                    "Bottom": 970.8688,
+                    "Area": 3143.9792
+                  },
+                  "Text": "nits"
+                }
+              ],
+              "Score": 0.99719095,
+              "CoordinateSpace": "document"
+            },
+            "IsFormula": false,
+            "IsTable": true,
+            "IsImage": false
+          }
+        ]
+      }
+    },
+    {
+      "input": "3840x2160",
+      "regions": 18,
+      "state": "done",
+      "elapsedMs": 2030,
+      "timingsMs": {
+        "prepare": 4,
+        "layout": 302,
+        "text": 1231,
+        "formula": 0,
+        "table": 491
+      },
+      "privateBefore": 311750656,
+      "privateAfter": 365789184,
+      "sampledPeakPrivateBytes": 365789184,
+      "sampledPeakWorkingSetBytes": 358699008,
+      "samplingIntervalMs": 10
+    },
+    {
+      "cycle": 0,
+      "elapsedMs": 1549,
+      "privateBytes": 568905728,
+      "managedBytes": 172714312,
+      "heapSize": 172804264,
+      "committed": 191729664,
+      "gen2": 3
+    },
+    {
+      "cycle": 1,
+      "elapsedMs": 220,
+      "privateBytes": 638521344,
+      "managedBytes": 173872512,
+      "heapSize": 172804264,
+      "committed": 191729664,
+      "gen2": 3
+    },
+    {
+      "cycle": 2,
+      "elapsedMs": 208,
+      "privateBytes": 638795776,
+      "managedBytes": 174920104,
+      "heapSize": 172804264,
+      "committed": 191729664,
+      "gen2": 3
+    },
+    {
+      "cycle": 3,
+      "elapsedMs": 212,
+      "privateBytes": 639070208,
+      "managedBytes": 176066784,
+      "heapSize": 172804264,
+      "committed": 191729664,
+      "gen2": 3
+    },
+    {
+      "cycle": 4,
+      "elapsedMs": 206,
+      "privateBytes": 639344640,
+      "managedBytes": 177114408,
+      "heapSize": 172804264,
+      "committed": 191729664,
+      "gen2": 3
+    },
+    {
+      "weakBuffersAlive": 0
+    },
+    {
+      "cancelCycle": 0,
+      "cancelMs": 248,
+      "state": "canceled"
+    },
+    {
+      "cancelCycle": 1,
+      "cancelMs": 0,
+      "state": "canceled"
+    },
+    {
+      "word": {
+        "ok": true,
+        "nativeEditableEquations": 1,
+        "containsOmmlFraction": true,
+        "containsOmmlRadical": true
+      }
+    }
+  ]
+}

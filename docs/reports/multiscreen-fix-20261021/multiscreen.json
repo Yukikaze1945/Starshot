@@ -1,0 +1,110 @@
+{
+  "ok": true,
+  "checks": 82,
+  "records": [
+    {
+      "actualScale": 1.5,
+      "xamlScale": 1.5,
+      "hwndDpi": 144,
+      "legacyTopLeftDpi": 96
+    },
+    {
+      "native": false,
+      "scale": 1,
+      "pixels": "832x225",
+      "dpi": 96,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": false,
+      "scale": 1.25,
+      "pixels": "832x225",
+      "dpi": 120,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": false,
+      "scale": 1.5,
+      "pixels": "832x225",
+      "dpi": 144,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": false,
+      "scale": 1.75,
+      "pixels": "832x225",
+      "dpi": 168,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": false,
+      "scale": 2,
+      "pixels": "832x225",
+      "dpi": 192,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": false,
+      "scale": 2.25,
+      "pixels": "832x225",
+      "dpi": 216,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": false,
+      "scale": 1,
+      "pixels": "832x225",
+      "dpi": 96,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": true,
+      "scale": 1,
+      "pixels": "832x225",
+      "dpi": 96,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": true,
+      "scale": 1.25,
+      "pixels": "832x225",
+      "dpi": 120,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": true,
+      "scale": 1.5,
+      "pixels": "832x225",
+      "dpi": 144,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": true,
+      "scale": 1.75,
+      "pixels": "832x225",
+      "dpi": 168,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": true,
+      "scale": 2,
+      "pixels": "832x225",
+      "dpi": 192,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": true,
+      "scale": 2.25,
+      "pixels": "832x225",
+      "dpi": 216,
+      "crop": "250,75,430,140"
+    },
+    {
+      "native": true,
+      "scale": 1,
+      "pixels": "832x225",
+      "dpi": 96,
+      "crop": "250,75,430,140"
+    }
+  ]
+}

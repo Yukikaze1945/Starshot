@@ -56,6 +56,8 @@ internal partial class ScreenCaptureService
     public ScreenCaptureService(ILogger<ScreenCaptureService> logger)
     {
         _logger = logger;
+        RegionToolbarPreferences.Configure(AppConfig.GetValue<string>(null, "RegionToolbarLayout"),
+            json => AppConfig.SetValue(json, "RegionToolbarLayout"));
         CaptureModeController.ModeChanged += ReleaseGpuWindowsForLightweight;
     }
 
@@ -233,6 +235,13 @@ internal partial class ScreenCaptureService
         Instance.CaptureRegionInternal(ocrEditor: true);
     }
 
+    internal static Task<System.Drawing.Rectangle?> SelectSubtitleRegionAsync(CancellationToken ct)
+    {
+        var selection = new TaskCompletionSource<System.Drawing.Rectangle?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        Instance.CaptureRegionInternal(subtitleSelection: selection, selectionToken: ct);
+        return selection.Task;
+    }
+
     private enum OcrResultStatus
     {
         Opened,
@@ -254,6 +263,7 @@ internal partial class ScreenCaptureService
         }
         try
         {
+            using var editorPreparation=OcrResultWindow.Prepare();
             var size = sdrCrop.SizeInPixels;
             byte[] pixels = sdrCrop.GetPixelBytes();
             var lines = await Task.Run(() =>
@@ -269,7 +279,7 @@ internal partial class ScreenCaptureService
                 _logger.LogInformation("Region OCR: no text found");
                 return OcrResultStatus.NoText;
             }
-            _ = new OcrResultWindow(lines, translate);
+            editorPreparation.Show(lines, translate);
             _logger.LogInformation("Region OCR editor opened: {Count} lines, translate={Translate}", lines.Count, translate);
             return OcrResultStatus.Opened;
         }
@@ -280,10 +290,11 @@ internal partial class ScreenCaptureService
         }
     }
 
-    private async void CaptureRegionInternal(bool copyOnly = false, bool ocrEditor = false)
+    private async void CaptureRegionInternal(bool copyOnly = false, bool ocrEditor = false,
+        TaskCompletionSource<System.Drawing.Rectangle?>? subtitleSelection = null,CancellationToken selectionToken=default)
     {
         if (Interlocked.CompareExchange(ref _isCapturing, 1, 0) != 0)
-            return;
+        {subtitleSelection?.TrySetException(new InvalidOperationException("区域截图正在进行，请先完成或取消当前选区。"));return;}
         bool guardReleased = false;
         _logger.LogInformation(
             copyOnly ? "Region copy-only triggered" : "Region capture triggered"
@@ -297,6 +308,7 @@ internal partial class ScreenCaptureService
         bool captureStarted = false;
         try
         {
+            selectionToken.ThrowIfCancellationRequested();
             captureOperation = CaptureModeController.BeginOperation();
             var captureMode = captureOperation.Mode;
             // 虚拟屏幕边界（物理像素）
@@ -313,7 +325,7 @@ internal partial class ScreenCaptureService
                 {
                     guardReleased = true;
                     Interlocked.Exchange(ref _isCapturing, 0);
-                });
+                },subtitleSelection,selectionToken);
                 return;
             }
 
@@ -370,6 +382,8 @@ internal partial class ScreenCaptureService
                             device,
                             isHDR
                         );
+                        _logger.LogInformation("Region monitor snapshot: desktop={X},{Y},{Width}x{Height}, offset={OffsetX},{OffsetY}, bitmap={FrameWidth}x{FrameHeight}, dpi={Dpi}, hdr={Hdr}",
+                            bounds.X, bounds.Y, bounds.Width, bounds.Height, ox, oy, bmp.SizeInPixels.Width, bmp.SizeInPixels.Height, bmp.Dpi, isHDR);
                         return (ox, oy, bmp, isHDR);
                     });
                 }
@@ -442,12 +456,16 @@ internal partial class ScreenCaptureService
             {
                 _regionWindow = new RegionCaptureWindow();
             }
-            var defaultAction = ocrEditor ? RegionCaptureAction.Ocr
+            var defaultAction = subtitleSelection is not null ? RegionCaptureAction.Subtitles : ocrEditor ? RegionCaptureAction.Ocr
                 : copyOnly ? RegionCaptureAction.Copy : RegionCaptureAction.Save;
             RegionCaptureResult result;
             using (captureMode == ScreenshotCaptureMode.Lightweight ? null : MonitorCaptureContext.PauseBackgroundFrames())
             {
                 _regionWindow.SetCapture(composite, sdrWhiteLevel, vw, vh, defaultAction);
+                var current = _regionWindow;
+                var completion = current.Completion;
+                using var cancelSelection = selectionToken.Register(()=>current.DispatcherQueue.TryEnqueue(()=>
+                {if(ReferenceEquals(current.Completion,completion))current.CancelSubtitleSelection();}));
                 result = await _regionWindow.Completion.Task;
             }
 
@@ -464,12 +482,24 @@ internal partial class ScreenCaptureService
             sdrCrop = result.SdrCrop;
             annotationLayer = result.AnnotationLayer;
 
+            if(result.Action==RegionCaptureAction.Subtitles)
+            {
+                var region=SubtitleSelectionRegion.ToDesktop(new System.Drawing.Rectangle((int)result.PhysicalRect.X,(int)result.PhysicalRect.Y,(int)result.PhysicalRect.Width,(int)result.PhysicalRect.Height),vx,vy);
+                // This action needs coordinates only. Release the frozen desktop
+                // and crop before live sampling; never carry the overlay into playback.
+                sdrCrop?.Dispose();sdrCrop=null;annotationLayer?.Dispose();annotationLayer=null;
+                composite.Dispose();composite=null;
+                if(subtitleSelection is not null)subtitleSelection.TrySetResult(region);
+                else await Features.Subtitles.SubtitleController.UseSelectionAsync(region);
+                return;
+            }
+
             if (result.Action == RegionCaptureAction.Pin)
             {
                 if (sdrCrop is null)
                     throw new InvalidOperationException("Pinned capture has no image.");
                 _ = new PinnedCaptureWindow(sdrCrop,
-                    vx + (int)result.PhysicalRect.X, vy + (int)result.PhysicalRect.Y);
+                    vx + (int)result.PhysicalRect.X-(result.FrameStyle?.Padding??0), vy + (int)result.PhysicalRect.Y-(result.FrameStyle?.Padding??0));
                 _logger.LogInformation("Region capture pinned on screen");
                 return;
             }
@@ -500,6 +530,17 @@ internal partial class ScreenCaptureService
                 return;
             }
 
+            if (result.Action == RegionCaptureAction.QrCode)
+            {
+                // Read only the existing SDR crop, never raw scRGB or a freshly encoded file.
+                composite.Dispose(); composite = null;
+                if(sdrCrop is null) throw new InvalidOperationException("二维码识别缺少选区图像。");
+                byte[] pixels = sdrCrop.GetPixelBytes();
+                int width = (int)sdrCrop.SizeInPixels.Width, height = (int)sdrCrop.SizeInPixels.Height;
+                sdrCrop.Dispose(); sdrCrop = null;
+                await QrCodeResultWindow.ShowAsync(pixels,width,height);
+                return;
+            }
             if (result.Action is RegionCaptureAction.Copy or RegionCaptureAction.Ocr or RegionCaptureAction.Translate)
             {
                 // Copy/OCR 只需要选区 SDR crop，立即释放全桌面 HDR composite。
@@ -605,7 +646,12 @@ internal partial class ScreenCaptureService
             composite = null;
 
             // ===== 走保存管线 =====
-            if(result.Action is RegionCaptureAction.Cutout or RegionCaptureAction.TranslateInPlace)
+            if(result.FrameStyle is{Enabled:true} frameStyle)
+            {
+                var styled=RegionFrameRenderer.Apply(cropped,frameStyle,anyHDR?sdrWhiteLevel:80);
+                cropped.Dispose();cropped=styled;
+            }
+            if(result.Action is RegionCaptureAction.Cutout or RegionCaptureAction.Formula or RegionCaptureAction.PageLayout)
             {
                 bool qualifiedHdr=false;
                 try
@@ -622,8 +668,8 @@ internal partial class ScreenCaptureService
                 catch{ }
                 var document=await Features.Workspace.WorkspaceDocument.FromCanvasAsync(cropped,"截图.png",Guid.NewGuid().ToString("N"),sdrWhiteLevel,
                     Starward.Codec.ICC.ColorPrimaries.BT709,"区域截图",allowHdrAnalysis:qualifiedHdr);
-                document.InitialTool=result.Action==RegionCaptureAction.TranslateInPlace ? "translate" : "polygon";
-                Features.Workspace.WorkspaceCaptureBroker.Publish(document);
+                document.InitialTool=result.Action switch{RegionCaptureAction.Formula=>"formula",RegionCaptureAction.PageLayout=>"layout",_=>"polygon"};
+                Features.ViewHost.MainWindow.OpenCaptureEditor(document);
                 return;
             }
             DateTimeOffset frameTime = DateTimeOffset.Now;
@@ -661,20 +707,12 @@ internal partial class ScreenCaptureService
                 regionDisplayId
             );
 
-            if (ShouldShowInfoWindow())
-            {
-                _infoWindow ??= new ScreenCaptureInfoWindow();
-                _infoWindow.CaptureStart(regionDisplayId, cropped, maxCLL);
-            }
-            captureStarted = true;
-
             // 守卫只挡"抓帧+选区"；编码慢且已由 _encodeSlim 单独串行，这里放守卫让下一次按下能立刻进
             Interlocked.Exchange(ref _isCapturing, 0);
             guardReleased = true;
 
-            // 选好后并行：保存（完整 HDR，不内嵌剪贴板）+ 直接从覆盖层裁好的 SDR 选区复制
-            await Task.WhenAll(
-                SaveCaptureAsync(
+            // A cancelled Save As must not copy or display a successful-save notice.
+            bool saved = await SaveCaptureAsync(
                     cropped,
                     processName,
                     processExeName,
@@ -688,14 +726,27 @@ internal partial class ScreenCaptureService
                     true,
                     copyToClipboard: captureMode == ScreenshotCaptureMode.HdrVideo,
                     captureMode: captureMode,
-                    singleVideoDisplay: displays.Count == 1
-                ),
-                captureMode == ScreenshotCaptureMode.HdrVideo ? Task.CompletedTask : CopyCaptureToClipboardAsync(sdrCrop)
-            );
+                    singleVideoDisplay: displays.Count == 1,
+                    chooseLocation: CaptureSavePolicy.ChooseLocation(result.Action),
+                    saveOwner: fgHwnd,
+                    savingStarted: () =>
+                    {
+                        if (ShouldShowInfoWindow())
+                        {
+                            _infoWindow ??= new ScreenCaptureInfoWindow();
+                            _infoWindow.CaptureStart(regionDisplayId, cropped, maxCLL);
+                        }
+                        captureStarted = true;
+                    }
+                );
+            if (!saved) return;
+            if (captureMode != ScreenshotCaptureMode.HdrVideo) await CopyCaptureToClipboardAsync(sdrCrop);
             _logger.LogInformation("Region screenshot saved");
         }
         catch (Exception ex)
         {
+            if(subtitleSelection is not null)
+            {if(ex is OperationCanceledException)subtitleSelection.TrySetResult(null);else subtitleSelection.TrySetException(ex);return;}
             _logger.LogError(ex, "Region capture failed");
             // 对齐全屏路径：不补 CaptureError 的话计数永差一，信息窗这个会话不再自动隐藏（卡「处理中」）
             if (captureOperation?.Mode == ScreenshotCaptureMode.Lightweight)
@@ -717,12 +768,13 @@ internal partial class ScreenCaptureService
             {
                 Interlocked.Exchange(ref _isCapturing, 0);
             }
+            subtitleSelection?.TrySetResult(null);
         }
     }
 
     // ==================== 共用保存管线 ====================
 
-    private async Task SaveCaptureAsync(
+    private async Task<bool> SaveCaptureAsync(
         CanvasBitmap bitmap,
         string processName,
         string processExeName,
@@ -736,7 +788,10 @@ internal partial class ScreenCaptureService
         bool isRegion = false,
         bool copyToClipboard = true,
         ScreenshotCaptureMode captureMode = ScreenshotCaptureMode.HighQualityHdr,
-        bool singleVideoDisplay = true
+        bool singleVideoDisplay = true,
+        bool chooseLocation = false,
+        nint saveOwner = 0,
+        Action? savingStarted = null
     )
     {
         bool videoMode = captureMode == ScreenshotCaptureMode.HdrVideo;
@@ -809,7 +864,6 @@ internal partial class ScreenCaptureService
                 screenshotFolder = Path.Combine(screenshotFolder, subfolder);
             }
         }
-        Directory.CreateDirectory(screenshotFolder);
 
         // 扩展名：HDR 输出走 HDR 格式；SDR（含 deleteHDR）走 SDR 格式
         string extension = outputIsHDR
@@ -838,13 +892,21 @@ internal partial class ScreenCaptureService
         );
         // 重名不覆盖：追加 _2、_3 ...（autoConvertSDR 的 jpg 跟随主文件名 ChangeExtension，自动同序唯一）
         filePath = EnsureUniquePath(filePath);
+        if (chooseLocation)
+        {
+            string? selected = await ChooseCaptureSavePathAsync(saveOwner, filePath, extension, videoMode, autoConvertSDR);
+            if (selected is null) { _logger.LogInformation("Region save cancelled; no file or clipboard change"); return false; }
+            filePath = selected;
+        }
+        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+        savingStarted?.Invoke();
 
         // 主文件编码：deleteHDR 走 StarshotPerceptual→sRGB SDR；其余按 colorPrimaries 直存 bitmap。
         using MemoryStream ms = new();
         await _encodeSlim.WaitAsync();
         try
         {
-            if (videoMode) filePath = EnsureVideoPairPath(filePath, autoConvertSDR);
+            if (videoMode && !chooseLocation) filePath = EnsureVideoPairPath(filePath, autoConvertSDR);
             if (deleteHDR)
             {
                 // Ordinary SDR file only. The UHDR base, preview/clipboard/OCR, and
@@ -928,7 +990,7 @@ internal partial class ScreenCaptureService
             }
             if (videoMode)
             {
-                using var output = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write);
+                using var output = new FileStream(filePath, chooseLocation ? FileMode.Create : FileMode.CreateNew, FileAccess.Write);
                 try
                 {
                     ms.Position = 0;
@@ -1004,6 +1066,7 @@ internal partial class ScreenCaptureService
                 _infoWindow?.SetSavedStatus(videoResult.Error is null ? "视频与图片已保存"
                     : videoResult.Cancelled ? "视频已取消，图片已保留" : "视频未完成，图片已保留");
         }
+        return true;
     }
 
     private static string EnsureVideoPairPath(string image, bool jpeg)

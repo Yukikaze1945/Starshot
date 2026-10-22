@@ -1,0 +1,10 @@
+.capture-editor .image-inspector{width:250px;flex-shrink:0;background:var(--surface)}
+.capture-editor .inspector-tabs{display:none}
+.capture-editor .image-stage{background:var(--paper)}
+.capture-editor .workspace-header-actions .dark-button{background:var(--accent,#ddf369);color:#242b24;border-color:transparent}
+.capture-editor .workspace-document-name b{font-family:'Outfit Variable',sans-serif;font-weight:600;letter-spacing:-.3px}
+.capture-editor .workspace-document-name>span{color:var(--muted)}
+.capture-editor .image-inspector section{padding:24px 20px}
+.capture-editor .image-inspector h3{font-size:16px;letter-spacing:-.4px;margin-top:8px}
+@media(max-width:850px){.capture-editor .image-inspector{width:220px}.capture-editor .image-inspector section{padding:20px 16px}}
+@media(prefers-reduced-motion:no-preference){.capture-editor .image-inspector section{animation:capture-panel-in 194ms ease-out}@keyframes capture-panel-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}}

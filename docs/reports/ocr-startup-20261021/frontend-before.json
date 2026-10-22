@@ -1,0 +1,163 @@
+{
+  "ok": true,
+  "report": [
+    {
+      "width": 444,
+      "height": 270,
+      "scale": 2,
+      "theme": "light",
+      "resultBeforeReady": true,
+      "firstVisibleEditorMs": 212,
+      "initialJsDecodedBytes": 644450,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BZr0OjSO.js",
+          "bytes": 644450
+        }
+      ],
+      "settingsMeasure": {
+        "width": 420,
+        "height": 246,
+        "scrollWidth": 420,
+        "contentWidth": 420,
+        "contentScrollWidth": 420,
+        "left": 12,
+        "right": 432,
+        "top": 12,
+        "bottom": 258,
+        "viewport": 444,
+        "viewportHeight": 270
+      },
+      "calls": [
+        "app.bootstrap",
+        "app.ready",
+        "clipboard.copyRichText",
+        "settings.set",
+        "translation.formatted",
+        "ocr.models.status",
+        "models.runtime.status",
+        "settings.set"
+      ]
+    },
+    {
+      "width": 444,
+      "height": 240,
+      "scale": 2,
+      "theme": "dark",
+      "resultBeforeReady": true,
+      "firstVisibleEditorMs": 192,
+      "initialJsDecodedBytes": 644450,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BZr0OjSO.js",
+          "bytes": 644450
+        }
+      ],
+      "settingsMeasure": {
+        "width": 420,
+        "height": 216,
+        "scrollWidth": 420,
+        "contentWidth": 420,
+        "contentScrollWidth": 420,
+        "left": 12,
+        "right": 432,
+        "top": 12,
+        "bottom": 228,
+        "viewport": 444,
+        "viewportHeight": 240
+      },
+      "calls": [
+        "app.bootstrap",
+        "app.ready",
+        "clipboard.copyRichText",
+        "settings.set",
+        "translation.formatted",
+        "ocr.models.status",
+        "models.runtime.status",
+        "settings.set"
+      ]
+    },
+    {
+      "width": 344,
+      "height": 198,
+      "scale": 2,
+      "theme": "light",
+      "resultBeforeReady": true,
+      "firstVisibleEditorMs": 204,
+      "initialJsDecodedBytes": 644450,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BZr0OjSO.js",
+          "bytes": 644450
+        }
+      ],
+      "settingsMeasure": {
+        "width": 320,
+        "height": 174,
+        "scrollWidth": 320,
+        "contentWidth": 320,
+        "contentScrollWidth": 320,
+        "left": 12,
+        "right": 332,
+        "top": 12,
+        "bottom": 186,
+        "viewport": 344,
+        "viewportHeight": 198
+      },
+      "calls": [
+        "app.bootstrap",
+        "app.ready",
+        "clipboard.copyRichText",
+        "settings.set",
+        "translation.formatted",
+        "ocr.models.status",
+        "models.runtime.status",
+        "settings.set"
+      ]
+    },
+    {
+      "width": 584,
+      "height": 391,
+      "scale": 2,
+      "theme": "dark",
+      "resultBeforeReady": true,
+      "firstVisibleEditorMs": 189,
+      "initialJsDecodedBytes": 644450,
+      "initialJsResources": [
+        {
+          "name": "/assets/index-BZr0OjSO.js",
+          "bytes": 644450
+        }
+      ],
+      "settingsMeasure": {
+        "width": 560,
+        "height": 367,
+        "scrollWidth": 560,
+        "contentWidth": 560,
+        "contentScrollWidth": 560,
+        "left": 12,
+        "right": 572,
+        "top": 12,
+        "bottom": 379,
+        "viewport": 584,
+        "viewportHeight": 391
+      },
+      "calls": [
+        "app.bootstrap",
+        "app.ready",
+        "clipboard.copyRichText",
+        "settings.set",
+        "translation.formatted",
+        "ocr.models.status",
+        "models.runtime.status",
+        "settings.set"
+      ]
+    }
+  ],
+  "benchmarkOrder": [
+    "current/previous",
+    "previous/current",
+    "current/previous"
+  ],
+  "benchmark": {}
+}

@@ -70,6 +70,15 @@ try
     var map=GamutAnalysis.CreateMap(fp16,6,1);Check(map.Width==6&&map.Height==1&&map.Pixels.Length==24,"Gamut region map geometry");
     Check(map.Pixels[0]==map.Pixels[4]&&map.Pixels[8]!=map.Pixels[0]&&map.Pixels[12]!=map.Pixels[8],"Gamut map nested-region colors");
     Check(map.Pixels[19]==255&&map.Pixels[23]==255,"Black and invalid pixels remain opaque diagnostic colors");
+    var streaming = new GamutAnalysis.Accumulator(6,1); streaming.AppendRows(fp16,0,1,48,default);
+    var streamed = streaming.Finish();
+    Check(streamed.Stats.Srgb==gamut.Srgb&&streamed.Stats.DisplayP3Only==gamut.DisplayP3Only&&streamed.Stats.Bt2020Only==gamut.Bt2020Only&&streamed.Stats.Density.SequenceEqual(gamut.Density),"Streaming gamut preserves existing negative-channel statistics");
+    Check(streamed.Map.Pixels.SequenceEqual(map.Pixels),"Streaming gamut map matches existing palette and coordinates");
+    var diagram=GamutAnalysis.CreateDiagram(streamed.Stats);Check(diagram.Width==256&&diagram.Height==256&&diagram.Pixels.Where((_,i)=>i%4==3).All(b=>b==255),"Bounded opaque CIE diagram");
+    byte[] twoRows=new byte[112];fp16.CopyTo(twoRows,0);fp16.CopyTo(twoRows,56);
+    var stripes=new GamutAnalysis.Accumulator(6,2);stripes.AppendRows(twoRows.AsSpan(0,56),0,1,56,default);stripes.AppendRows(twoRows.AsSpan(56),1,1,56,default);
+    Check(stripes.Finish().Stats.Samples==8,"Padded FP16 stripes retain row coordinates");
+    try{new GamutAnalysis.Accumulator(6,1).AppendRows(fp16,0,1,48,new CancellationToken(true));throw new Exception("Cancellation ignored");}catch(OperationCanceledException){Check(true,"Gamut CPU calculation observes cancellation");}
     try{ImageMask.Polygon(10,10,new Vector2[]{new(0,0),new(float.MaxValue,2),new(3,4)});throw new Exception("Unbounded point accepted");}catch(ArgumentException){Check(true,"Untrusted polygon coordinates bounded");}
     byte[] data=Enumerable.Range(0,2048).Select(i=>(byte)i).ToArray();string hash=Convert.ToHexString(SHA256.HashData(data));
     var asset=new DlcModelStore.Model("test","Test","test",data.Length,hash,"https://example.invalid/model","weights.bin","MIT","test");

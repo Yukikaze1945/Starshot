@@ -29,7 +29,7 @@ public sealed partial class RegionCaptureWindow
         (byte)(argb >> 16), (byte)(argb >> 8), (byte)argb));
     private void InitializeToolbarInteraction()
     {
-        foreach (var panel in new[] { SelectionToolbar, ToolbarParameters, ToolbarPopup, ShortcutHint })
+        foreach (var panel in new[] { SelectionToolbar, ToolbarParameters, ToolbarPopup, ShortcutHint,TranslationNotice,SelectionMetrics,FrameStylePanel })
         {
             // These panels are in the existing overlay, not separate HWND/Popup windows.
             panel.PointerPressed += (_, e) => e.Handled = true;
@@ -46,7 +46,9 @@ public sealed partial class RegionCaptureWindow
 
     private void HideToolbarAuxiliary()
     {
+        CancelRegionTranslation();CloseFrameStyle();
         CloseHdrAnalysis();
+        CloseGamutAnalysis();
         _toolbarState.ClosePopup(); _toolbarHelpVisible = false; _toolbarDismissedPointer = false;
         _toolbarDismissedUntil = 0; _toolbarDismissedAt = default;
         ToolbarPopup.Visibility = ToolbarParameters.Visibility = ShortcutHint.Visibility = Visibility.Collapsed;
@@ -62,6 +64,7 @@ public sealed partial class RegionCaptureWindow
     {
         if (_state != RegionCaptureState.Selected) return;
         if (_analysisCancellation is not null && GetPhysicalSourceRect() != _analysisRect) CloseHdrAnalysis();
+        if (_gamutCancellation is not null && GetPhysicalSourceRect() != _gamutRect) CloseGamutAnalysis();
         var monitors = RegionToolbarMonitors.Read(new(_vx, _vy, (float)(_lockedW * _scale),
             (float)(_lockedH * _scale)), (float)_scale);
         _toolbarLayout = RegionToolbarGeometry.Arrange(ToolbarPhysicalSelection(), monitors, _toolbarState, _defaultAction);
@@ -126,6 +129,7 @@ public sealed partial class RegionCaptureWindow
         RefreshToolbarAvailability();
         RefreshToolbarMenu();
         PositionHdrAnalysis();
+        PositionGamutAnalysis();
     }
 
     private double ToolbarDip(double physical) => physical / _scale;
@@ -174,7 +178,8 @@ public sealed partial class RegionCaptureWindow
 
     private bool ToolbarCommandEnabled(RegionToolbarCommand command) => command switch
     { RegionToolbarCommand.Undo => _undoEdits.Count > 0, RegionToolbarCommand.Redo => _redoEdits.Count > 0,
-      RegionToolbarCommand.HdrAnalysis => CanAnalyzeHdr(), _ => true };
+      RegionToolbarCommand.Subtitles => SelectionRect.Width*_scale>=80&&SelectionRect.Height*_scale>=16&&SelectionRect.Width*SelectionRect.Height*_scale*_scale<=4_194_304,
+      RegionToolbarCommand.HdrAnalysis or RegionToolbarCommand.GamutAnalysis => CanAnalyzeHdr(), _ => true };
     private void RefreshToolbarAvailability()
     {
         foreach (var (command, button) in _toolbarActionButtons) button.IsEnabled = ToolbarCommandEnabled(command);
@@ -196,14 +201,16 @@ public sealed partial class RegionCaptureWindow
         ToolbarPopup.Visibility = Visibility.Visible; PlaceToolbarPanel(ToolbarPopup, _toolbarMenu.Bounds);
         for (int i = 0; i < _toolbarMenu.Slots.Count; i++)
         {
-            int index = _toolbarMenu.FirstIndex + i;
             var slot = _toolbarMenu.Slots[i];
+            int index = slot.ItemIndex;
             var button = ToolbarButton(slot.Command, _toolbarLayout.Monitor.Scale, true);
+            if (slot.Command == RegionToolbarCommand.Help && _toolbarState.Popup == RegionToolbarCommand.More)
+            { button.BorderBrush = ToolbarBrush(0xffd7ddce); button.BorderThickness = new Thickness(0, 1, 0, 0); }
             button.IsEnabled = ToolbarCommandEnabled(slot.Command);
-            if (slot.Command == RegionToolbarCommand.HdrAnalysis && !button.IsEnabled)
+            if (slot.Command is (RegionToolbarCommand.HdrAnalysis or RegionToolbarCommand.GamutAnalysis) && !button.IsEnabled)
             {
                 ToolTipService.SetToolTip(button, "需要原始 HDR FP16 捕获；SDR、轻量模式及混合 SDR 选区不支持绝对 nits 分析");
-                ((Grid)button.Content).Children.OfType<TextBlock>().Last().Text = "HDR 分析 · 需 HDR 捕获";
+                ((Grid)button.Content).Children.OfType<TextBlock>().Last().Text = RegionToolbarCatalog.Get(slot.Command).Label + " · 需 HDR 捕获";
             }
             button.Click += (_, _) => InvokeToolbar(slot.Command);
             button.PointerEntered += (_, _) => { _toolbarState.MenuFocus = index; RefreshToolbarMenuFocus(); };
@@ -214,7 +221,7 @@ public sealed partial class RegionCaptureWindow
     private void RefreshToolbarMenuFocus()
     {
         for (int i = 0; i < _toolbarMenuButtons.Count; i++)
-            _toolbarMenuButtons[i].Background = ToolbarBrush(i + (_toolbarMenu?.FirstIndex ?? 0) == _toolbarState.MenuFocus ? 0xffe8ecd9 : 0x00ffffff);
+            _toolbarMenuButtons[i].Background = ToolbarBrush(_toolbarMenu?.Slots[i].ItemIndex == _toolbarState.MenuFocus ? 0xffe8ecd9 : 0x00ffffff);
     }
     private void InvokeToolbar(RegionToolbarCommand command)
     {
@@ -225,7 +232,7 @@ public sealed partial class RegionCaptureWindow
         _toolbarState.ClosePopup(); _toolbarHelpVisible = false;
         if (RegionToolbarCatalog.IsTool(command)) SetAnnotationTool(Enum.Parse<AnnotationTool>(command.ToString()));
         else if (RegionToolbarCatalog.Get(command).Action is { } action)
-        { if (action == RegionCaptureAction.Cancel) CancelCapture(); else CompleteCapture(action); }
+        { if(action==RegionCaptureAction.TranslateInPlace){ToolbarPopup.Visibility=Visibility.Collapsed;_ = TranslateRegionInPlaceAsync();return;}if (action == RegionCaptureAction.Cancel) CancelCapture(); else CompleteCapture(action); }
         else switch (command)
         {
             case RegionToolbarCommand.Undo: UndoAnnotation(); break;
@@ -233,8 +240,26 @@ public sealed partial class RegionCaptureWindow
             case RegionToolbarCommand.Reselect: ReturnToSelectingState(); break;
             case RegionToolbarCommand.Help: ShowToolbarHelp(); break;
             case RegionToolbarCommand.HdrAnalysis: _ = OpenHdrAnalysisAsync(); break;
+            case RegionToolbarCommand.GamutAnalysis: _ = OpenGamutAnalysisAsync(); break;
+            case RegionToolbarCommand.EditToolbar: _ = EditToolbarAsync(); break;
         }
         if (_state == RegionCaptureState.Selected) RefreshToolbar();
+    }
+    private bool _editingToolbar;
+    private async System.Threading.Tasks.Task EditToolbarAsync()
+    {
+        if (_editingToolbar || _isClosed) return;
+        _editingToolbar = true;
+        long generation = _captureGeneration;
+        ToolbarPopup.Visibility = ShortcutHint.Visibility = Visibility.Collapsed;
+        try { await CpuCaptureToolbarEditor.ShowAsync(WinRT.Interop.WindowNative.GetWindowHandle(this)); }
+        catch (Exception ex) { Serilog.Log.Error(ex, "Unable to edit screenshot toolbar"); }
+        finally
+        {
+            _editingToolbar = false;
+            if (!_isClosed && generation == _captureGeneration)
+            { _toolbarVisualKey = ""; RefreshToolbar(); RequestRedraw(); }
+        }
     }
     private void ShowToolbarHelp()
     {
@@ -246,8 +271,8 @@ public sealed partial class RegionCaptureWindow
     }
     private bool DismissToolbarOutsidePress()
     {
-        if (!_toolbarState.Popup.HasValue && !_toolbarHelpVisible) return false;
-        _toolbarState.ClosePopup(); _toolbarHelpVisible = false;
+        if (!_toolbarState.Popup.HasValue && !_toolbarHelpVisible && !_framePopup) return false;
+        CloseFrameStyle();_toolbarState.ClosePopup(); _toolbarHelpVisible = false;
         ToolbarPopup.Visibility = ShortcutHint.Visibility = Visibility.Collapsed;
         return true;
     }
@@ -266,10 +291,15 @@ public sealed partial class RegionCaptureWindow
     private static extern uint ToolbarDoubleClickTime();
     private bool HandleToolbarPopupKey(Windows.System.VirtualKey key)
     {
+        if(FrameKey(key))return true;
+        if(key==Windows.System.VirtualKey.Escape&&!_toolbarState.Popup.HasValue&&(_translationCancellation is not null||TranslationNotice.Visibility==Visibility.Visible))
+        {CancelRegionTranslation();return true;}
         if (key == Windows.System.VirtualKey.Escape && _analysisScale?.IsDropDownOpen == true)
         { _analysisScale.IsDropDownOpen = false; return true; }
         if (key == Windows.System.VirtualKey.Escape && !_toolbarState.Popup.HasValue && !_toolbarHelpVisible && _analysisCancellation is not null)
         { CloseHdrAnalysis(); return true; }
+        if (key == Windows.System.VirtualKey.Escape && !_toolbarState.Popup.HasValue && !_toolbarHelpVisible && _gamutCancellation is not null)
+        { CloseGamutAnalysis(); return true; }
         if (!_toolbarState.Popup.HasValue && !_toolbarHelpVisible) return false;
         if (key == Windows.System.VirtualKey.Escape || key == Windows.System.VirtualKey.F1)
         { DismissToolbarOutsidePress(); return true; }

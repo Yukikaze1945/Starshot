@@ -1,0 +1,36 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "该桌面应用程序会一次性捕获屏幕，并保留一张冻结图像以供编辑。用户可以在主体周围绘制多边形、撤销单个顶点，并导出透明图像。对于翻译功能，文本会先在其原始位置被识别，然后由本地模型生成目标语言。翻译后的标签仍然可以编辑。直到用户复制或保存结果，原始图像都不会改变。进度指示器会显示识别或翻译是否正在运行。取消操作可防止后续操作覆盖新的工作。模型文件仅在需要时加载，工作程序在一段时间无操作后会自动退出。"
+      }
+    }
+  ],
+  "created": 1792425224,
+  "model": "Index-Translate-2B",
+  "system_fingerprint": "b11429-d81235049",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 113,
+    "prompt_tokens": 184,
+    "total_tokens": 297,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  "id": "chatcmpl-yppEJYDpJYduoIPo3g5Du4GUeAlutJm0",
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 184,
+    "prompt_ms": 1448.605,
+    "prompt_per_token_ms": 7.872853260869565,
+    "prompt_per_second": 127.01875252397996,
+    "predicted_n": 113,
+    "predicted_ms": 8236.301,
+    "predicted_per_token_ms": 73.53840178571429,
+    "predicted_per_second": 13.598337408989789
+  }
+}

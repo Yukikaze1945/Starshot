@@ -10,7 +10,7 @@ using Starshot.Helpers;
 namespace Starshot.Features.Screenshot;
 
 internal sealed record CpuRegionCaptureResult(RegionCaptureAction Action, Rectangle PhysicalRect,
-    CpuCaptureImage? Image = null, CpuCaptureImage? AnnotationLayer = null);
+    CpuCaptureImage? Image = null, CpuCaptureImage? AnnotationLayer = null,RegionFrameStyle? FrameStyle=null);
 
 /// <summary>
 /// Lightweight selection uses CPU DIBs and a short-lived Win32 window. There is no WinUI
@@ -153,24 +153,32 @@ internal sealed partial class CpuRegionCaptureWindow : CpuCaptureNativeWindow
             Rectangle r = _selected || _dragging ? _selection : HoverRectangle();
             if (r.Width > 1 && r.Height > 1)
             {
-                if (_annotations.Count > 0 || _draft is not null)
+                if(_selected&&_frameStyle.Enabled&&_dragging)PaintDraggingFrame(dc,r);
+                else if(_selected&&_frameStyle.Enabled)PaintStyledSelection(dc,r);
+                else if (_annotations.Count > 0 || _draft is not null)
                 {
                     EnsurePreview();
                     if (_preview is not null) CpuCaptureGdi.BitBlt(dc, r.X, r.Y, r.Width, r.Height, _preview.Dc, 0, 0, CpuCaptureGdi.Copy);
                 }
                 else CpuCaptureGdi.Blit(dc, _source.Pixels, _source.Width, _source.Height, r, r);
-                CpuCaptureGdi.Shape(dc, r, Accent, Dip(1));
+                if(_selected&&_frameStyle.Radius>0)CpuCaptureGdi.RoundedShape(dc,r,Accent,Dip(1),(int)_frameStyle.EffectiveRadius(r.Width,r.Height));
+                else CpuCaptureGdi.Shape(dc,r,Accent,Dip(1));
                 if (_selected)
                     foreach (Point p in CpuRegionSelection.Handles(r))
                     { var handle = new Rectangle(p.X - Dip(3), p.Y - Dip(3), Dip(6), Dip(6)); CpuCaptureGdi.Fill(dc, handle, Accent); CpuCaptureGdi.Shape(dc, handle, Ink, 1); }
+                if(_selected)PaintFrameMetrics(dc,r);
+                else
+                {
                 int labelW = Dip(260), labelH = Dip(28);
                 var label = new Rectangle(Math.Clamp(r.X, 0, Math.Max(0, _desktop.Width - labelW)), Math.Max(0, r.Top - labelH - Dip(6)), labelW, labelH);
                 CpuCaptureGdi.Fill(dc, label, Paper, Dip(8));
                 CpuCaptureGdi.Text(dc, $"{r.X + _virtualX},{r.Y + _virtualY}   {r.Width} × {r.Height} px", new Rectangle(label.X + Dip(10), label.Y, label.Width - Dip(20), label.Height), _smallFont, Ink);
             }
+                }
             if (_selected) PaintToolbar(dc);
             if (!_selected || _dragging) PaintMagnifier(dc);
             if (!_selected && _toolbarHelp) PaintHelp(dc, ToolbarLayout());
+            PaintFramePopup(dc);
             if (!CpuCaptureGdi.BitBlt(targetDc, 0, 0, _desktop.Width, _desktop.Height, dc, 0, 0, CpuCaptureGdi.Copy))
                 throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
         }
@@ -307,6 +315,7 @@ internal sealed partial class CpuRegionCaptureWindow : CpuCaptureNativeWindow
     }
     private void Reselect()
     {
+        ClearFramePreview();
         _selected = false; _dragging = false; _selection = default; _draft = null;
         _annotations.Clear(); _undo.Clear(); _redo.Clear(); _tool = CpuAnnotationTool.Select;
         _preview?.Dispose(); _preview = null; _previewDirty = true; _tip = ""; CloseToolbarPopup(); Redraw();
@@ -391,17 +400,20 @@ internal sealed partial class CpuRegionCaptureWindow : CpuCaptureNativeWindow
     {
         if (_closed) return;
         if (action != RegionCaptureAction.Cancel && (!_selected || _source is null)) return;
+        if(action==RegionCaptureAction.TranslateInPlace){_ = TranslateRegionInPlaceAsync();return;}
         if (_textEdit != 0) CommitText();
         CpuCaptureImage? image = null, layer = null;
         try
         {
-            if (action != RegionCaptureAction.Cancel)
+            if (action is not (RegionCaptureAction.Cancel or RegionCaptureAction.Subtitles))
             {
                 image = _annotations.Count == 0 ? _source!.Crop(_selection) : CpuCaptureRaster.Render(_source!, _selection, _annotations, _scale);
                 if (_annotations.Count > 0 && action is RegionCaptureAction.RecordGif or RegionCaptureAction.LongCapture)
                     layer = CpuCaptureRaster.RenderLayer(_source!, _selection, _annotations, _scale);
             }
-            var result = new CpuRegionCaptureResult(action, _selection, image, layer);
+            var style=RegionFrameStyle.Applies(action)?_frameStyle:new RegionFrameStyle();
+            if(image is not null&&style.Enabled){var styled=CpuCaptureFrameStyle.Apply(image,style);image.Dispose();image=styled;}
+            var result = new CpuRegionCaptureResult(action, _selection, image, layer,style);
             if (Completion.TrySetResult(result)) { image = null; layer = null; }
             Serilog.Log.Information("CPU region completed: generation={Generation}, action={Action}; destroying native overlay", _generation, action);
         }
@@ -412,6 +424,8 @@ internal sealed partial class CpuRegionCaptureWindow : CpuCaptureNativeWindow
     protected override void OnFailure(Exception ex) { Completion.TrySetException(ex); Dispose(); }
     protected override void OnNativeClosed()
     {
+        CancelRegionTranslation();
+        ClearFramePreview();CloseFrameStyle();
         _closed = true; _pendingMoveIn = false;
         _preview?.Dispose(); _preview = null; _dark = null; _source = null;
         _backBuffer?.Dispose(); _backBuffer = null;

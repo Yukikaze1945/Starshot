@@ -120,6 +120,12 @@ internal static class CpuCaptureGdi
         finally { SelectObject(dc, oldBrush); SelectObject(dc, oldPen); DeleteObject(pen); }
     }
 
+    internal static void RoundedShape(nint dc,Rectangle rect,Color color,int width,int radius)
+    {
+        nint pen=CreatePen(0,Math.Max(1,width),Rgb(color)),oldPen=SelectObject(dc,pen),oldBrush=SelectObject(dc,GetStockObject(5));
+        try{RoundRect(dc,rect.Left,rect.Top,rect.Right,rect.Bottom,radius*2,radius*2);}
+        finally{SelectObject(dc,oldBrush);SelectObject(dc,oldPen);DeleteObject(pen);}
+    }
     internal static void Line(nint dc, Point a, Point b, Color color, int width = 1)
     {
         nint pen = CreatePen(0, Math.Max(1, width), Rgb(color));

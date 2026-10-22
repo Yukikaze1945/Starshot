@@ -1,0 +1,96 @@
+[
+  {
+    "Id": "formula-rapidlatex",
+    "Name": "RapidLaTeXOCR · 公式识别",
+    "License": "MIT (RapidAI / pix2tex)",
+    "Source": "https://github.com/RapidAI/RapidLaTeXOCR/releases/tag/v0.0.0",
+    "Assets": [
+      {
+        "File": "encoder.onnx",
+        "Bytes": 89008136,
+        "Sha256": "01bf5dc25539ca0cd5b1bd29296ea495977a6ba5f629dc4178277809d26e5e7d",
+        "Url": "https://github.com/RapidAI/RapidLaTeXOCR/releases/download/v0.0.0/encoder.onnx"
+      },
+      {
+        "File": "decoder.onnx",
+        "Bytes": 50952726,
+        "Sha256": "bd695497bf1b22279b7626f5916c79226e1e244c84355f8da7edfd2d921d0072",
+        "Url": "https://github.com/RapidAI/RapidLaTeXOCR/releases/download/v0.0.0/decoder.onnx"
+      },
+      {
+        "File": "image_resizer.onnx",
+        "Bytes": 38967751,
+        "Sha256": "e0b075c39700f64d50400f39c8fc186bbb3b5d84d31864008313f376603aca9d",
+        "Url": "https://github.com/RapidAI/RapidLaTeXOCR/releases/download/v0.0.0/image_resizer.onnx"
+      },
+      {
+        "File": "tokenizer.json",
+        "Bytes": 24174,
+        "Sha256": "1dc27b18d6a518d0d5ff3f4bb7bd98521fe80ad39e5b2a246d4109f1bb9d5019",
+        "Url": "https://github.com/RapidAI/RapidLaTeXOCR/releases/download/v0.0.0/tokenizer.json"
+      }
+    ]
+  },
+  {
+    "Id": "layout-doclayout-s",
+    "Name": "PP-DocLayout-S · 版面检测",
+    "License": "Apache-2.0",
+    "Source": "https://huggingface.co/stefanj0/PP-DocLayout-S-ONNX/tree/7e851b9e5ad66613d7318a3213ab3336ebe0a514",
+    "Assets": [
+      {
+        "File": "layout.onnx",
+        "Bytes": 4917852,
+        "Sha256": "33688dbee1c23e34b81777e97cb428eb40f24b242c02b5f623484959e830aec8",
+        "Url": "https://huggingface.co/stefanj0/PP-DocLayout-S-ONNX/resolve/7e851b9e5ad66613d7318a3213ab3336ebe0a514/pp_doclayout_s.onnx"
+      }
+    ]
+  },
+  {
+    "Id": "table-slanet-plus",
+    "Name": "SLANet_plus · 表格结构",
+    "License": "Apache-2.0",
+    "Source": "https://huggingface.co/PaddlePaddle/SLANet_plus_onnx/tree/7dbe640e127602bf506815e822c09758de73c482",
+    "Assets": [
+      {
+        "File": "table.onnx",
+        "Bytes": 7782138,
+        "Sha256": "7790c0c13ce064782c9d22ebeb16b4da8216f83d3ba576da962c106ef58386da",
+        "Url": "https://huggingface.co/PaddlePaddle/SLANet_plus_onnx/resolve/7dbe640e127602bf506815e822c09758de73c482/inference.onnx"
+      },
+      {
+        "File": "table.yml",
+        "Bytes": 2035,
+        "Sha256": "8a6372d3269a6f112fe13a2da7952a84da6e112c10a3146cbb43de5bd01d19fa",
+        "Url": "https://huggingface.co/PaddlePaddle/SLANet_plus_onnx/resolve/7dbe640e127602bf506815e822c09758de73c482/inference.yml"
+      }
+    ]
+  },
+  {
+    "Id": "layout-doclayout-m",
+    "Name": "PP-DocLayout-M · 版面检测",
+    "License": "Apache-2.0 · Paddle 模型 / 社区 ONNX 导出",
+    "Source": "https://huggingface.co/x3zvawq/paddleocr-js-onnx/tree/51c2133b5a7ea27b795fa8c400fdbfbd5337dd6a",
+    "Assets": [
+      {
+        "File": "layout.onnx",
+        "Bytes": 23496395,
+        "Sha256": "c5032bdae772887e9de4d2e955c05c42ac7f38c8c8eb6bdc1b4560dc5cf1c786",
+        "Url": "https://huggingface.co/x3zvawq/paddleocr-js-onnx/resolve/51c2133b5a7ea27b795fa8c400fdbfbd5337dd6a/pp_doclayout_m/PP-DocLayout-M_infer.onnx"
+      }
+    ]
+  },
+  {
+    "Id": "layout-doclayout-l",
+    "Name": "PP-DocLayout-L · 版面检测",
+    "License": "Apache-2.0 · Paddle 模型 / 社区 ONNX 导出",
+    "Source": "https://huggingface.co/x3zvawq/paddleocr-js-onnx/tree/51c2133b5a7ea27b795fa8c400fdbfbd5337dd6a",
+    "Assets": [
+      {
+        "File": "layout.onnx",
+        "Bytes": 129398697,
+        "Sha256": "01fd1a44fbea5b0a76302de356c1518250cbd34ee82833ac04d907034c1376e1",
+        "Url": "https://huggingface.co/x3zvawq/paddleocr-js-onnx/resolve/51c2133b5a7ea27b795fa8c400fdbfbd5337dd6a/pp_doclayout_l/PP-DocLayout-L_infer.onnx"
+      }
+    ]
+  }
+]

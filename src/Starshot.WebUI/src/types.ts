@@ -11,12 +11,14 @@ export interface Settings {
   theme: number; language: string; autoUpdate: boolean; previewUpdates: boolean; startupHidden: boolean; highPriority: boolean;
 }
 export interface OcrModelsStatus {
-  selected: 'tiny' | 'small'; state: 'notInstalled' | 'downloading' | 'validating' | 'installed' | 'corrupt' | 'canceled' | 'error' | 'deleting';
+  selected: 'tiny' | 'small'; state: 'notInstalled' | 'downloading' | 'importing' | 'validating' | 'installed' | 'corrupt' | 'canceled' | 'error' | 'deleting';
   installed: boolean; downloadedBytes: number; totalBytes: number; error: string | null; directory: string; version: string;
+  warning?: string | null; activeSource?: string | null; sources?: {Id:string;Label:string;Url:string|null;Note?:string}[];
+  actualHashes?: string|null;
 }
 export interface Hotkey { id: number; modifiers: number; key: number; text: string; registered: boolean; error: boolean }
 export interface ChromeState { enabled: boolean; inset: number; height: number; active: boolean; maximized: boolean }
-export interface Bootstrap { version: string; protocol: number; settings: Settings; hotkeys: Hotkey[]; hasApiKey: boolean; chrome?: ChromeState }
+export interface Bootstrap { version: string; protocol: number; settings: Settings; hotkeys: Hotkey[]; hasApiKey: boolean; chrome?: ChromeState; ocr?: OcrResult | null }
 export interface Shot { id: string; name: string; format: string; bytes: number; timestamp: string; kind?: 'image' | 'video'; codec?: string | null; hdr?: boolean | null }
 export interface Library { total: number; items: Shot[]; offset: number }
 export interface Thumbnail { src: string; width: number; height: number }

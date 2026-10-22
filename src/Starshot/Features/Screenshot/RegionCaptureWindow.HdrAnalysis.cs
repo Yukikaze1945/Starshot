@@ -49,8 +49,24 @@ public sealed partial class RegionCaptureWindow
     private bool CanAnalyzeHdr()
     {
         if (_canvasOriginal?.Format != DirectXPixelFormat.R16G16B16A16Float || _isClosed) return false;
-        // Metadata only: no WGC/device creation, no readback. Reject normalized SDR parts of
-        // the mixed-monitor composite; those are not an absolute HDR signal.
+        EnsureAnalysisMonitors();
+        var r = GetPhysicalSourceRect();
+        var screen = new Drawing.RectangleF((float)r.X + _vx, (float)r.Y + _vy, (float)r.Width, (float)r.Height);
+        double hdrArea = 0;
+        foreach (var monitor in _analysisMonitors!)
+        {
+            var b = monitor.Bounds;
+            var intersection = Drawing.RectangleF.Intersect(screen, new((float)b.X, (float)b.Y, (float)b.Width, (float)b.Height));
+            if (intersection.IsEmpty) continue;
+            if (!monitor.Hdr) return false;
+            hdrArea += intersection.Width * intersection.Height;
+        }
+        return hdrArea >= screen.Width * (double)screen.Height - 1;
+    }
+    private void EnsureAnalysisMonitors()
+    {
+        // Metadata only: no capture/device creation or readback. Also used to undo the
+        // export composite's SDR-monitor boost when presenting a native HDR overlay.
         if (_analysisMonitors is null)
         {
             _analysisMonitors = new();
@@ -72,18 +88,6 @@ public sealed partial class RegionCaptureWindow
             }
             catch (Exception ex) { Serilog.Log.Warning(ex, "HDR analysis display metadata unavailable"); }
         }
-        var r = GetPhysicalSourceRect();
-        var screen = new Drawing.RectangleF((float)r.X + _vx, (float)r.Y + _vy, (float)r.Width, (float)r.Height);
-        double hdrArea = 0;
-        foreach (var monitor in _analysisMonitors)
-        {
-            var b = monitor.Bounds;
-            var intersection = Drawing.RectangleF.Intersect(screen, new((float)b.X, (float)b.Y, (float)b.Width, (float)b.Height));
-            if (intersection.IsEmpty) continue;
-            if (!monitor.Hdr) return false;
-            hdrArea += intersection.Width * intersection.Height;
-        }
-        return hdrArea >= screen.Width * (double)screen.Height - 1;
     }
 
     private async Task OpenHdrAnalysisAsync()
@@ -101,7 +105,7 @@ public sealed partial class RegionCaptureWindow
         BuildHdrAnalysisPanel();
         HdrAnalysisPanel.Visibility = Visibility.Visible;
         PositionHdrAnalysis();
-        var previous = _analysisPending;
+        var previous = Task.WhenAll(_analysisPending, _gamutPending);
         var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         _analysisPending = completed.Task;
         var watch = Stopwatch.StartNew();
@@ -186,12 +190,15 @@ public sealed partial class RegionCaptureWindow
         _analysisMetrics.Clear();
         var content = new StackPanel { Spacing = 8 * s, Padding = new Thickness(16 * s) };
         var header = new Grid();
+        header.ColumnDefinitions.Add(new()); header.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
+        var grip = new StackPanel { Spacing = 2 * s, Background = ToolbarBrush(0x00ffffff) };
         var title = AnalysisText("HDR 亮度分析", 17); title.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
-        header.Children.Add(title);
+        grip.Children.Add(title); grip.Children.Add(AnalysisText("⠿ 拖动标题移动面板", 10));
+        header.Children.Add(grip); InstallAnalysisDrag(grip, HdrAnalysisPanel, false);
         var close = new Button { Content = "×", MinWidth = 30 * s, MinHeight = 30 * s, Padding = new Thickness(0),
             HorizontalAlignment = HorizontalAlignment.Right, Background = ToolbarBrush(0x00ffffff) };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(close, "关闭 HDR 亮度分析");
-        close.Click += (_, _) => CloseHdrAnalysis(); header.Children.Add(close); content.Children.Add(header);
+        close.Click += (_, _) => CloseHdrAnalysis(); Grid.SetColumn(close, 1); header.Children.Add(close); content.Children.Add(header);
         content.Children.Add(AnalysisText("内容亮度 / nits", 11));
         var metrics = new Grid { ColumnSpacing = 12 * s, RowSpacing = 10 * s };
         for (int i = 0; i < 3; i++) metrics.ColumnDefinitions.Add(new());
@@ -215,6 +222,7 @@ public sealed partial class RegionCaptureWindow
         _analysisHeatmapSwitch.Toggled += (_, _) =>
         {
             _analysisShowHeatmap = _analysisHeatmapSwitch.IsOn;
+            if (_analysisShowHeatmap && _gamutSwitch?.IsOn == true) _gamutSwitch.IsOn = false;
             heatmapControls.Visibility = _analysisShowHeatmap ? Visibility.Visible : Visibility.Collapsed;
             _ = UpdateHdrAnalysisHeatmapAsync();
             RequestRedraw();
@@ -313,8 +321,10 @@ public sealed partial class RegionCaptureWindow
     private void PositionHdrAnalysis(bool? expanded = null)
     {
         if (_analysisCancellation is null || _toolbarLayout is null) return;
-        PlaceToolbarPanel(HdrAnalysisPanel, RegionToolbarGeometry.AnalysisBounds(_toolbarLayout,
-            ToolbarPhysicalSelection(), expanded ?? _analysisWaveExpander?.IsExpanded ?? false));
+        var bounds = RegionToolbarGeometry.AnalysisBounds(_toolbarLayout,
+            ToolbarPhysicalSelection(), expanded ?? _analysisWaveExpander?.IsExpanded ?? false);
+        if (_analysisManualBounds is { } moved) bounds = ClampAnalysisPanel(new(moved.X, moved.Y, bounds.Width, bounds.Height));
+        PlaceToolbarPanel(HdrAnalysisPanel, bounds);
     }
     private void DrawHdrAnalysisHeatmap(CanvasDrawingSession ds)
     {
@@ -354,6 +364,7 @@ public sealed partial class RegionCaptureWindow
     }
     private void CloseHdrAnalysis()
     {
+        StopAnalysisDrag(HdrAnalysisPanel); _analysisManualBounds = null;
         HdrAnalysisDiagnostics.Mark("close_request", _analysisGeneration);
         ++_analysisGeneration;
         ++_analysisWaveGeneration;
@@ -378,12 +389,12 @@ public sealed partial class RegionCaptureWindow
     }
     private bool IsHdrAnalysisControlFocused()
     {
-        if (_analysisCancellation is null || RootGrid.XamlRoot is null) return false;
+        if ((_analysisCancellation is null && _gamutCancellation is null) || RootGrid.XamlRoot is null) return false;
         if (_analysisScale?.IsDropDownOpen == true) return true;
         var focused = Microsoft.UI.Xaml.Input.FocusManager.GetFocusedElement(RootGrid.XamlRoot) as DependencyObject;
         while (focused is not null)
         {
-            if (ReferenceEquals(focused, HdrAnalysisPanel)) return true;
+            if (ReferenceEquals(focused, HdrAnalysisPanel) || ReferenceEquals(focused, GamutAnalysisPanel)) return true;
             focused = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(focused);
         }
         return false;

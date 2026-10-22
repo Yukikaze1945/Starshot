@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, Download, LoaderCircle, Package, ShieldCheck, Trash2, X } from 'lucide-react'
+import { AlertTriangle, Check, Download, FolderOpen, LoaderCircle, Package, ShieldCheck, Trash2, X } from 'lucide-react'
 import { request } from './bridge'
 import type { OcrModelsStatus, Settings } from './types'
 
 export function modelBusy(status: OcrModelsStatus | null) {
-  return !!status && ['downloading', 'validating', 'deleting'].includes(status.state)
+  return !!status && ['downloading', 'importing', 'validating', 'deleting'].includes(status.state)
 }
 export function modelProgress(status: OcrModelsStatus | null) {
   return status ? Math.max(0, Math.min(100, status.downloadedBytes / Math.max(1, status.totalBytes) * 100)) : 0
 }
 const labels: Record<OcrModelsStatus['state'], string> = {
-  notInstalled: '尚未安装', downloading: '下载中', validating: '校验与安装中', installed: '已校验 · 可使用',
+  notInstalled: '尚未安装', downloading: '下载中', importing:'正在导入', validating: '校验与安装中', installed: '已校验 · 可使用',
   corrupt: '文件校验失败', canceled: '已取消', error: '下载失败', deleting: '等待 OCR 结束并删除',
 }
 type Props = { selected: Settings['ocrModel']; onSelected: (model: Settings['ocrModel']) => void;
@@ -46,11 +46,13 @@ export function OcrModels({ selected, onSelected, notify, management = false, on
     revision.current++
     setActing(true)
     try {
-      const next = await request<OcrModelsStatus>(`ocr.models.${method}`, params)
+      const next = method==='import' ? await request<OcrModelsStatus|null>('models.import',{id:'ocr-small'})
+        : await request<OcrModelsStatus>(`ocr.models.${method}`, params)
+      if (!next) return
       accept(next)
       if (method === 'select') notify(`已选择 PP-OCRv6 ${next.selected === 'small' ? 'Small' : 'Tiny'}，下次识别时加载。`)
       if (method === 'delete') notify('Small 已删除，继续使用内置 Tiny。')
-      if (method === 'status') notify(next.installed ? 'Small 安装文件 SHA-256 校验通过。' : next.error || 'Small 尚未安装。', !next.installed)
+      if (method === 'status') notify(next.installed ? next.warning || 'Small 安装文件 SHA-256 校验通过。' : next.error || 'Small 尚未安装。', !next.installed)
     } catch (e) {
       current.current.notify((e as Error).message, true)
       try { accept(await request<OcrModelsStatus>('ocr.models.status')) } catch { /* next poll retries */ }
@@ -76,18 +78,22 @@ export function OcrModels({ selected, onSelected, notify, management = false, on
       <div className="ocr-model-heading"><span className="eyebrow">OPTIONAL / MORE DETAIL</span><span className="ocr-model-badge">DLC · 29.67 MiB</span></div>
       <h3>PP-OCRv6 Small <small>1.0.0</small></h3>
       <p>为复杂文字提供另一种选择。仅下载官方 DET、REC 与字典，复用内置方向分类器；切换后在下一次识别时加载。</p>
-      <div className="ocr-model-state" aria-live="polite">{busy ? <LoaderCircle size={15} className="spin"/> : <ShieldCheck size={15}/>}{status ? labels[status.state] : '检查安装状态…'}{selected === 'small' && status?.installed && <b>正在使用</b>}</div>
+      <div className="ocr-model-state" aria-live="polite">{busy ? <LoaderCircle size={15} className="spin"/> : status?.warning?<AlertTriangle size={15}/>:<ShieldCheck size={15}/>}{status?.warning?'可用 · 校验提醒':status ? labels[status.state] : '检查安装状态…'}{selected === 'small' && status?.installed && <b>正在使用</b>}</div>
       {busy && <div className="ocr-download"><progress aria-label="Small 模型下载进度" max={100} value={modelProgress(status)}/><span>{((status?.downloadedBytes || 0)/1048576).toFixed(2)} / 29.67 MiB · {modelProgress(status).toFixed(0)}%</span></div>}
       {(error || status?.error) && <p className="error-text" role="status">{error || status?.error}</p>}
+      {status?.warning&&<p className="model-warning" role="status"><AlertTriangle size={15}/>{status.warning}</p>}
       <div className="ocr-model-actions">
         {busy ? <button className="button" disabled={acting || status?.state === 'deleting'} onClick={() => void action('cancel')}><X size={15}/>取消下载</button> : <>
           {!status?.installed && <button className="button dark-button" disabled={acting || !status} onClick={() => void action('download')}><Download size={15}/>{status?.state === 'error' || status?.state === 'canceled' ? '重新下载' : '下载 Small'}</button>}
           {status?.installed && <><button className="button dark-button" disabled={acting || selected === 'small'} onClick={() => void action('select', { model: 'small' })}><Check size={15}/>{selected === 'small' ? '正在使用' : '使用 Small'}</button><button className="button" disabled={acting} onClick={() => void action('status', { verify: true })}><ShieldCheck size={15}/>校验</button></>}
           {(status?.installed || status?.state === 'corrupt') && <button className="button" disabled={acting} onClick={() => void action('delete')}><Trash2 size={15}/>删除</button>}
+          <button className="button" disabled={acting} onClick={()=>void action('import')}><FolderOpen size={15}/>导入本地 Small</button>
         </>}
       </div>
-      <footer><button className="text-button" onClick={() => void request('ocr.models.source').catch(e => notify((e as Error).message, true))}>官方来源 ↗</button><span>Apache-2.0 · SHA-256 校验</span></footer>
+      <footer><button className="text-button" onClick={() => void request('ocr.models.source').catch(e => notify((e as Error).message, true))}>官方来源 ↗</button><span>GitHub · 可导入 DET / REC / 字典文件夹</span></footer>
+      <small className="model-source-note">当前核实的同版资源来自 GitHub，暂无魔搭／HF 镜像。不需要下载 DLL。</small>
       {status?.directory && <details><summary>模型存储位置</summary><code>{status.directory}</code></details>}
+      {status?.actualHashes&&<details><summary>实际文件 SHA-256</summary><pre className="model-hashes">{status.actualHashes}</pre></details>}
     </article>
     <div className="settings-note">只保留当前使用的一套 OCR 引擎。下载失败、资源损坏或删除模型时回到 Tiny；截图与 HDR 处理流程保持原样。</div>
   </div>

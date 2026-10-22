@@ -117,8 +117,13 @@ public partial class App : Application
         _uiDispatcherQueue.TryEnqueue(EnsureMainWindow);
     }
 
-    public new void Exit()
+    private bool _exiting;
+    public new async void Exit()
     {
+        if(_exiting)return;_exiting=true;
+        try{await Features.Subtitles.SubtitleController.ShutdownAsync();}
+        catch(Exception ex){Serilog.Log.Error(ex,"Stop subtitle OCR on exit");}
+        Features.ViewHost.MainWindow.CloseSubtitlePanel();
         OcrHelper.Dispose();
         ScreenCaptureHelper.DisposeMonitorContexts();
         if (m_MainWindow is not null)

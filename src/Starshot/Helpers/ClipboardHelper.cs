@@ -132,6 +132,11 @@ internal static class ClipboardHelper
         }
         GlobalUnlock(hMem);
 
+        // Legacy CF_DIB consumers may ignore alpha. Advertise an explicit
+        // sRGB/alpha BITMAPV5 alongside it for transparent screenshot frames.
+        IntPtr hAlpha=IntPtr.Zero;
+        for(int p=3;p<bgraTopDown.Length;p+=4)
+            if(bgraTopDown[p]!=255){hAlpha=CreateAlphaDib(width,height,bgraTopDown);break;}
         bool success = false;
         for (int i = 0; i < 10; i++)
         {
@@ -139,6 +144,7 @@ internal static class ClipboardHelper
             {
                 EmptyClipboard();
                 IntPtr res = SetClipboardData(CF_DIB, hMem);
+                if(res!=IntPtr.Zero&&hAlpha!=IntPtr.Zero&&SetClipboardData(17,hAlpha)!=IntPtr.Zero)hAlpha=IntPtr.Zero;
                 CloseClipboard();
                 if (res != IntPtr.Zero)
                 {
@@ -152,7 +158,28 @@ internal static class ClipboardHelper
         {
             GlobalFree(hMem); // 失败时自己释放
         }
+        if(hAlpha!=IntPtr.Zero)GlobalFree(hAlpha);
         return success;
+    }
+
+    private static IntPtr CreateAlphaDib(int width,int height,byte[] pixels)
+    {
+        int row=checked(width*4),size=checked(row*height);
+        IntPtr memory=GlobalAlloc(GMEM_MOVEABLE,(UIntPtr)checked(124+size));
+        if(memory==IntPtr.Zero)return IntPtr.Zero;
+        IntPtr pointer=GlobalLock(memory);
+        if(pointer==IntPtr.Zero){GlobalFree(memory);return IntPtr.Zero;}
+        try
+        {
+            byte[] header=new byte[124];
+            void I(int offset,uint value)=>BitConverter.TryWriteBytes(header.AsSpan(offset,4),value);
+            I(0,124);I(4,(uint)width);I(8,(uint)height);header[12]=1;header[14]=32;
+            I(16,3);I(20,(uint)size);I(40,0x00ff0000);I(44,0x0000ff00);I(48,0x000000ff);I(52,0xff000000);I(56,0x73524742);I(108,4);
+            Marshal.Copy(header,0,pointer,124);
+            for(int y=height-1;y>=0;y--)Marshal.Copy(pixels,y*row,pointer+124+(height-1-y)*row,row);
+        }
+        catch{GlobalUnlock(memory);GlobalFree(memory);throw;}
+        GlobalUnlock(memory);return memory;
     }
 
     /// <summary>

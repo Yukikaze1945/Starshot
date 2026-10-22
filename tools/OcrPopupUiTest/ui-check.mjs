@@ -31,7 +31,7 @@ async function seedMock(page, theme) {
   await page.addInitScript(({ theme }) => {
     const settings = { screenshotFolder: '', extraFolders: [], subfolders: false, subfolderPattern: '', filenamePattern: '', regionFilenamePattern: '', autoCopy: false, autoCopyOcr: true, ocrModel: 'tiny', ocrGpuAcceleration: false, ultraHdr: false, capacityManual: false, capacity: 8, captureMode: 2, videoCodec: 0, sdrFormat: 0, hdrFormat: 0, quality: 1, colorManagement: false, deleteSdrHdr: false, sdrWhite: 0, monitorSource: 0, muteFullscreen: false, endpoint: 'https://example.invalid/v1', model: 'test-model', targetLanguage: '简体中文', theme, language: '', autoUpdate: false, previewUpdates: false, startupHidden: false, highPriority: false }
     const boot = { version: 'UI test', protocol: 1, hasApiKey: true, settings, hotkeys: [] }
-    const calls = window.calls = [], handlers = []
+    const calls = window.calls = [], handlers = []; window.readyFrames = []
     window.chrome = { webview: { addEventListener: (_, handler) => handlers.push(handler), postMessage: message => {
       calls.push(message.method)
       const reply = (ok, result, error) => handlers.forEach(handler => handler({ data: { type: 'response', id: message.id, ok, result, error } }))
@@ -39,7 +39,8 @@ async function seedMock(page, theme) {
         // Deliberately deliver the first OCR result before resolving bootstrap/app.ready.
         setTimeout(() => { window.resultDeliveredBeforeReady = !calls.includes('app.ready'); handlers.forEach(handler => handler({ data: { type: 'event', name: 'ocr.result', data: { id: 'first', text: 'First recognized line\nSecond recognized line', raw: 'First recognized lineSecond recognized line', lineCount: 2, translate: false, autoCopied: false } } })) }, 0)
         setTimeout(() => reply(true, structuredClone(boot)), 20)
-      } else if (message.method === 'app.ready' || message.method === 'window.close') setTimeout(() => reply(true, null), 0)
+      } else if (message.method === 'app.ready') { window.readyFrames.push({ id:message.params.ocrResultId, text:document.querySelector('[aria-label="可编辑的原文"]')?.textContent, animation:document.querySelector('.compact-ocr')?.getAnimations().length }); setTimeout(() => reply(true,null),0) }
+      else if (message.method === 'window.close') setTimeout(() => reply(true,null),0)
       else if (message.method === 'clipboard.copyRichText') { window.lastCopy = message.params; setTimeout(() => reply(true, null), 0) }
       else if (message.method === 'settings.set') { window.lastSettingSet = message.params; settings[message.params.key] = message.params.value; setTimeout(() => reply(true, structuredClone(settings)), 0) }
       else if (message.method === 'translation.formatted') setTimeout(() => reply(true, message.params.segments.map(segment => ({ id: segment.id, text: `译：${segment.text}` }))), 0)
@@ -73,6 +74,10 @@ try {
       await page.locator('.compact-ocr').evaluate(element => element.getAnimations().forEach(animation => animation.finish()))
       previewImageBase64 = (await page.screenshot({ path: resolve(sampleDir, 'popup-initial-584.png') })).toString('base64')
     }
+    await page.waitForFunction(()=>window.readyFrames?.some(frame=>frame.id==='first'))
+    const committed=await page.evaluate(()=>window.readyFrames.find(frame=>frame.id==='first'))
+    assert.match(committed.text,/First recognized line/,'Ready is sent only after the OCR document exists')
+    assert.equal(committed.animation,0,'Compact editor has no fade/slide animation during native handoff')
     const firstReady = await page.evaluate(() => window.calls.indexOf('app.ready'))
     assert.ok(firstReady >= 0, 'app.ready should run after the result-bearing popup mounts')
     assert.equal(await page.evaluate(() => window.resultDeliveredBeforeReady), true, 'first OCR result should arrive before app.ready')
@@ -130,6 +135,33 @@ try {
     await page.screenshot({ path: resolve(sampleDir, `popup-${width}-${theme}.png`), fullPage: true })
     assert.deepEqual(errors, [])
     report.push({ width, height, scale: 2, theme: theme === 1 ? 'light' : 'dark', resultBeforeReady: true, firstVisibleEditorMs: editorReadyAt - loadStarted, initialJsDecodedBytes: startupMetrics.initialJsDecodedBytes, initialJsResources: startupMetrics.initialJsResources, settingsMeasure, calls: await page.evaluate(() => window.calls) })
+    await context.close()
+  }
+  // Real bootstrap payload and hidden-preparation delivery, without the
+  // artificially early event used by the preceding four regression cases.
+  for (const delivery of ['bootstrap','prepared']) {
+    const context=await browser.newContext({viewport:{width:460,height:300},deviceScaleFactor:2}),page=await context.newPage()
+    await page.addInitScript(({delivery})=>{
+      const handlers=[];window.readyFrames=[]
+      const payload={id:'actual-payload',text:'启动即带文字 / Ready without a blank frame',raw:'启动即带文字 / Ready without a blank frame',lineCount:1,translate:false,autoCopied:false}
+      window.chrome={webview:{addEventListener:(_,h)=>handlers.push(h),postMessage:m=>{
+        const reply=result=>queueMicrotask(()=>handlers.forEach(h=>h({data:{type:'response',id:m.id,ok:true,result}})))
+        if(m.method==='app.bootstrap'){reply({version:'test',protocol:1,hasApiKey:false,settings:{theme:2,targetLanguage:'简体中文',autoCopyOcr:false},hotkeys:[],ocr:delivery==='bootstrap'?payload:null});return}
+        if(m.method==='app.ready'){
+          window.readyFrames.push({id:m.params.ocrResultId,text:document.querySelector('[aria-label="可编辑的原文"]')?.textContent,theme:document.documentElement.dataset.theme,animations:document.querySelector('.compact-ocr')?.getAnimations().length})
+          if(delivery==='prepared'&&!m.params.ocrResultId)setTimeout(()=>handlers.forEach(h=>h({data:{type:'event',name:'ocr.result',data:payload}})),20)
+        }
+        reply(null)
+      }}}
+    },{delivery})
+    await page.goto(`http://127.0.0.1:${server.address().port}/?surface=ocr`)
+    await page.waitForFunction(()=>window.readyFrames.some(f=>f.id==='actual-payload'))
+    const frames=await page.evaluate(()=>window.readyFrames)
+    const ready=frames.find(f=>f.id==='actual-payload')
+    assert.match(ready.text,/启动即带文字/);assert.equal(ready.theme,'dark');assert.equal(ready.animations,0)
+    if(delivery==='bootstrap')assert.ok(frames.every(f=>f.id),'Bootstrap OCR never announces an empty editor')
+    else assert.equal(frames[0].id,null,'Prepared empty editor is distinguished from a rendered result')
+    report.push({delivery,committedReadyFrames:frames})
     await context.close()
   }
   const benchmarkRuns = []

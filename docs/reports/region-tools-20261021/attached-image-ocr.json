@@ -1,0 +1,466 @@
+[
+  {
+    "model": "tiny",
+    "input": "1134x1047",
+    "elapsedMs": 1337.6926,
+    "lines": [
+      {
+        "id": 0,
+        "text": "Appearance",
+        "score": 35.814423,
+        "empty": false,
+        "x": 77.81350708007812,
+        "y": 34,
+        "width": 118.18649291992188,
+        "height": 23.00689697265625
+      },
+      {
+        "id": 1,
+        "text": "Mode",
+        "score": 38.44378,
+        "empty": false,
+        "x": 106,
+        "y": 107,
+        "width": 57,
+        "height": 23
+      },
+      {
+        "id": 2,
+        "text": "Device",
+        "score": 39.405098,
+        "empty": false,
+        "x": 783,
+        "y": 109,
+        "width": 57,
+        "height": 19
+      },
+      {
+        "id": 3,
+        "text": "Show bookmarks bar",
+        "score": 39.665543,
+        "empty": false,
+        "x": 107,
+        "y": 180,
+        "width": 185,
+        "height": 21
+      },
+      {
+        "id": 4,
+        "text": "Tab position",
+        "score": 37.918278,
+        "empty": false,
+        "x": 108,
+        "y": 254,
+        "width": 108,
+        "height": 21
+      },
+      {
+        "id": 5,
+        "text": "Horizontal",
+        "score": 39.535435,
+        "empty": false,
+        "x": 783,
+        "y": 254,
+        "width": 86,
+        "height": 18
+      },
+      {
+        "id": 6,
+        "text": "Show tab search button",
+        "score": 37.62224,
+        "empty": false,
+        "x": 106.89952850341797,
+        "y": 326,
+        "width": 209.20095825195312,
+        "height": 22.000030517578125
+      },
+      {
+        "id": 7,
+        "text": "Side panel position",
+        "score": 37.250835,
+        "empty": false,
+        "x": 106,
+        "y": 398,
+        "width": 170,
+        "height": 23
+      },
+      {
+        "id": 8,
+        "text": "ego Panels",
+        "score": 37.22407,
+        "empty": false,
+        "x": 165.49981689453125,
+        "y": 468.99005126953125,
+        "width": 100.50021362304688,
+        "height": 27.009979248046875
+      },
+      {
+        "id": 9,
+        "text": "Right",
+        "score": 35.69699,
+        "empty": false,
+        "x": 780,
+        "y": 468.99078369140625,
+        "width": 53.00006103515625,
+        "height": 28.01849365234375
+      },
+      {
+        "id": 10,
+        "text": "Tab hover preview card",
+        "score": 37.468155,
+        "empty": false,
+        "x": 109,
+        "y": 544,
+        "width": 200,
+        "height": 21
+      },
+      {
+        "id": 11,
+        "text": "Show tab preview images",
+        "score": 36.983574,
+        "empty": false,
+        "x": 166.9017791748047,
+        "y": 616,
+        "width": 224.1964569091797,
+        "height": 23
+      },
+      {
+        "id": 12,
+        "text": "Show tab memory usage",
+        "score": 35.489468,
+        "empty": false,
+        "x": 166.80734252929688,
+        "y": 689,
+        "width": 218.38528442382812,
+        "height": 23
+      },
+      {
+        "id": 13,
+        "text": "Font size",
+        "score": 37.92789,
+        "empty": false,
+        "x": 106,
+        "y": 762,
+        "width": 82,
+        "height": 21
+      },
+      {
+        "id": 14,
+        "text": "Medium (Recommended)",
+        "score": 37.435543,
+        "empty": false,
+        "x": 783,
+        "y": 763,
+        "width": 203,
+        "height": 18
+      },
+      {
+        "id": 15,
+        "text": "Customize fonts",
+        "score": 39.177998,
+        "empty": false,
+        "x": 107.85211944580078,
+        "y": 834,
+        "width": 142.2957763671875,
+        "height": 22
+      },
+      {
+        "id": 16,
+        "text": "V",
+        "score": 19.001965,
+        "empty": false,
+        "x": 1051,
+        "y": 838,
+        "width": 8,
+        "height": 12
+      },
+      {
+        "id": 17,
+        "text": "Page zoom",
+        "score": 35.011265,
+        "empty": false,
+        "x": 105.75721740722656,
+        "y": 907,
+        "width": 103.24281311035156,
+        "height": 26.00738525390625
+      },
+      {
+        "id": 18,
+        "text": "100%",
+        "score": 36.450615,
+        "empty": false,
+        "x": 783,
+        "y": 906,
+        "width": 49,
+        "height": 23
+      },
+      {
+        "id": 19,
+        "text": "Allow split view drag-and-drop on left or right edge of window",
+        "score": 37.036304,
+        "empty": false,
+        "x": 108,
+        "y": 981,
+        "width": 542,
+        "height": 20
+      }
+    ]
+  },
+  {
+    "model": "small",
+    "input": "1134x1047",
+    "elapsedMs": 1092.2855,
+    "lines": [
+      {
+        "id": 0,
+        "text": "Appearance",
+        "score": 22.852457,
+        "empty": false,
+        "x": 76,
+        "y": 32,
+        "width": 121,
+        "height": 25
+      },
+      {
+        "id": 1,
+        "text": "Mode",
+        "score": 22.266483,
+        "empty": false,
+        "x": 102,
+        "y": 103,
+        "width": 64,
+        "height": 30
+      },
+      {
+        "id": 2,
+        "text": "Device",
+        "score": 22.33491,
+        "empty": false,
+        "x": 780,
+        "y": 104,
+        "width": 63,
+        "height": 27
+      },
+      {
+        "id": 3,
+        "text": "1",
+        "score": 8.843853,
+        "empty": false,
+        "x": 1043,
+        "y": 112,
+        "width": 10,
+        "height": 8
+      },
+      {
+        "id": 4,
+        "text": "Show bookmarks bar",
+        "score": 20.664324,
+        "empty": false,
+        "x": 104.73548126220703,
+        "y": 177,
+        "width": 189.529052734375,
+        "height": 27.000015258789062
+      },
+      {
+        "id": 5,
+        "text": "Tab position",
+        "score": 20.124249,
+        "empty": false,
+        "x": 103.74784851074219,
+        "y": 249.00001525878906,
+        "width": 115.50431823730469,
+        "height": 30.000015258789062
+      },
+      {
+        "id": 6,
+        "text": "Horizontal",
+        "score": 20.227568,
+        "empty": false,
+        "x": 780,
+        "y": 250,
+        "width": 91,
+        "height": 25
+      },
+      {
+        "id": 7,
+        "text": "Show tab search button",
+        "score": 21.894949,
+        "empty": false,
+        "x": 106,
+        "y": 324,
+        "width": 211,
+        "height": 24
+      },
+      {
+        "id": 8,
+        "text": "Side panel position",
+        "score": 21.625685,
+        "empty": false,
+        "x": 105,
+        "y": 396,
+        "width": 173,
+        "height": 27
+      },
+      {
+        "id": 9,
+        "text": "ego Panels",
+        "score": 21.088387,
+        "empty": false,
+        "x": 164.43673706054688,
+        "y": 466.99151611328125,
+        "width": 103.56329345703125,
+        "height": 31.00848388671875
+      },
+      {
+        "id": 10,
+        "text": "Right",
+        "score": 20.463564,
+        "empty": false,
+        "x": 780,
+        "y": 468,
+        "width": 53,
+        "height": 28
+      },
+      {
+        "id": 11,
+        "text": "",
+        "score": 0,
+        "empty": true,
+        "x": 1044,
+        "y": 477,
+        "width": 7,
+        "height": 5
+      },
+      {
+        "id": 12,
+        "text": "Tab hover preview card",
+        "score": 21.399794,
+        "empty": false,
+        "x": 105.87745666503906,
+        "y": 540.9999389648438,
+        "width": 204.24510192871094,
+        "height": 26
+      },
+      {
+        "id": 13,
+        "text": "Show tab preview images",
+        "score": 21.935015,
+        "empty": false,
+        "x": 165.88938903808594,
+        "y": 615,
+        "width": 226.2212371826172,
+        "height": 26
+      },
+      {
+        "id": 14,
+        "text": "Show tab memory usage",
+        "score": 21.629417,
+        "empty": false,
+        "x": 165.8868865966797,
+        "y": 688.0000610351562,
+        "width": 221.22630310058594,
+        "height": 26
+      },
+      {
+        "id": 15,
+        "text": "9",
+        "score": 12.762605,
+        "empty": false,
+        "x": 1028,
+        "y": 687,
+        "width": 43,
+        "height": 25
+      },
+      {
+        "id": 16,
+        "text": "Font size",
+        "score": 21.506956,
+        "empty": false,
+        "x": 102.34864807128906,
+        "y": 757,
+        "width": 89.65135192871094,
+        "height": 30.9853515625
+      },
+      {
+        "id": 17,
+        "text": "Medium (Recommended)",
+        "score": 22.023796,
+        "empty": false,
+        "x": 780.8793334960938,
+        "y": 759.0000610351562,
+        "width": 207.24151611328125,
+        "height": 26
+      },
+      {
+        "id": 18,
+        "text": "",
+        "score": 0,
+        "empty": true,
+        "x": 1044,
+        "y": 768,
+        "width": 7,
+        "height": 5
+      },
+      {
+        "id": 19,
+        "text": "Customize fonts",
+        "score": 21.426937,
+        "empty": false,
+        "x": 106,
+        "y": 832,
+        "width": 145,
+        "height": 25
+      },
+      {
+        "id": 20,
+        "text": "\u304F",
+        "score": 11.72498,
+        "empty": false,
+        "x": 1050,
+        "y": 835,
+        "width": 13,
+        "height": 18
+      },
+      {
+        "id": 21,
+        "text": "Page zoom",
+        "score": 20.988756,
+        "empty": false,
+        "x": 104,
+        "y": 904,
+        "width": 107,
+        "height": 29
+      },
+      {
+        "id": 22,
+        "text": "100%",
+        "score": 24.746178,
+        "empty": false,
+        "x": 781,
+        "y": 905,
+        "width": 52,
+        "height": 24
+      },
+      {
+        "id": 23,
+        "text": "1",
+        "score": 8.843853,
+        "empty": false,
+        "x": 1043,
+        "y": 911,
+        "width": 10,
+        "height": 8
+      },
+      {
+        "id": 24,
+        "text": "Allow split view drag-and-drop on left or right edge of window",
+        "score": 20.904142,
+        "empty": false,
+        "x": 106,
+        "y": 978,
+        "width": 547,
+        "height": 26
+      }
+    ]
+  }
+]

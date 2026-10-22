@@ -2122,8 +2122,9 @@ public sealed partial class ImageViewWindow : Window
 
     private async void Button_OcrEditor_Click(object sender, RoutedEventArgs e)
     {
+        using var editorPreparation=OcrResultWindow.Prepare();
         if (_ocrLines.Count == 0) await RunOcrAsync();
-        if (_ocrLines.Count > 0) _ = new OcrResultWindow(_ocrLines);
+        if (_ocrLines.Count > 0) editorPreparation.Show(_ocrLines);
     }
 
     /// <summary>图库/剪贴板右键「识别文字」入口复用：打开查看器加载完直接进入 OCR。</summary>

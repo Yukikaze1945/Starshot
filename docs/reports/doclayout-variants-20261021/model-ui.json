@@ -1,0 +1,369 @@
+[
+  {
+    "width": 1280,
+    "height": 900,
+    "scale": 2,
+    "theme": 1,
+    "ok": true,
+    "controls": [
+      {
+        "text": "使用 Tiny",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "正在使用",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "校验",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "删除",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "导入本地 Small",
+        "visible": true,
+        "fits": true
+      }
+    ],
+    "acquisition": [
+      {
+        "text": "自动选择 · 国内优先魔搭 ModelScopeHF 镜像 · hf-mirror.comHugging FaceGitHub 原始来源",
+        "fits": true
+      },
+      {
+        "text": "扫描本地",
+        "fits": true
+      },
+      {
+        "text": "选择文件夹扫描",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "导入副本",
+        "fits": true
+      },
+      {
+        "text": "导入副本",
+        "fits": true
+      },
+      {
+        "text": " 设为版面模型",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "导入本地",
+        "fits": true
+      },
+      {
+        "text": " 当前版面模型",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "导入本地",
+        "fits": true
+      },
+      {
+        "text": "下载 模型",
+        "fits": true
+      },
+      {
+        "text": "导入本地",
+        "fits": true
+      },
+      {
+        "text": " 正在使用离线翻译",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "导入本地",
+        "fits": true
+      },
+      {
+        "text": "下载 模型",
+        "fits": true
+      },
+      {
+        "text": "导入本地",
+        "fits": true
+      }
+    ],
+    "calls": [
+      "app.bootstrap",
+      "app.ready",
+      "ocr.models.status",
+      "models.runtime.status",
+      "models.list",
+      "library.list",
+      "models.layout.select",
+      "models.list",
+      "models.download",
+      "models.list",
+      "models.cancel",
+      "models.list",
+      "models.import",
+      "models.list",
+      "models.layout.select",
+      "models.list",
+      "models.verify",
+      "models.list",
+      "models.delete",
+      "models.list",
+      "models.layout.select",
+      "models.list",
+      "models.source",
+      "models.list",
+      "models.source",
+      "models.list",
+      "models.source",
+      "models.list",
+      "models.source",
+      "models.list",
+      "models.translation",
+      "models.list",
+      "models.runtime.gpu",
+      "models.runtime.status",
+      "ocr.models.status",
+      "models.runtime.load",
+      "models.runtime.status",
+      "models.runtime.api",
+      "models.runtime.status",
+      "models.runtime.copyKey",
+      "models.runtime.status",
+      "models.list",
+      "models.runtime.api",
+      "models.runtime.status",
+      "models.runtime.api",
+      "models.runtime.status",
+      "models.runtime.unload",
+      "models.runtime.status",
+      "models.runtime.gpu",
+      "models.runtime.status",
+      "models.scan",
+      "models.runtime.status",
+      "models.import",
+      "models.list",
+      "models.import",
+      "ocr.models.select",
+      "models.scan"
+    ]
+  },
+  {
+    "width": 720,
+    "height": 900,
+    "scale": 2,
+    "theme": 2,
+    "ok": true,
+    "controls": [
+      {
+        "text": "使用 Tiny",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "正在使用",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "校验",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "删除",
+        "visible": true,
+        "fits": true
+      },
+      {
+        "text": "导入本地 Small",
+        "visible": true,
+        "fits": true
+      }
+    ],
+    "acquisition": [
+      {
+        "text": "自动选择 · 国内优先魔搭 ModelScopeHF 镜像 · hf-mirror.comHugging FaceGitHub 原始来源",
+        "fits": true
+      },
+      {
+        "text": "扫描本地",
+        "fits": true
+      },
+      {
+        "text": "选择文件夹扫描",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "导入副本",
+        "fits": true
+      },
+      {
+        "text": "导入副本",
+        "fits": true
+      },
+      {
+        "text": " 设为版面模型",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "导入本地",
+        "fits": true
+      },
+      {
+        "text": " 当前版面模型",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "导入本地",
+        "fits": true
+      },
+      {
+        "text": "下载 模型",
+        "fits": true
+      },
+      {
+        "text": "导入本地",
+        "fits": true
+      },
+      {
+        "text": " 正在使用离线翻译",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "",
+        "fits": true
+      },
+      {
+        "text": "导入本地",
+        "fits": true
+      },
+      {
+        "text": "下载 模型",
+        "fits": true
+      },
+      {
+        "text": "导入本地",
+        "fits": true
+      }
+    ],
+    "calls": [
+      "app.bootstrap",
+      "app.ready",
+      "ocr.models.status",
+      "models.runtime.status",
+      "models.list",
+      "library.list",
+      "models.layout.select",
+      "models.list",
+      "models.download",
+      "models.list",
+      "models.cancel",
+      "models.list",
+      "models.import",
+      "models.list",
+      "models.layout.select",
+      "models.list",
+      "models.verify",
+      "models.list",
+      "models.delete",
+      "models.list",
+      "models.layout.select",
+      "models.list",
+      "models.source",
+      "models.list",
+      "models.source",
+      "models.list",
+      "models.source",
+      "models.list",
+      "ocr.models.status",
+      "models.source",
+      "models.list",
+      "models.translation",
+      "models.list",
+      "models.runtime.gpu",
+      "models.runtime.status",
+      "models.list",
+      "models.runtime.load",
+      "models.runtime.status",
+      "models.runtime.api",
+      "models.runtime.status",
+      "models.runtime.copyKey",
+      "models.runtime.status",
+      "models.runtime.status",
+      "models.runtime.api",
+      "models.runtime.status",
+      "models.runtime.api",
+      "models.runtime.status",
+      "models.runtime.unload",
+      "models.runtime.status",
+      "models.runtime.gpu",
+      "models.runtime.status",
+      "models.scan",
+      "ocr.models.status",
+      "models.import",
+      "models.list",
+      "models.import",
+      "ocr.models.select",
+      "models.scan"
+    ]
+  }
+]

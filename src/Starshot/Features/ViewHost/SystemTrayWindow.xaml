@@ -78,6 +78,17 @@
           <TextBlock VerticalAlignment="Center" Text="{x:Bind lang:Lang.ImageViewWindow_Ocr}" />
         </StackPanel>
       </Button>
+      <DropDownButton Height="36" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Content="实时字幕摘录">
+        <DropDownButton.Flyout><MenuFlyout>
+          <MenuFlyoutItem Text="打开控制面板" Click="SubtitlePanel_Click" />
+          <MenuFlyoutItem Text="区域框选字幕 / 重新选区" Click="SubtitleConfigure_Click" />
+          <MenuFlyoutItem Text="继续摘录" Click="SubtitleStart_Click" />
+          <MenuFlyoutItem Text="暂停摘录" Click="SubtitlePause_Click" />
+          <MenuFlyoutSeparator />
+          <MenuFlyoutItem Text="复制纯文案" Click="SubtitleCopy_Click" />
+          <MenuFlyoutItem Text="结束摘录 · 保留结果" Click="SubtitleStop_Click" />
+        </MenuFlyout></DropDownButton.Flyout>
+      </DropDownButton>
       <MenuFlyoutSeparator />
       <TextBlock Margin="12,6,12,4" FontSize="12"
                  Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="截图模式" />

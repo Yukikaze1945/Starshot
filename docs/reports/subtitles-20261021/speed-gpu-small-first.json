@@ -1,0 +1,500 @@
+[
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": true,
+    "actual": {
+      "requested": "Auto",
+      "device": "NVIDIA GeForce RTX 5060 Ti",
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "720p",
+    "input": "1280x140",
+    "cold": true,
+    "ms": 1283.6387,
+    "initMs": 560,
+    "initCount": 1,
+    "privateBytes": 359555072,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 177.0703125,
+      "sharedResidentMiB": 30.1640625,
+      "dedicatedCommittedMiB": 177.0703125,
+      "adapters": 3,
+      "residentQueries": 4,
+      "committedQueries": 6,
+      "failedQueries": 4
+    },
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": true,
+    "fixture": "720p",
+    "input": "1280x140",
+    "ms": 34.8093,
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": true,
+    "actual": {
+      "requested": "Auto",
+      "device": "NVIDIA GeForce RTX 5060 Ti",
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "720p",
+    "input": "1280x140",
+    "cold": false,
+    "ms": 129.1093,
+    "initMs": 560,
+    "initCount": 1,
+    "privateBytes": 360415232,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 177.0703125,
+      "sharedResidentMiB": 30.1640625,
+      "dedicatedCommittedMiB": 177.0703125,
+      "adapters": 3,
+      "residentQueries": 4,
+      "committedQueries": 6,
+      "failedQueries": 4
+    },
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": true,
+    "fixture": "720p",
+    "input": "1280x140",
+    "ms": 23.3665,
+    "text": "\u6211\u4EEC\u5728\u8FD9\u91CC\u8BB0\u5F55\u6BCF\u4E00\u53E5\u5BF9\u767D\nKeep every word, without interrupting playback."
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": true,
+    "actual": {
+      "requested": "Auto",
+      "device": "NVIDIA GeForce RTX 5060 Ti",
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "1080p",
+    "input": "1920x180",
+    "cold": false,
+    "ms": 180.3597,
+    "initMs": 560,
+    "initCount": 1,
+    "privateBytes": 400535552,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 208.7734375,
+      "sharedResidentMiB": 32.1640625,
+      "dedicatedCommittedMiB": 208.7734375,
+      "adapters": 3,
+      "residentQueries": 4,
+      "committedQueries": 6,
+      "failedQueries": 4
+    },
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": true,
+    "fixture": "1080p",
+    "input": "1920x180",
+    "ms": 18.753,
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": true,
+    "actual": {
+      "requested": "Auto",
+      "device": "NVIDIA GeForce RTX 5060 Ti",
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "1080p",
+    "input": "1920x180",
+    "cold": false,
+    "ms": 105.1402,
+    "initMs": 560,
+    "initCount": 1,
+    "privateBytes": 400666624,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 208.7734375,
+      "sharedResidentMiB": 32.1640625,
+      "dedicatedCommittedMiB": 208.7734375,
+      "adapters": 3,
+      "residentQueries": 4,
+      "committedQueries": 6,
+      "failedQueries": 4
+    },
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": true,
+    "fixture": "1080p",
+    "input": "1920x180",
+    "ms": 18.6381,
+    "text": "\u8BA9\u6BCF\u4E00\u53E5\u5BF9\u767D\u90FD\u7559\u4E0B\u6765\nRead subtitles while the video keeps playing."
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": true,
+    "actual": {
+      "requested": "Auto",
+      "device": "NVIDIA GeForce RTX 5060 Ti",
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "4k",
+    "input": "3840x360",
+    "cold": false,
+    "ms": 134.2716,
+    "initMs": 560,
+    "initCount": 1,
+    "privateBytes": 439906304,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 243.6015625,
+      "sharedResidentMiB": 32.1640625,
+      "dedicatedCommittedMiB": 243.6015625,
+      "adapters": 3,
+      "residentQueries": 4,
+      "committedQueries": 6,
+      "failedQueries": 4
+    },
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": true,
+    "fixture": "4k",
+    "input": "3840x360",
+    "ms": 37.854,
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "inference",
+    "model": "small",
+    "gpuRequested": true,
+    "actual": {
+      "requested": "Auto",
+      "device": "NVIDIA GeForce RTX 5060 Ti",
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        }
+      ]
+    },
+    "fixture": "4k",
+    "input": "3840x360",
+    "cold": false,
+    "ms": 117.3516,
+    "initMs": 560,
+    "initCount": 1,
+    "privateBytes": 441425920,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 243.6015625,
+      "sharedResidentMiB": 32.1640625,
+      "dedicatedCommittedMiB": 243.6015625,
+      "adapters": 3,
+      "residentQueries": 4,
+      "committedQueries": 6,
+      "failedQueries": 4
+    },
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "background-inference",
+    "model": "small",
+    "gpuRequested": true,
+    "fixture": "4k",
+    "input": "3840x360",
+    "ms": 33.1591,
+    "text": "\u8FD9\u662F\u56DB\u5343\u5206\u8FA8\u7387\u7684\u4E2D\u6587\u5B57\u5E55\u8BC6\u522B\u6D4B\u8BD5\nCapture every sentence without stopping playback."
+  },
+  {
+    "kind": "timeline",
+    "model": "small",
+    "elapsedMs": 3706,
+    "Captures": 19,
+    "Recognitions": 5,
+    "Skipped": 14,
+    "Count": 4,
+    "text": "\u8FD9\u662F\u7B2C\u4E00\u53E5\u5B57\u5E55\r\nThe first subtitle is visible.\r\n\u8FD9\u662F\u77ED\u6682\u7684\u7B2C\u4E8C\u53E5\r\nA short second subtitle.\r\n\u8FD9\u662F\u7B2C\u4E09\u53E5\u5B57\u5E55\r\nThe third subtitle follows.\r\n\u8FD9\u662F\u7B2C\u4E00\u53E5\u5B57\u5E55\r\nThe first subtitle is visible.",
+    "expected": [
+      "\u7B2C\u4E00\u53E5",
+      "\u7B2C\u4E8C\u53E5",
+      "\u7B2C\u4E09\u53E5"
+    ],
+    "found": [
+      true,
+      true,
+      true
+    ],
+    "shortCaptionMs": 400,
+    "observedOcrMs": [
+      18.7445,
+      24.8174,
+      11.0913,
+      4.8414,
+      11.2846
+    ]
+  },
+  {
+    "kind": "summary",
+    "model": "small",
+    "gpuRequested": true,
+    "actual": {
+      "requested": "Auto",
+      "device": "NVIDIA GeForce RTX 5060 Ti",
+      "stages": [
+        {
+          "stage": "_detector",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_classifier",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        },
+        {
+          "stage": "_recognizer",
+          "sessions": [
+            {
+              "type": "Sdcb.SimdPaddleOCR.Backends.Vulkan.GpuSession",
+              "gpuAlive": true
+            }
+          ]
+        }
+      ]
+    },
+    "memoryBefore": 23343104,
+    "gpuBefore": {
+      "status": 0,
+      "dedicatedResidentMiB": 0,
+      "sharedResidentMiB": 0,
+      "dedicatedCommittedMiB": 0,
+      "adapters": 3,
+      "residentQueries": 0,
+      "committedQueries": 0,
+      "failedQueries": 14
+    },
+    "privateAfter": 427397120,
+    "gpuAfter": {
+      "status": 0,
+      "dedicatedResidentMiB": 243.9765625,
+      "sharedResidentMiB": 32.1640625,
+      "dedicatedCommittedMiB": 243.9765625,
+      "adapters": 3,
+      "residentQueries": 4,
+      "committedQueries": 6,
+      "failedQueries": 4
+    },
+    "warmMedianMs": 129.1093,
+    "warmMaxMs": 180.3597,
+    "initializations": 1,
+    "foregroundBusyReturnMs": 0.0346,
+    "fallbacks": 0
+  },
+  {
+    "kind": "engines-retired",
+    "privateBytes": 427802624,
+    "gpuMemory": {
+      "status": 0,
+      "dedicatedResidentMiB": 34.921875,
+      "sharedResidentMiB": 27.7890625,
+      "dedicatedCommittedMiB": 34.921875,
+      "adapters": 3,
+      "residentQueries": 4,
+      "committedQueries": 6,
+      "failedQueries": 4
+    },
+    "loadedModel": null
+  }
+]

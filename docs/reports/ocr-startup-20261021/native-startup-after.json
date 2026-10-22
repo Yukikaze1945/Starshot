@@ -1,0 +1,30 @@
+{
+  "checks": 18,
+  "rows": [
+    {
+      "cycle": 0,
+      "readyMs": 4290.4019,
+      "textMs": 4299.7092,
+      "layout": "\u0022{\\\u0022text\\\u0022:\\\u0022\u51B7\u542F\u52A8\u6587\u5B57 / First OCR result\\\u0022,\\\u0022fonts\\\u0022:\\\u0022loaded\\\u0022,\\\u0022animations\\\u0022:0}\u0022",
+      "privateBytes": 153788416
+    },
+    {
+      "cycle": 1,
+      "readyMs": 2770.6469,
+      "textMs": 2772.9282,
+      "layout": "\u0022{\\\u0022text\\\u0022:\\\u0022\u51B7\u542F\u52A8\u6587\u5B57 / First OCR result\\\u0022,\\\u0022fonts\\\u0022:\\\u0022loaded\\\u0022,\\\u0022animations\\\u0022:0}\u0022",
+      "privateBytes": 142553088
+    },
+    {
+      "cycle": 2,
+      "readyMs": 2071.2829,
+      "textMs": 2074.5982,
+      "layout": "\u0022{\\\u0022text\\\u0022:\\\u0022\u51B7\u542F\u52A8\u6587\u5B57 / First OCR result\\\u0022,\\\u0022fonts\\\u0022:\\\u0022loaded\\\u0022,\\\u0022animations\\\u0022:0}\u0022",
+      "privateBytes": 143589376
+    },
+    {
+      "phase": "prepared-result",
+      "postOcrMs": 36.8224
+    }
+  ]
+}

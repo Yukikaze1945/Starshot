@@ -1,0 +1,31 @@
+{
+  "ok": true,
+  "reports": [
+    {
+      "width": 1280,
+      "height": 900,
+      "theme": 1,
+      "dpi": 200,
+      "formulaWord": true,
+      "editableLatex": true,
+      "tableSpans": true,
+      "tableExport": true,
+      "cancelOnClose": true,
+      "standalone": true,
+      "errors": []
+    },
+    {
+      "width": 680,
+      "height": 460,
+      "theme": 2,
+      "dpi": 200,
+      "formulaWord": true,
+      "editableLatex": true,
+      "tableSpans": true,
+      "tableExport": true,
+      "cancelOnClose": true,
+      "standalone": true,
+      "errors": []
+    }
+  ]
+}

@@ -1,19 +1,33 @@
+using System;
 using System.Collections.Generic;
 using Starshot.Helpers;
+using Starshot.Features.ViewHost;
 
 namespace Starshot.Features.Screenshot;
 
-/// <summary>One compact WebUI OCR window, independent of the translation workspace.</summary>
+/// <summary>Each recognition owns an independent editor and its draft.</summary>
 internal sealed class OcrResultWindow
 {
-    private static Starshot.Features.ViewHost.MainWindow? _popup;
-    public OcrResultWindow(IReadOnlyList<OcrLine> lines, bool translateImmediately = false)
+    internal static Preparation Prepare() => new();
+    internal sealed class Preparation : IDisposable
     {
-        if (_popup is null)
+        private MainWindow? _window = new(ocrPopup:true);
+        private bool _delivered;
+        internal void Show(IReadOnlyList<OcrLine> lines, bool translate=false)
         {
-            _popup = new Starshot.Features.ViewHost.MainWindow(ocrPopup: true);
-            _popup.Closed += (_, _) => _popup = null;
+            var window=_window??throw new ObjectDisposedException(nameof(Preparation));
+            window.ShowOcr(lines,translate);_delivered=true;
         }
-        _popup.ShowOcr(lines, translateImmediately);
+        public void Dispose()
+        {
+            var window=_window;_window=null;
+            // Delivered windows remain rooted by their native HWND until the user
+            // closes them; an empty/failed OCR preparation is never kept idle.
+            if(!_delivered)window?.Dispose();
+        }
+    }
+    public OcrResultWindow(IReadOnlyList<OcrLine> lines, bool translateImmediately=false)
+    {
+        using var preparation=Prepare();preparation.Show(lines,translateImmediately);
     }
 }

@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "softwareRendering": true,
+  "realModelInference": false,
+  "reports": [
+    {
+      "width": 1280,
+      "height": 900,
+      "theme": 1,
+      "deviceScaleFactor": 2,
+      "checks": "workspace and clipboard QR actions, internal viewer, split/side, polygon undo/redo, mask export, HDR/gamut UI, synthetic translation UI, capture draft guard, model controls",
+      "errors": []
+    },
+    {
+      "width": 960,
+      "height": 640,
+      "theme": 2,
+      "deviceScaleFactor": 2,
+      "checks": "workspace and clipboard QR actions, internal viewer, split/side, polygon undo/redo, mask export, HDR/gamut UI, synthetic translation UI, capture draft guard, model controls",
+      "errors": []
+    }
+  ]
+}

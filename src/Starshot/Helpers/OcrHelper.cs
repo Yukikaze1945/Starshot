@@ -71,6 +71,14 @@ public static class OcrHelper
 
     public static async Task<List<OcrLine>?> RecognizeAsync(byte[] bgra, int width, int height,
         double scale, CancellationToken cancellationToken = default, int stride = 0)
+        =>await RecognizeCoreAsync(bgra,width,height,scale,cancellationToken,stride,false).ConfigureAwait(false);
+
+    // Background subtitle sampling never queues ahead of an interactive OCR request.
+    // null means retry a later sample, not a newly observed empty subtitle.
+    internal static Task<List<OcrLine>?> RecognizeBackgroundAsync(byte[] bgra,int width,int height,CancellationToken ct)
+        =>RecognizeCoreAsync(bgra,width,height,1,ct,0,true);
+    private static async Task<List<OcrLine>?> RecognizeCoreAsync(byte[] bgra,int width,int height,
+        double scale,CancellationToken cancellationToken,int stride,bool background)
     {
         ArgumentNullException.ThrowIfNull(bgra);
         if (width <= 0 || height <= 0 || !double.IsFinite(scale) || scale <= 0)
@@ -78,7 +86,8 @@ public static class OcrHelper
         stride = stride == 0 ? checked(width * 4) : stride;
         if (stride < checked(width * 4) || bgra.Length < checked(stride * height))
             throw new ArgumentException("OCR BGRA buffer/stride does not match its dimensions.", nameof(bgra));
-        await EngineGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        if(background){if(!await EngineGate.WaitAsync(0,cancellationToken).ConfigureAwait(false))return null;}
+        else await EngineGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             ObjectDisposedException.ThrowIf(_stopping, typeof(OcrHelper));
@@ -90,7 +99,10 @@ public static class OcrHelper
                 try
                 {
                     PaddleOcrModelBundle? bundle = model == "small"
-                        ? await OcrModelStore.Current.GetVerifiedBundleAsync(cancellationToken).ConfigureAwait(false) : null;
+                        // Subtitle samples reuse the verified fingerprint; an installed
+                        // bundle mutation still retires the engine under EngineGate,
+                        // and each provider verifies resources when opening a model.
+                        ? await OcrModelStore.Current.GetVerifiedBundleAsync(cancellationToken,force:!background).ConfigureAwait(false) : null;
                     if (model == "small" && bundle is null)
                     {
                         Log.Warning("[OCR] Small unavailable or corrupt; falling back to built-in Tiny");

@@ -20,6 +20,8 @@ public enum CaptureMonitorSource
 public static partial class AppConfig
 {
     public static string TranslationBackend {get=>GetValue("api");set=>SetValue(value=="local" ? "local" : "api");}
+    public static bool LocalTranslationGpu {get=>GetValue(false);set=>SetValue(value);}
+    public static int LocalTranslationApiPort {get=>GetValue(43182);set=>SetValue(value);}
     #region Static Setting
 
 

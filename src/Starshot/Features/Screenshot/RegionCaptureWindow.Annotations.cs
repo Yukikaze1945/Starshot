@@ -15,7 +15,7 @@ namespace Starshot.Features.Screenshot;
 
 public sealed partial class RegionCaptureWindow
 {
-    private enum AnnotationTool { Select, Rectangle, Ellipse, Line, Arrow, Number, Pen, Highlighter, Mosaic, Blur, Text, Eraser }
+    private enum AnnotationTool { Select, Rectangle, Ellipse, Line, Arrow, Number, Pen, Highlighter, Mosaic, Blur, Text, Eraser, Translation }
 
     private sealed class Annotation
     {
@@ -26,6 +26,8 @@ public sealed partial class RegionCaptureWindow
         public float Width { get; init; } = 3;
         public string Text { get; init; } = "";
         public List<Point> Points { get; } = new();
+        public float CoordinateScale { get; set; } = 1;
+        public RegionTranslatedText[] Translation {get;init;}=[];
     }
 
     private readonly List<Annotation> _annotations = new();
@@ -127,6 +129,7 @@ public sealed partial class RegionCaptureWindow
         if (_draftAnnotation is null) return;
         position = new Point(Math.Clamp(position.X, SelectionRect.Left, SelectionRect.Right),
             Math.Clamp(position.Y, SelectionRect.Top, SelectionRect.Bottom));
+        position = new Point(position.X / _draftAnnotation.CoordinateScale, position.Y / _draftAnnotation.CoordinateScale);
         _draftAnnotation.End = position;
         if (_draftAnnotation.Tool is AnnotationTool.Pen or AnnotationTool.Highlighter or AnnotationTool.Mosaic or AnnotationTool.Blur)
             _draftAnnotation.Points.Add(position);
@@ -148,7 +151,7 @@ public sealed partial class RegionCaptureWindow
                 _draftAnnotation = new Annotation
                 {
                     Tool = AnnotationTool.Number, Start = _draftAnnotation.Start, End = _draftAnnotation.End,
-                    Color = _draftAnnotation.Color, Text = count.ToString(), Width = _draftAnnotation.Width,
+                    Color = _draftAnnotation.Color, Text = count.ToString(), Width = _draftAnnotation.Width, CoordinateScale = _draftAnnotation.CoordinateScale,
                 };
             }
             _undoEdits.Push((_draftAnnotation, _annotations.Count, true));
@@ -195,7 +198,7 @@ public sealed partial class RegionCaptureWindow
     private static Rect AnnotationBounds(Annotation a)
     {
         double left = Math.Min(a.Start.X, a.End.X) - 12, top = Math.Min(a.Start.Y, a.End.Y) - 12;
-        return new Rect(left, top, Math.Abs(a.End.X - a.Start.X) + 24, Math.Abs(a.End.Y - a.Start.Y) + 24);
+        return ScaleViewportRect(new Rect(left, top, Math.Abs(a.End.X - a.Start.X) + 24, Math.Abs(a.End.Y - a.Start.Y) + 24), a.CoordinateScale);
     }
 
     private void TranslateAnnotations(double dx, double dy)
@@ -203,10 +206,11 @@ public sealed partial class RegionCaptureWindow
         if (dx == 0 && dy == 0) return;
         foreach (Annotation annotation in _annotations)
         {
-            annotation.Start = new Point(annotation.Start.X + dx, annotation.Start.Y + dy);
-            annotation.End = new Point(annotation.End.X + dx, annotation.End.Y + dy);
+            double x = dx / annotation.CoordinateScale, y = dy / annotation.CoordinateScale;
+            annotation.Start = new Point(annotation.Start.X + x, annotation.Start.Y + y);
+            annotation.End = new Point(annotation.End.X + x, annotation.End.Y + y);
             for (int i = 0; i < annotation.Points.Count; i++)
-                annotation.Points[i] = new Point(annotation.Points[i].X + dx, annotation.Points[i].Y + dy);
+                annotation.Points[i] = new Point(annotation.Points[i].X + x, annotation.Points[i].Y + y);
         }
     }
 
@@ -247,11 +251,28 @@ public sealed partial class RegionCaptureWindow
 
     private void DrawAnnotation(CanvasDrawingSession ds, Annotation a)
     {
+        var transform = ds.Transform;
+        ds.Transform = Matrix3x2.CreateScale(a.CoordinateScale) * transform;
+        try { DrawAnnotationCore(ds, a); }
+        finally { ds.Transform = transform; }
+    }
+    private void DrawAnnotationCore(CanvasDrawingSession ds, Annotation a)
+    {
         Vector2 start = V(a.Start), end = V(a.End);
         float left = Math.Min(start.X, end.X), top = Math.Min(start.Y, end.Y);
         float width = Math.Abs(end.X - start.X), height = Math.Abs(end.Y - start.Y);
         switch (a.Tool)
         {
+            case AnnotationTool.Translation:
+                foreach(var line in a.Translation)
+                {
+                    var b=line.Bounds;var target=new Rect(a.Start.X+b.X,a.Start.Y+b.Y,b.Width,b.Height);
+                    using var clip=ds.CreateLayer(1,target);
+                    ds.FillRectangle(target,ToolbarBrush(line.Background).Color);
+                    using var format=new CanvasTextFormat{FontSize=line.FontSize,WordWrapping=CanvasWordWrapping.NoWrap};
+                    ds.DrawText(line.Text,target,ToolbarBrush(line.Foreground).Color,format);
+                }
+                break;
             case AnnotationTool.Rectangle:
             ds.DrawRectangle(left, top, width, height, a.Color, a.Width);
                 break;
@@ -296,7 +317,7 @@ public sealed partial class RegionCaptureWindow
                 break;
             case AnnotationTool.Text:
                 using (var textFormat = new CanvasTextFormat { FontSize = 24 })
-                ds.DrawText(a.Text, new Rect(a.Start.X, a.Start.Y, Math.Max(240, SelectionRect.Right - a.Start.X), 60),
+                ds.DrawText(a.Text, new Rect(a.Start.X, a.Start.Y, Math.Max(240, SelectionRect.Right / a.CoordinateScale - a.Start.X), 60),
                     a.Color, textFormat);
                 break;
         }
@@ -315,8 +336,8 @@ public sealed partial class RegionCaptureWindow
             {
                 if (!visited.Add((x, y))) continue;
                 float px = x * 10, py = y * 10;
-                if (!SelectionRect.Contains(new Point(px + 5, py + 5))) continue;
-                if (TrySampleColor(px + 5, py + 5, out Color color))
+                if (!SelectionRect.Contains(new Point((px + 5) * a.CoordinateScale, (py + 5) * a.CoordinateScale))) continue;
+                if (TrySampleColor((px + 5) * a.CoordinateScale, (py + 5) * a.CoordinateScale, out Color color))
                     ds.FillRectangle(px, py, 10, 10, color);
             }
         }
@@ -333,12 +354,12 @@ public sealed partial class RegionCaptureWindow
             {
                 if (!visited.Add((x, y))) continue;
                 float px = x * 6, py = y * 6;
-                if (!SelectionRect.Contains(new Point(px + 3, py + 3))) continue;
+                if (!SelectionRect.Contains(new Point((px + 3) * a.CoordinateScale, (py + 3) * a.CoordinateScale))) continue;
                 int r = 0, g = 0, b = 0, samples = 0;
                 for (int sy = -12; sy <= 12; sy += 12)
                 for (int sx = -12; sx <= 12; sx += 12)
                 {
-                    if (!TrySampleColor(px + 3 + sx, py + 3 + sy, out Color sample)) continue;
+                    if (!TrySampleColor((px + 3 + sx) * a.CoordinateScale, (py + 3 + sy) * a.CoordinateScale, out Color sample)) continue;
                     r += sample.R; g += sample.G; b += sample.B; samples++;
                 }
                 if (samples > 0)

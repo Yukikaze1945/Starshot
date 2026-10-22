@@ -26,7 +26,7 @@ public sealed class OcrModelStore
     public static long TotalBytes => Assets.Sum(a => a.Bytes);
     public static string SourceUrl(Asset asset) => $"https://raw.githubusercontent.com/sdcb/SimdPaddleOCR/{Revision}/models/{asset.Source}";
     public sealed record Status(string State, bool Installed, long DownloadedBytes, long TotalBytes,
-        string? Error, string Directory, string Version);
+        string? Error, string Directory, string Version, string? Warning, string? ActiveSource, ModelDownloadSource[] Sources, string? ActualHashes);
     private static readonly HttpClient Client = new(new SocketsHttpHandler { ConnectTimeout = TimeSpan.FromSeconds(15) })
         { Timeout = Timeout.InfiniteTimeSpan };
     public static OcrModelStore Current { get; } = new(
@@ -43,6 +43,7 @@ public sealed class OcrModelStore
     private string? _fingerprint;
     private string _state = "notInstalled";
     private string? _error;
+    private string? _warning, _activeSource, _actualHashes;
     private bool _installed;
     private long _downloaded;
     public string DirectoryPath => Path.Combine(Path.GetFullPath(_root()), "ppocrv6-small-1.0.0");
@@ -52,7 +53,8 @@ public sealed class OcrModelStore
     { _root = root; _client = client; _publish = publish; }
 
     private Status Snapshot()
-    { lock (_sync) return new(_state, _installed, _downloaded, TotalBytes, _error, DirectoryPath, ModelVersion); }
+    { lock (_sync) return new(_state, _installed, _downloaded, TotalBytes, _error, DirectoryPath, ModelVersion,
+        _warning,_activeSource,ModelDownloadSources.For("ocr-small",SourceUrl(Assets[0])),_actualHashes); }
     private void Set(string state, bool installed, string? error = null)
     { lock (_sync) { _state = state; _installed = installed; _error = error; } }
 
@@ -67,16 +69,18 @@ public sealed class OcrModelStore
             lock (_sync) if (_mutating) return Snapshot();
             string? signature = Fingerprint(DirectoryPath);
             lock (_sync) if (!force && signature is not null && signature == _fingerprint && _installed) return Snapshot();
-            bool valid = await VerifyDirectoryAsync(DirectoryPath, ct).ConfigureAwait(false);
+            var inspection = await VerifyDirectoryAsync(DirectoryPath, ct).ConfigureAwait(false);
+            bool valid = inspection.Valid;
             lock (_sync)
             {
                 if (_mutating) return Snapshot();
                 _fingerprint = valid ? signature : null;
-                if (valid) { _state = "installed"; _installed = true; _error = null; }
+                if (valid) { _state = "installed"; _installed = true; _error = null; _warning=inspection.Warning; _actualHashes=inspection.Hashes; }
                 else
                 {
                     _installed = false;
-                    if (Directory.Exists(DirectoryPath)) { _state = "corrupt"; _error = "Small 文件缺失或校验失败，将使用内置 Tiny。请删除后重新下载。"; }
+                    _warning=_actualHashes=null;
+                    if (Directory.Exists(DirectoryPath)) { _state = "corrupt"; _error = "Small 文件缺失或格式无法读取，将使用内置 Tiny。请重新导入或下载。"; }
                     else if (_state is not ("error" or "canceled")) { _state = "notInstalled"; _error = null; }
                 }
             }
@@ -85,24 +89,29 @@ public sealed class OcrModelStore
         finally { _operations.Release(); }
     }
 
-    internal async Task<PaddleOcrModelBundle?> GetVerifiedBundleAsync(CancellationToken ct)
+    internal async Task<PaddleOcrModelBundle?> GetVerifiedBundleAsync(CancellationToken ct,bool force=true)
     {
-        var status = await GetStatusAsync(ct, force: true).ConfigureAwait(false);
+        var status = await GetStatusAsync(ct, force: force).ConfigureAwait(false);
         if (!status.Installed || status.State != "installed") return null;
         return new("PP-OCRv6_small", "zh",
             new LocalProvider(DirectoryPath, Assets[0]), new LocalProvider(DirectoryPath, Assets[1]),
             new LocalProvider(DirectoryPath, Assets[2]), TextLineOrientationModel.Provider);
     }
 
-    public Status StartDownload()
+    public Status StartDownload(string source = "auto") => StartOperation(source, null);
+    public Status StartImport(string directory) => StartOperation("auto", Path.GetFullPath(directory));
+    private Status StartOperation(string source, string? directory)
     {
+        if (directory is null) _ = ModelDownloadSources.Resolve("ocr-small",SourceUrl(Assets[0]),source).ToArray();
+        else if(!Directory.Exists(directory))throw new DirectoryNotFoundException("请选择包含 DET、REC 和字典的文件夹。");
         lock (_sync)
         {
             if (_mutating) throw new InvalidOperationException("模型操作正在进行，请稍后重试。");
-            _mutating = true; _state = "downloading"; _installed = false; _error = null; _downloaded = 0;
+            _mutating = true; _state = directory is null?"downloading":"importing"; _installed = false; _error = _warning = null; _downloaded = 0;
+            _activeSource=directory is null?"GitHub 官方来源":"本地文件夹";
             _downloadCancellation = new CancellationTokenSource(TimeSpan.FromMinutes(10));
             var token = _downloadCancellation.Token;
-            _download = Task.Run(() => DownloadAsync(token));
+            _download = Task.Run(() => DownloadAsync(token,source,directory));
             return Snapshot();
         }
     }
@@ -110,7 +119,7 @@ public sealed class OcrModelStore
     public void CancelDownload() { lock (_sync) _downloadCancellation?.Cancel(); }
     internal Task WaitForDownloadAsync() { lock (_sync) return _download ?? Task.CompletedTask; }
 
-    private async Task DownloadAsync(CancellationToken ct)
+    private async Task DownloadAsync(CancellationToken ct,string selectedSource,string? localDirectory)
     {
         string? stage = null;
         await _operations.WaitAsync().ConfigureAwait(false);
@@ -118,42 +127,41 @@ public sealed class OcrModelStore
         {
             stage = Path.Combine(Path.GetFullPath(_root()), ".install-" + Guid.NewGuid().ToString("N"));
             ct.ThrowIfCancellationRequested();
-            if (await VerifyDirectoryAsync(DirectoryPath, ct).ConfigureAwait(false))
+            if (localDirectory is null && (await VerifyDirectoryAsync(DirectoryPath, ct).ConfigureAwait(false)).Valid)
             { Set("installed", true); return; }
             Directory.CreateDirectory(stage);
             foreach (var asset in Assets)
             {
-                using var response = await _client.GetAsync(SourceUrl(asset), HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-                if (response.Content.Headers.ContentLength is long length && length != asset.Bytes)
-                    throw new InvalidDataException("官方模型长度不符，下载未安装。请重试。");
-                await using var input = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+                using var response = localDirectory is null ? await _client.GetAsync(
+                    ModelDownloadSources.Resolve("ocr-small",SourceUrl(asset),selectedSource).First().Url,
+                    HttpCompletionOption.ResponseHeadersRead,ct).ConfigureAwait(false) : null;
+                response?.EnsureSuccessStatusCode();
+                string localPath=localDirectory is null?"":Path.Combine(localDirectory,asset.File);
+                if(localDirectory is not null && !File.Exists(localPath))localPath=Path.Combine(localDirectory,asset.Source);
+                await using Stream input = response is not null ? await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false) : File.OpenRead(localPath);
                 await using var output = new FileStream(Path.Combine(stage, asset.File), FileMode.CreateNew, FileAccess.Write,
                     FileShare.None, 65536, FileOptions.Asynchronous);
-                using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 var buffer = new byte[65536];
                 long bytes = 0;
                 int read;
                 while ((read = await input.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
                 {
                     bytes += read;
-                    if (bytes > asset.Bytes) throw new InvalidDataException("官方模型长度超出预期，下载未安装。");
-                    hash.AppendData(buffer, 0, read);
+                    if (bytes > 128*1024*1024) throw new InvalidDataException("模型资源超过支持的大小。");
                     await output.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
                     lock (_sync) _downloaded += read;
                 }
-                if (bytes != asset.Bytes || Convert.ToHexString(hash.GetHashAndReset()) != asset.Sha256)
-                    throw new InvalidDataException("Small 模型 SHA-256 校验失败，下载未安装。请重试。");
                 await output.FlushAsync(ct).ConfigureAwait(false);
                 output.Flush(flushToDisk: true);
             }
             Set("validating", false);
-            if (!await VerifyDirectoryAsync(stage, ct).ConfigureAwait(false)) throw new InvalidDataException("安装前磁盘校验失败。");
+            var inspection=await VerifyDirectoryAsync(stage,ct).ConfigureAwait(false);
+            if (!inspection.Valid) throw new InvalidDataException("模型格式无效或文件不完整。无法加载该 OCR 包。");
             // Wait for an in-flight OCR before replacing/removing any model directory.
             await _publish(() => Publish(stage), ct).ConfigureAwait(false);
-            lock (_sync) { _fingerprint = Fingerprint(DirectoryPath); _downloaded = TotalBytes; }
+            lock (_sync) { _fingerprint = Fingerprint(DirectoryPath); _warning=inspection.Warning; _actualHashes=inspection.Hashes; }
             Set("installed", true);
-            Log.Information("[OCR DLC] Small 1.0.0 installed; bytes={Bytes}; SHA-256 verified", TotalBytes);
+            Log.Information("[OCR DLC] Small installed; bytes={Bytes}; verificationWarning={Warning}", _downloaded,_warning);
         }
         catch (OperationCanceledException) { Set("canceled", false, "下载已取消，继续使用内置 Tiny。"); }
         catch (Exception ex)
@@ -206,7 +214,7 @@ public sealed class OcrModelStore
             await _operations.WaitAsync(ct).ConfigureAwait(false);
             acquired = true;
             await _publish(() => RemoveOwnedDirectory(DirectoryPath), ct).ConfigureAwait(false);
-            lock (_sync) { _fingerprint = null; _downloaded = 0; }
+            lock (_sync) { _fingerprint = null; _downloaded = 0; _warning=_activeSource=_actualHashes=null; }
             Set("notInstalled", false);
         }
         finally { lock (_sync) _mutating = false; if (acquired) _operations.Release(); }
@@ -219,22 +227,30 @@ public sealed class OcrModelStore
         catch (UnauthorizedAccessException) { return null; }
     }
 
-    private static async Task<bool> VerifyDirectoryAsync(string directory, CancellationToken ct)
+    private static async Task<(bool Valid,string? Warning,string? Hashes)> VerifyDirectoryAsync(string directory, CancellationToken ct)
     {
         try
         {
-            if (!Directory.Exists(directory) || (File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0) return false;
+            bool mismatch=false;
+            var hashes=new System.Collections.Generic.List<string>();
+            if (!Directory.Exists(directory) || (File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0) return (false,null,null);
             foreach (var asset in Assets)
             {
                 string path = Path.Combine(directory, asset.File);
-                if (!File.Exists(path) || (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0 || new FileInfo(path).Length != asset.Bytes) return false;
+                if (!File.Exists(path) || (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0) return (false,null,null);
                 await using var file = File.OpenRead(path);
-                if (Convert.ToHexString(await SHA256.HashDataAsync(file, ct).ConfigureAwait(false)) != asset.Sha256) return false;
+                string hash=Convert.ToHexString(await SHA256.HashDataAsync(file, ct).ConfigureAwait(false));hashes.Add(asset.File+"  "+hash);
+                bool match=file.Length==asset.Bytes && hash==asset.Sha256;
+                if(!match)
+                {
+                    mismatch=true;
+                    if(LocalModelFiles.CheckFormat(path,asset.Kind==PaddleOcrModelKind.Dictionary?"dictionary":"onnx") is not null)return(false,null,null);
+                }
             }
-            return true;
+            return (true,mismatch?"SHA-256 与登记版本不一致，仍可使用；DET、REC、字典的兼容性将在识别时检查。":null,string.Join("\n",hashes));
         }
-        catch (IOException) { return false; }
-        catch (UnauthorizedAccessException) { return false; }
+        catch (IOException) { return (false,null,null); }
+        catch (UnauthorizedAccessException) { return (false,null,null); }
     }
 
     private void RemoveOwnedDirectory(string path)
@@ -268,8 +284,9 @@ public sealed class OcrModelStore
             var stream = File.OpenRead(path);
             try
             {
-                if (stream.Length != asset.Bytes || Convert.ToHexString(SHA256.HashData(stream)) != asset.Sha256)
-                    throw new InvalidDataException("Small 模型资源校验失败。");
+                bool match=stream.Length==asset.Bytes && Convert.ToHexString(SHA256.HashData(stream))==asset.Sha256;
+                if (!match && LocalModelFiles.CheckFormat(path,asset.Kind==PaddleOcrModelKind.Dictionary?"dictionary":"onnx") is {} error)
+                    throw new InvalidDataException(error);
                 stream.Position = 0;
                 return stream;
             }

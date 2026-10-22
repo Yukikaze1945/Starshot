@@ -24,3 +24,8 @@
 .scrim .popup-settings{width:min(720px,calc(100% - 24px));max-width:720px;height:calc(100% - 24px);border-radius:10px;box-shadow:0 16px 48px #111c1930}
 .scrim .popup-settings .settings-content{padding:22px}
 @media(max-width:480px){.ocr-popup .compact-ocr .editor-top{padding:0 8px}.ocr-popup .compact-ocr .editor-tabs{gap:12px}.ocr-popup .compact-ocr .format-actions{gap:7px}.ocr-popup .compact-ocr .editor-bottom>span{max-width:65%}.ocr-popup .compact-ocr .translation-bar select{max-width:112px}.ocr-popup .compact-ocr .translation-bar .button{padding:6px 9px}}
+
+/* Native/system fonts paint immediately: no CJK webfont swap during handoff. */
+:root.ocr-surface{font-family:"Segoe UI Variable Text","Microsoft YaHei UI","Microsoft YaHei",sans-serif}
+.ocr-surface .compact-titlebar,.ocr-surface .compact-titlebar span,.ocr-surface .compact-ocr :is(code,kbd,.editor-tabs span){font-family:inherit}
+.ocr-popup .compact-ocr{animation:none}

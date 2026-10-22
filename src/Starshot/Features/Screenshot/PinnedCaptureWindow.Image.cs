@@ -262,11 +262,12 @@ public sealed partial class PinnedCaptureWindow
     {
         try
         {
+            using var editorPreparation=OcrResultWindow.Prepare();
             using var image = CreateCurrentImage(includeOpacity: false);
             byte[] pixels = image.GetPixelBytes();
             int width = (int)image.SizeInPixels.Width, height = (int)image.SizeInPixels.Height;
             var lines = await Task.Run(() => OcrHelper.RecognizeAsync(pixels, width, height, 1.0));
-            if (lines is { Count: > 0 }) _ = new OcrResultWindow(lines, translate);
+            if (lines is { Count: > 0 }) editorPreparation.Show(lines, translate);
         }
         catch (Exception ex) { Serilog.Log.Error(ex, "Pinned image OCR failed"); }
     }

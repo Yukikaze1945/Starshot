@@ -1,0 +1,36 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "高动态范围图像中可能包含比普通界面白色更亮的亮部。一个实用的截图工具必须能够区分捕获的信号与显示设置。因此，分析面板会报告原始浮点像素的亮度统计信息，不会根据色调映射的预览来估算绝对亮度。当用户选择一个区域时，分析会异步运行，并报告峰值、平均值、最小值和百分位值。波形图可以显示图像中亮细节的位置。热图作为可选的查看层提供。除非用户明确要求添加注释的输出，否则这两个显示层都不会被写入保存的文件。编辑工具会将每次捕获与图像库保持分离。打开翻译工具应能启动识别和翻译过程，而不是悄无声息地改变当前页面。错误必须清晰可见且可操作，重试时必须保留所有现有编辑内容。本地翻译任务每次仅运行一个请求，并采用保守的CPU线程数量。这可以限制对其他桌面工作的干扰，避免占用游戏或图像生成所需的图形内存。第一个请求包含模型初始化，后续请求可以重用已加载的模型。性能测量应单独报告提示词处理，并明确标识任何提示词缓存的复用情况。"
+      }
+    }
+  ],
+  "created": 1792425277,
+  "model": "Index-Translate-2B",
+  "system_fingerprint": "b11429-d81235049",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 232,
+    "prompt_tokens": 300,
+    "total_tokens": 532,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  "id": "chatcmpl-XllaKJ12fwEgvScHZcn4qPogb3Vo1T6O",
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 300,
+    "prompt_ms": 2273.813,
+    "prompt_per_token_ms": 7.579376666666667,
+    "prompt_per_second": 131.93697107018033,
+    "predicted_n": 232,
+    "predicted_ms": 17332.452,
+    "predicted_per_token_ms": 75.03225974025975,
+    "predicted_per_second": 13.327600734160406
+  }
+}

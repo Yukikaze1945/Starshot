@@ -118,6 +118,7 @@ internal static class CpuCaptureNative
     [DllImport("user32.dll")] internal static extern bool SetCursorPos(int x, int y);
     [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(nint hwnd);
+    [DllImport("user32.dll")] internal static extern bool EnableWindow(nint hwnd, bool enable);
     [DllImport("user32.dll")] internal static extern nint SetFocus(nint hwnd);
     [DllImport("user32.dll")] internal static extern nint SetCapture(nint hwnd);
     [DllImport("user32.dll")] internal static extern bool ReleaseCapture();

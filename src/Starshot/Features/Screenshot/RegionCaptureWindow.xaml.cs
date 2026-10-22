@@ -29,7 +29,8 @@ public sealed record RegionCaptureResult(
     Rect SelectionRect,
     Rect PhysicalRect,
     CanvasRenderTarget? SdrCrop,
-    CanvasRenderTarget? AnnotationLayer = null
+    CanvasRenderTarget? AnnotationLayer = null,
+    RegionFrameStyle? FrameStyle = null
 );
 
 public sealed partial class RegionCaptureWindow : WindowEx
@@ -49,7 +50,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
     private RegionCaptureAction _defaultAction;
 
     private CanvasBitmap _canvasOriginal; // 原始帧（裁剪用，可能 HDR），每次 SetCapture 更新
-    private CanvasBitmap? _displayBitmap; // 显示用（SDR 色调映射后），每次 SetCapture 重建；会话间为 null（CloseWindow 清引用）
+    private CanvasBitmap? _displayBitmap; // SDR auxiliary for copy/OCR/color sampling; native HDR preview draws _canvasOriginal.
     private byte[]? _displayPixels; // One readback per capture; color picking never blocks a redraw on GPU readback.
     private Color _sampledColor;
     private float _scale;
@@ -109,6 +110,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
     public RegionCaptureWindow()
     {
         InitializeComponent();
+        InitializeOverlayViewport();
         InitializeToolbarInteraction();
         this.Closed += RegionCaptureWindow_Closed;
 
@@ -192,6 +194,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         RegionCaptureAction defaultAction)
     {
         int generation = ++_captureGeneration;
+        _viewportSyncQueued = false;
         StopMoveInTimer();
         _pendingMoveIn = false;
         _redrawQueued = false;
@@ -207,28 +210,13 @@ public sealed partial class RegionCaptureWindow : WindowEx
         // 每次会话在屏外创建新 swap chain，结束时释放，避免 idle 常驻全屏双缓冲。
         float needW = physW / _scale,
             needH = physH / _scale;
-        if (
-            _swapChain is null
-            || Math.Abs((float)_swapChain.Size.Width - needW) > 0.5f
-            || Math.Abs((float)_swapChain.Size.Height - needH) > 0.5f
-        )
-        {
-            ReleaseSwapChain();
-            _swapChain = new CanvasSwapChain(
-                CanvasDevice.GetSharedDevice(),
-                needW,
-                needH,
-                _scale * 96f,
-                DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                2,
-                CanvasAlphaMode.Premultiplied
-            );
-            Canvas.SwapChain = _swapChain;
-        }
+        CreateOverlaySwapChain(needW, needH, canvas.Format == DirectXPixelFormat.R16G16B16A16Float);
 
         // 更新帧（旧的已在 CloseWindow 释放并清引用）
         _canvasOriginal = canvas;
         PrepareHdrAnalysisMetadata(sdrWhiteLevel);
+        _previewSdrWhite = sdrWhiteLevel;
+        if (_nativeHdrPreview) EnsureAnalysisMonitors();
         _displayBitmap = CreateDisplayBitmap(canvas, physW, physH, sdrWhiteLevel);
         _ownsDisplayBitmap = !ReferenceEquals(_displayBitmap, canvas);
         try { _displayPixels = _displayBitmap.GetPixelBytes(); }
@@ -259,6 +247,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
         _selectionFromDrag = false;
         _windowRects = new List<Rect>();
         ResetAnnotations();
+        _frameStyle=new();CloseFrameStyle();
         _hoverRect = default;
         _hasHover = false;
         _lockedW = 0;
@@ -332,20 +321,9 @@ public sealed partial class RegionCaptureWindow : WindowEx
         );
     }
 
-    [DllImport("shcore.dll")]
-    private static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
-
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetWindowDisplayAffinity(IntPtr hwnd, uint affinity);
-
-    private float GetCaptureScale()
-    {
-        var anchor = new POINT { x = _vx + 1, y = _vy + 1 };
-        var monitor = User32.MonitorFromPoint(anchor, User32.MonitorFlags.MONITOR_DEFAULTTONEAREST);
-        return GetDpiForMonitor(monitor.DangerousGetHandle(), 0, out uint dpi, out _) == 0
-            ? dpi / 96f : User32.GetDpiForWindow(WindowHandle) / 96f;
-    }
 
     private static CanvasBitmap CreateDisplayBitmap(
         CanvasBitmap source,
@@ -411,7 +389,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
     // 移植自 WindowsRectangleList：跳过 cloaked / TOOLWINDOW&NOACTIVATE 等垃圾窗口，
     // DWM 扩展边界去阴影，额外加入 client rect（可吸到内容区），最后去重。
-    private void DetectWindows()
+    private void DetectWindows(int generation, int vx, int vy)
     {
         var raw = new List<(Rect rect, bool isWindow)>();
 
@@ -477,10 +455,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
                         return true;
 
                     var winRect = new Rect(
-                        (wr.left - _vx) / _scale,
-                        (wr.top - _vy) / _scale,
-                        wr.Width / _scale,
-                        wr.Height / _scale
+                        wr.left - vx, wr.top - vy, wr.Width, wr.Height
                     );
 
                     // 客户区（若与窗口矩形明显不同）：放在窗口矩形之前入列，使悬停优先命中内容区
@@ -497,10 +472,7 @@ public sealed partial class RegionCaptureWindow : WindowEx
                             if (User32.ClientToScreen(hWnd, ref tl))
                             {
                                 var c = new Rect(
-                                    (tl.x + cr.left - _vx) / _scale,
-                                    (tl.y + cr.top - _vy) / _scale,
-                                    cr.Width / _scale,
-                                    cr.Height / _scale
+                                    tl.x + cr.left - vx, tl.y + cr.top - vy, cr.Width, cr.Height
                                 );
                                 if (
                                     Math.Abs(c.X - winRect.X) > 2
@@ -551,13 +523,12 @@ public sealed partial class RegionCaptureWindow : WindowEx
             if (keep)
                 result.Add(rect);
         }
-        _windowRects = result;
-
         // 窗口列表就绪后，立即对初始光标位置做悬停命中——不必等第一次 PointerMoved
         DispatcherQueue.TryEnqueue(() =>
         {
-            if (!_isClosed)
+            if (!_isClosed && generation == _captureGeneration)
             {
+                _windowRects = result.ConvertAll(r => ScaleViewportRect(r, 1 / _scale));
                 if (_state == RegionCaptureState.Selecting)
                 {
                     UpdateHover(_currentMousePos);
@@ -589,6 +560,15 @@ public sealed partial class RegionCaptureWindow : WindowEx
         if (_isClosed || _swapChain is null || _displayBitmap is null)
             return;
 
+        try { SynchronizeViewport(); }
+        catch (Exception ex)
+        {
+            Serilog.Log.Error(ex, "Region viewport resize failed before rendering");
+            CloseWindow(new RegionCaptureResult(RegionCaptureAction.Cancel, default, default, null), ex);
+            return;
+        }
+        if (_isClosed || _swapChain is null || _displayBitmap is null) return;
+
         bool trace = _traceNextRedraw;
         _traceNextRedraw = false;
         if (trace)
@@ -605,7 +585,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
             _lockedW = (float)_swapChain.Size.Width;
             _lockedH = (float)_swapChain.Size.Height;
             _sizeLocked = true;
-            _ = Task.Run(DetectWindows);
+            int generation = _captureGeneration, vx = _vx, vy = _vy;
+            _ = Task.Run(() => DetectWindows(generation, vx, vy));
         }
 
         // 不依赖 PointerMoved 的缓存位置：窗口复用/激活时的指针事件可能仍带旧坐标。
@@ -627,12 +608,9 @@ public sealed partial class RegionCaptureWindow : WindowEx
             float physH = (float)_displayBitmap.SizeInPixels.Height;
 
             // 1. 画冻结帧（铺满，尺寸锁定，不动）
-            ds.DrawImage(
-                _displayBitmap,
+            DrawFrozenPreview(ds,
                 new Rect(0, 0, _lockedW, _lockedH),
-                new Rect(0, 0, physW, physH),
-                1f,
-                CanvasImageInterpolation.Linear
+                new Rect(0, 0, physW, physH)
             );
 
             // Darken the surroundings; repaint the selected area from the frozen frame below.
@@ -659,6 +637,9 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
             if (hasRect)
             {
+                DrawFrameShadow(ds,rect);
+                using(var frameClip=FrameClip(ds,rect))
+                {
                 // 选区/hover 位置挖洞：重画干净原图抵消压黑（backgroundHighlight）
                 // hover rect 可能含标题栏/阴影（位置负，超画布），只挖与画布的交集，避免 sourceRect 越出 bitmap 边界被拉伸
                 double cx = Math.Max(rect.X, 0);
@@ -668,25 +649,27 @@ public sealed partial class RegionCaptureWindow : WindowEx
                 var clip = new Rect(cx, cy, cw, ch);
                 if (clip.Width > 0 && clip.Height > 0)
                 {
-                    ds.DrawImage(
-                        _displayBitmap,
+                    DrawFrozenPreview(ds,
                         clip,
                         new Rect(
                             clip.X / _lockedW * physW,
                             clip.Y / _lockedH * physH,
                             clip.Width / _lockedW * physW,
                             clip.Height / _lockedH * physH
-                        ),
-                        1f,
-                        CanvasImageInterpolation.Linear
+                        )
                     );
                 }
 
                 DrawHdrAnalysisHeatmap(ds);
+                DrawGamutAnalysisMap(ds);
                 if (_state == RegionCaptureState.Selected)
                     DrawAnnotations(ds);
-                ds.DrawRectangle(rect, Color.FromArgb(180, 2, 10, 24), 4);
-                ds.DrawRectangle(rect, Color.FromArgb(255, 157, 183, 70), 2);
+                }
+                float frameRadius=_state==RegionCaptureState.Selected?_frameStyle.EffectiveRadius((int)(rect.Width*_scale),(int)(rect.Height*_scale))/(float)_scale:0;
+                if(_state==RegionCaptureState.Selected&&_frameStyle.Border>0)
+                    RegionFrameRenderer.DrawBorder(ds,ds.Device,rect,frameRadius,_frameStyle,_previewSdrWhite,_nativeHdrPreview,1/(float)_scale);
+                ds.DrawRoundedRectangle(rect,frameRadius,frameRadius,Color.FromArgb(180,2,10,24),4);
+                ds.DrawRoundedRectangle(rect,frameRadius,frameRadius,Color.FromArgb(255,157,183,70),2);
                 if (_state == RegionCaptureState.Selected)
                     DrawResizeHandles(ds, rect);
             }
@@ -908,7 +891,9 @@ public sealed partial class RegionCaptureWindow : WindowEx
         if (!visible)
             return;
         var physical = ComputePhysicalRect(rect, _dragMode == DragMode.Creating);
-        SelectionMetricsText.Text = $"{(int)physical.X + _vx},{(int)physical.Y + _vy}  {(int)physical.Width} × {(int)physical.Height} px";
+        SelectionMetricsText.Text = $"{(int)physical.X + _vx},{(int)physical.Y + _vy}  {(int)physical.Width} × {(int)physical.Height} px" + (_nativeHdrPreview ? " · 原生 HDR" : "");
+        FrameStyleButton.Visibility=_state==RegionCaptureState.Selected?Visibility.Visible:Visibility.Collapsed;
+        if(_state==RegionCaptureState.Selected){UpdateFrameMetrics();return;}
         double labelWidth = Math.Max(SelectionMetrics.ActualWidth, 230);
         double x = Math.Clamp(rect.Left, 0, Math.Max(0, _lockedW - labelWidth));
         double y = rect.Top >= 40 ? rect.Top - 38 : Math.Min(_lockedH - 32, rect.Top + 5);
@@ -1209,19 +1194,28 @@ public sealed partial class RegionCaptureWindow : WindowEx
     {
         if (_state != RegionCaptureState.Selected)
             return;
+        if(action==RegionCaptureAction.TranslateInPlace){_ = TranslateRegionInPlaceAsync();return;}
         _state = RegionCaptureState.Completing;
         Rect physical = GetPhysicalSourceRect();
         try
         {
             CommitAnnotationText();
+            if(action==RegionCaptureAction.Subtitles)
+            {CloseWindow(new RegionCaptureResult(action,SelectionRect,physical,null));return;}
             // 完成动作前裁出 SDR 选区；保存时 HDR crop 由 service 从原始 composite 裁出。
             CanvasRenderTarget sdrCrop = CropDisplayToBgra();
+            var frameStyle=RegionFrameStyle.Applies(action)?_frameStyle:new RegionFrameStyle();
+            if(frameStyle.Enabled)
+            {
+                try{var styled=RegionFrameRenderer.Apply(sdrCrop,frameStyle);sdrCrop.Dispose();sdrCrop=styled;}
+                catch{sdrCrop.Dispose();throw;}
+            }
             CanvasRenderTarget? annotationLayer = null;
             try
             {
                 if (_annotations.Count > 0)
                     annotationLayer = CreateAnnotationLayer(physical);
-                CloseWindow(new RegionCaptureResult(action, SelectionRect, physical, sdrCrop, annotationLayer));
+                CloseWindow(new RegionCaptureResult(action, SelectionRect, physical, sdrCrop, annotationLayer,frameStyle));
             }
             catch
             {
@@ -1238,6 +1232,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
 
     private void CancelCapture() => CloseWindow(
         new RegionCaptureResult(RegionCaptureAction.Cancel, default, default, null));
+
+    internal void CancelSubtitleSelection()=>CancelCapture();
 
     private void CloseWindow(RegionCaptureResult result, Exception? error = null)
     {
@@ -1336,6 +1332,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
             User32.SetWindowPosFlags.SWP_NOZORDER
         );
         LogOverlayPhase("Region overlay MoveOnscreen done", generation);
+        Redraw();
+        if (_isClosed || generation != _captureGeneration) return;
         Activate();
         LogOverlayPhase("Region overlay Activate done", generation);
         // 首次完成交接前持续兜底；只有本次会话真正发生物理移动后，后续会话才永久停用。
@@ -1453,7 +1451,9 @@ public sealed partial class RegionCaptureWindow : WindowEx
         if (_cleanedUp)
             return;
         _cleanedUp = true;
+        DisposeOverlayViewport();
         CloseHdrAnalysis();
+        CloseGamutAnalysis();
         ReleaseCaptureCursor();
         ++_captureGeneration;
         _pendingMoveIn = false;
@@ -1642,6 +1642,8 @@ public sealed partial class RegionCaptureWindow : WindowEx
         nint dwRefData
     )
     {
+        if (uMsg == 0x02E0) // WM_DPICHANGED: XAML commits its new scale asynchronously.
+            QueueViewportSync();
         if (uMsg == (uint)User32.WindowMessage.WM_RBUTTONUP)
         {
             if (_toolbarDismissedPointer) { _toolbarDismissedPointer = false; return 0; }

@@ -435,3 +435,5 @@ third_party/local-inference/win-x64/
 # Local diagnostic browser profiles can contain cookies and other user data.
 **/EBWebView/
 docs/reports/**/webview2/
+
+third_party/local-inference/win-vulkan-x64/

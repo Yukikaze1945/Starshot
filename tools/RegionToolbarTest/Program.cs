@@ -9,6 +9,70 @@ RegionToolbarMonitor Monitor(float width, float height, float scale, float x = 0
     new(new(x, y, width * scale, height * scale), new(x, y, width * scale, height * scale), scale);
 
 var state = new RegionToolbarState();
+Check(CaptureSavePolicy.ChooseLocation(RegionCaptureAction.Save), "Save Image requires a picker");
+Check(!CaptureSavePolicy.ChooseLocation(RegionCaptureAction.QuickSave), "Quick Save skips the picker");
+Check(RegionToolbarCatalog.Shortcut(0x53, true, false) == RegionToolbarCommand.Save, "Ctrl+S selects Save As");
+Check(RegionToolbarCatalog.Shortcut(0x53, true, true) == RegionToolbarCommand.QuickSave, "Ctrl+Shift+S quick saves");
+string imagePath = Path.GetFullPath("sample.avif");
+Check(!CaptureSavePolicy.HasCompanionConflict(imagePath, false, false, _ => true), "Picker owns primary overwrite confirmation");
+Check(CaptureSavePolicy.HasCompanionConflict(imagePath, true, false, p => p.EndsWith(".mp4")), "Unconfirmed video overwrite rejected");
+Check(CaptureSavePolicy.HasCompanionConflict(imagePath, true, false, p => p.EndsWith(".json")), "Unconfirmed manifest overwrite rejected");
+Check(CaptureSavePolicy.HasCompanionConflict(imagePath, false, true, p => p.EndsWith(".jpg")), "Unconfirmed UHDR overwrite rejected");
+Check(!CaptureSavePolicy.HasCompanionConflict(imagePath, true, true, _ => false), "New family can retain chosen name");
+string? persisted = null;
+RegionToolbarPreferences.Configure(null, json => persisted = json);
+var defaults = RegionToolbarPreferences.Current;
+Check(defaults.Secondary.Contains(RegionToolbarCommand.Subtitles), "Live subtitles appear in region More menu");
+Check(RegionToolbarCatalog.Get(RegionToolbarCommand.Subtitles).Action==RegionCaptureAction.Subtitles,"CPU/XAML share subtitle action dispatch");
+Check(RegionToolbarCatalog.Primary(RegionCaptureAction.Subtitles)==RegionToolbarCommand.Subtitles,"Subtitle-entry Enter highlights the matching action");
+Check(RegionToolbarPreferences.Parse("{\"version\":4,\"main\":[],\"secondary\":[]}").Secondary.Contains(RegionToolbarCommand.Subtitles),"Previous settings receive region subtitles once");
+Check(!RegionToolbarPreferences.Parse("{\"version\":5,\"main\":[],\"secondary\":[]}").Secondary.Contains(RegionToolbarCommand.Subtitles),"Intentionally removed subtitle action stays removed");
+Check(SubtitleSelectionRegion.ToDesktop(new(100,200,640,120),-2560,-300)==new Rectangle(-2460,-100,640,120),"Existing physical selection handles negative desktop origins without a second DPI scale");
+Check(defaults.Secondary.Contains(RegionToolbarCommand.GamutAnalysis), "Gamut analysis is available in More by default");
+Check(RegionToolbarPreferences.Parse("{\"version\":3,\"main\":[],\"secondary\":[]}").Secondary.Contains(RegionToolbarCommand.GamutAnalysis), "V3 settings receive gamut entry once");
+Check(!RegionToolbarPreferences.Parse("{\"version\":4,\"main\":[],\"secondary\":[]}").Secondary.Contains(RegionToolbarCommand.GamutAnalysis), "V4 intentionally removed gamut remains removed");
+foreach(var monitor in new[]{Monitor(1920,1080,1,-1920,-120),Monitor(800,600,2,0,0)})
+foreach(var proposed in new[]{new RectangleF(-10000,-5000,360,480),new RectangleF(30000,20000,360,690),new RectangleF(0,0,8000,8000)})
+    Check(Inside(monitor.WorkArea,RegionToolbarGeometry.ClampPanel(proposed,[monitor])), "Dragged analysis panel clamps to negative/DPI work area");
+var edits = new RegionToolbarEditModel(defaults);
+Check(edits.Move(0, 0, 1, 0) && edits.Secondary[0] == defaults.Main[0], "Move across columns");
+Check(RegionToolbarPreferences.Current.Main.SequenceEqual(defaults.Main), "Draft does not change active layout");
+Check(edits.Move(1, 0, 1, 2) && edits.Secondary[1] == defaults.Main[0], "Downward drag insertion correct");
+edits.Secondary.RemoveAt(1);
+Check(edits.Unused().Contains(defaults.Main[0]), "Removed button returns to library");
+RegionToolbarPreferences.Save(edits.Snapshot());
+Check(persisted is not null && RegionToolbarPreferences.Parse(persisted).Main.SequenceEqual(edits.Main), "Versioned settings round trip");
+var cleaned = RegionToolbarPreferences.Normalize(new([RegionToolbarCommand.Save, RegionToolbarCommand.Save, RegionToolbarCommand.More],
+    [RegionToolbarCommand.Save, RegionToolbarCommand.QuickSave, RegionToolbarCommand.Help, RegionToolbarCommand.EditToolbar, (RegionToolbarCommand)987]));
+Check(cleaned.Main.SequenceEqual(new[] { RegionToolbarCommand.Save }) && cleaned.Secondary.SequenceEqual(new[] { RegionToolbarCommand.QuickSave }), "Invalid/duplicate/protected buttons removed");
+foreach (string bad in new[] { "", "{}", "[]", "not json", "{\"version\":2}" })
+    Check(RegionToolbarPreferences.Parse(bad).Main.SequenceEqual(defaults.Main), "Invalid/old settings restore default");
+RegionToolbarPreferences.Configure(persisted, _ => throw new IOException("test save failure"));
+var prior = RegionToolbarPreferences.Current;
+try { RegionToolbarPreferences.Save(defaults); throw new Exception("Expected write failure"); }
+catch (IOException) { Check(RegionToolbarPreferences.Current.Main.SequenceEqual(prior.Main), "Failed persistence preserves active layout"); }
+// Empty/custom layouts must still expose fixed footer recovery on small displays.
+foreach (var custom in new[] { new RegionToolbarCustomization([], []), new(RegionToolbarPreferences.Available, []), cleaned })
+{
+    RegionToolbarPreferences.Configure(RegionToolbarPreferences.Serialize(custom), _ => { });
+    foreach (float scale in new[] { 1f, 2f, 3f })
+    {
+        var m = Monitor(320, 720, scale, -1000, -80);
+        var layout = RegionToolbarGeometry.Arrange(new(-900, 0, 90, 140), [m], state, RegionCaptureAction.Save);
+        state.Open(RegionToolbarCommand.More);
+        var commands = state.MenuItems(layout);
+        for (int focus = 0; focus < commands.Length; focus++)
+        {
+            state.MenuFocus = focus; var menu = RegionToolbarGeometry.Menu(layout, state);
+            Check(menu.Slots.Any(s => s.ItemIndex == focus && s.Command == commands[focus]), "Custom paged focused item reachable");
+            Check(menu.Slots[^2].Command == RegionToolbarCommand.Help && menu.Slots[^1].Command == RegionToolbarCommand.EditToolbar,
+                "Help/edit always anchored at bottom");
+            Check(menu.Slots[^2].Bounds.Bottom <= menu.Slots[^1].Bounds.Top, "Edit remains below help");
+            foreach (var slot in menu.Slots) Check(Inside(menu.Bounds, slot.Bounds), "Custom footer/body stays in popup");
+        }
+    }
+}
+RegionToolbarPreferences.Configure(null, _ => { });
 foreach (var group in new[] { RegionToolbarCommand.Shapes, RegionToolbarCommand.Brushes, RegionToolbarCommand.Texts })
 {
     foreach (var tool in RegionToolbarCatalog.Members(group))

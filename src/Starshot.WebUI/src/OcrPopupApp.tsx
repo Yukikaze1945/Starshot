@@ -11,13 +11,14 @@ export function OcrPopupApp() {
   const notify = useCallback((text: string, error = false) => setMessage({ text, error }), [])
   useWindowChrome(boot)
   const configure = useCallback(() => setSettings(true), [])
+  const contentReady = useCallback((id: string | null) => { void request('app.ready', { ocrResultId: id }).catch(error => setError(error.message)) }, [])
   useEffect(() => onEvent<OcrResult>('ocr.result', setResult), [])
   useEffect(() => onEvent('settings.changed', () => { void request<Bootstrap>('app.bootstrap').then(setBoot).catch(error => notify(error.message, true)) }), [notify])
   useEffect(() => { const close = (event: KeyboardEvent) => { if (event.key === 'Escape' && !settings && !document.querySelector('.selection-format')) { event.preventDefault(); void request('window.close') } }; document.addEventListener('keydown', close); return () => document.removeEventListener('keydown', close) }, [settings])
-  useEffect(() => { let live = true; void request<Bootstrap>('app.bootstrap').then(value => { if (live) { setBoot(value); return request('app.ready') } }).catch(error => live && setError(error.message)); return () => { live = false } }, [])
+  useEffect(() => { let live = true; void request<Bootstrap>('app.bootstrap').then(value => { if (live) { setBoot(value); setResult(current => current ?? value.ocr ?? null) } }).catch(error => live && setError(error.message)); return () => { live = false } }, [])
   useEffect(() => { if (boot) document.documentElement.dataset.theme = boot.settings.theme === 2 ? 'dark' : boot.settings.theme === 1 ? 'light' : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' }, [boot])
   useEffect(() => { if (!message) return; const timer = window.setTimeout(() => setMessage(null), 5000); return () => window.clearTimeout(timer) }, [message])
   if (error) return <><CompactTitleBar/><div className="fatal"><p>{error}</p><button onClick={() => location.reload()}>重新加载</button></div></>
   if (!boot) return <><CompactTitleBar/><div className="loading">正在准备文字窗口…</div></>
-  return <><CompactTitleBar/><main className="ocr-popup ocr-with-chrome" inert={settings}><OcrLab boot={boot} result={result} compact configure={configure} notify={notify} update={setBoot}/></main>{settings && <Suspense fallback={<div className="loading">正在打开设置…</div>}><Dialog title="OCR 与翻译设置" className="settings-dialog popup-settings" onClose={() => setSettings(false)}><SettingsPanel initialTab="translation" boot={boot} update={setBoot} notify={notify}/></Dialog></Suspense>}{message && <div role="status" className={`toast ${message.error ? 'error' : ''}`}>{message.text}</div>}</>
+  return <><CompactTitleBar/><main className="ocr-popup ocr-with-chrome" inert={settings}><OcrLab boot={boot} result={result} compact onContentReady={contentReady} configure={configure} notify={notify} update={setBoot}/></main>{settings && <Suspense fallback={<div className="loading">正在打开设置…</div>}><Dialog title="OCR 与翻译设置" className="settings-dialog popup-settings" onClose={() => setSettings(false)}><SettingsPanel initialTab="translation" boot={boot} update={setBoot} notify={notify}/></Dialog></Suspense>}{message && <div role="status" className={`toast ${message.error ? 'error' : ''}`}>{message.text}</div>}</>
 }

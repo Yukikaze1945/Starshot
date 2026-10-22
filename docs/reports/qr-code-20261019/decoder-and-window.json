@@ -1,0 +1,85 @@
+{
+  "ok": true,
+  "checks": 68,
+  "screenshots": 0,
+  "modelInference": false,
+  "measurements": [
+    {
+      "label": "url",
+      "width": 240,
+      "height": 240,
+      "count": 1,
+      "ms": 38
+    },
+    {
+      "label": "unicode",
+      "width": 240,
+      "height": 240,
+      "count": 1,
+      "ms": 1
+    },
+    {
+      "label": "GB18030-ECI",
+      "width": 240,
+      "height": 240,
+      "count": 1,
+      "ms": 1
+    },
+    {
+      "label": "Shift-JIS",
+      "width": 240,
+      "height": 240,
+      "count": 1,
+      "ms": 1
+    },
+    {
+      "label": "inverted",
+      "width": 240,
+      "height": 240,
+      "count": 1,
+      "ms": 1
+    },
+    {
+      "label": "rotated-90",
+      "width": 240,
+      "height": 240,
+      "count": 1,
+      "ms": 1
+    },
+    {
+      "label": "padded-stride",
+      "width": 240,
+      "height": 240,
+      "count": 1,
+      "ms": 1
+    },
+    {
+      "label": "premultiplied-transparent",
+      "width": 240,
+      "height": 240,
+      "count": 1,
+      "ms": 1
+    },
+    {
+      "label": "multiple-normal-and-inverted",
+      "width": 600,
+      "height": 280,
+      "count": 2,
+      "ms": 3
+    },
+    {
+      "label": "4K-small-code-original-resolution",
+      "width": 3840,
+      "height": 2160,
+      "count": 1,
+      "ms": 91
+    },
+    {
+      "label": "no-QR",
+      "width": 640,
+      "height": 480,
+      "count": 0,
+      "ms": 3
+    }
+  ]
+}

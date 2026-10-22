@@ -1,0 +1,18 @@
+{
+  "actualGpuTranslations": 1,
+  "loadMilliseconds": 6954,
+  "pid": 45024,
+  "observedBeforeFailure": [
+    "GPU resident and Vulkan0 backend",
+    "ggml-vulkan.dll loaded",
+    "simulated idle timeout retained worker",
+    "API reused identical worker instance",
+    "authenticated models endpoint returned 200",
+    "one chat generation returned 200 and nonempty text",
+    "unload cleared Loaded and API enabled state"
+  ],
+  "harnessFailure": "Immediate Process.GetProcesses PID-absence assertion; it did not distinguish an exiting/terminated process entry.",
+  "followUpCheck": "Independent Get-Process found no llama-server process after the runner exited. No second GPU load or generation was performed.",
+  "performanceAndMemoryMetrics": null,
+  "reasonMetricsUnavailable": "The original runner serialized final measurements only after the assertion and exited before writing them. No values reconstructed."
+}

@@ -6,6 +6,9 @@
 .native-chrome :is(.topbar,.image-workspace-header,.compact-titlebar,.dialog-title) :is(button,input,select,a,[role=button]),
 .native-chrome .top-actions,
 .native-chrome .workspace-header-actions { -webkit-app-region: no-drag; app-region: no-drag; }
+.native-chrome :is(.topbar,.image-workspace-header,.compact-titlebar,.dialog-title) :is(button,input,select,a,[role=button]) * {
+  -webkit-app-region: no-drag; app-region: no-drag;
+}
 .native-chrome .topbar { height:48px; padding:0 calc(var(--caption-inset) + 14px) 0 26px; gap:24px; background:var(--paper); }
 .native-chrome .wordmark { font-size:23px; line-height:1; white-space:nowrap; }
 .native-chrome .wordmark span { font-size:12px; margin-left:18px; }

@@ -62,16 +62,52 @@ public sealed partial class ToolbarTestApp : Starshot.App
         try
         {
             ((System.Timers.Timer)typeof(Starshot.App).GetField("_gcTimer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(this)!).Stop();
+            typeof(Starshot.AppConfig).GetProperty("LogFile", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!
+                .SetValue(null, Path.Combine(report, "toolbar-app.log"));
+            if(Environment.GetEnvironmentVariable("STARSHOT_CAPTURE_EDITOR_ONLY")=="1")
+            {
+                await ValidateCaptureEditorAsync();
+                File.WriteAllText(Path.Combine(report,"xaml-interaction.log"),$"PASS {_checks} capture-editor ownership/bridge/draft/teardown checks; hidden HWNDs; synthetic CPU pixels only; no WebView startup, capture, model inference or desktop input.\n");
+                Environment.Exit(0);return;
+            }
+            if(Environment.GetEnvironmentVariable("STARSHOT_SUBTITLE_PIN_ONLY")=="1")
+            {
+                ValidateSubtitlePin();
+                File.WriteAllText(Path.Combine(report,"subtitle-pin.log"),$"PASS {_checks} subtitle pin/native topmost checks; hidden HWND; no browser, capture or models.\n");
+                Environment.Exit(0);return;
+            }
+            if(Environment.GetEnvironmentVariable("STARSHOT_OCR_STARTUP_ONLY")=="1")
+            {
+                await ValidateOcrStartupAsync(report);
+                Environment.Exit(0);return;
+            }
             if (Environment.GetEnvironmentVariable("STARSHOT_CHROME_ONLY") == "1")
             {
                 typeof(Starshot.AppConfig).GetProperty("LogFile", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!
                     .SetValue(null, Path.Combine(report, "native-chrome-app.log"));
-                ValidateWindowChrome();
+                await ValidateWindowChromeAsync();
                 File.WriteAllText(Path.Combine(report, "xaml-interaction.log"), $"PASS {_checks} window chrome checks; hidden HWNDs; no WebView startup, capture, textures, model inference or desktop input.\n");
                 Environment.Exit(0); return;
             }
             window = new RegionCaptureWindow();
             Call(window, "MoveOffscreen"); // Never Show/Activate this synthetic test overlay.
+            if(Environment.GetEnvironmentVariable("STARSHOT_FRAME_STYLE_ONLY")=="1")
+            {
+                await ValidateFrameStyleAsync(window,report);
+                window.Close();Environment.Exit(0);return;
+            }
+            if(Environment.GetEnvironmentVariable("STARSHOT_REGION_TRANSLATION_ONLY")=="1")
+            {
+                ValidateRegionTranslation(window);
+                File.WriteAllText(Path.Combine(report,"region-translation.log"),$"PASS {_checks} hidden native translation/undo/copy/subtitle selection checks; synthetic pixels, no models, desktop capture or input.");
+                window.Close();Environment.Exit(0);return;
+            }
+            if (Environment.GetEnvironmentVariable("STARSHOT_MULTI_MONITOR_ONLY") == "1")
+            {
+                await ValidateMultiMonitorViewport(window, report);
+                File.WriteAllText(Path.Combine(report,"xaml-interaction.log"),$"PASS {_checks} multi-monitor viewport/FP16/SDR/crop/annotation/DPI checks; hidden HWND; synthetic pixels only; no WGC, desktop capture/input or model inference.\n");
+                window.Close();Environment.Exit(0);return;
+            }
             if (Environment.GetEnvironmentVariable("STARSHOT_POINTER_CLOSE_ONLY") == "1")
             {
                 ValidateClosedPointerEvents(window);
@@ -132,6 +168,20 @@ public sealed partial class ToolbarTestApp : Starshot.App
             Call(window, "HandleCaptureKey", VirtualKey.Escape);
             Check(Field(window, "_state")!.ToString() == "Closed", "Final Esc closes capture");
             Check(Field(window, "_swapChain") is null && Field(window, "_canvasOriginal") is null, "No synthetic test capture/device was created");
+            if (Environment.GetEnvironmentVariable("STARSHOT_TOOLBAR_EDITOR_ONLY") == "1")
+            {
+                State(window, "Selected");
+                Call(window, "RefreshToolbar"); Call(window, "OpenToolbarMenu", Command("More"));
+                var menu = ((Canvas)Field(window,"ToolbarPopupButtons")!).Children.OfType<Button>().ToArray();
+                Check(menu[^2].Tag.ToString()=="Help" && menu[^1].Tag.ToString()=="EditToolbar", "Actual XAML menu has fixed help/edit footer");
+                Check(Canvas.GetTop(menu[^2]) + menu[^2].Height <= Canvas.GetTop(menu[^1]), "Editor below help without overlap");
+                Check(menu.Any(b=>b.Tag.ToString()=="QuickSave"), "Quick Save independently exposed");
+                Check(menu.Any(b=>b.Tag.ToString()=="QrCode" && b.IsEnabled), "QR recognition is available in the actual HDR toolbar More menu");
+                Check(Field(window,"_swapChain") is null && Field(window,"_canvasOriginal") is null, "Editor layout test does not initialize capture resources");
+                File.WriteAllText(Path.Combine(report,"xaml-interaction.log"),$"PASS {_checks} real XAML toolbar/edit-footer/keyboard checks; hidden HWND; no textures, models, capture or desktop input.\n");
+                window.Close(); Environment.Exit(0); return;
+            }
+            ValidateNativeHdrPreview(window);
             await ValidateHdrAnalysis(window);
             await BenchmarkHdrAnalysis(window, report);
             File.WriteAllText(Path.Combine(report, "xaml-interaction.log"), $"PASS {_checks} real XAML toolbar checks; hidden HWND; 0 screenshots; 0 desktop input; installed Starshot untouched.\n");
@@ -139,12 +189,59 @@ public sealed partial class ToolbarTestApp : Starshot.App
         }
         catch (Exception ex)
         {
-            File.WriteAllText(Path.Combine(report, "xaml-interaction.log"), ex.ToString());
+            File.WriteAllText(Path.Combine(report, "xaml-interaction.log"), ex.ToString()+"\n"+string.Join("\n",ex.Data.Cast<DictionaryEntry>().Select(item=>$"{item.Key}: {item.Value}")));
             window?.Close(); Environment.Exit(1);
         }
     }
 
-    private void ValidateWindowChrome()
+    private async Task ValidateCaptureEditorAsync()
+    {
+        var assembly=typeof(Starshot.Features.ViewHost.MainWindow).Assembly;
+        var documentType=assembly.GetType("Starshot.Features.Workspace.WorkspaceDocument")!;
+        var bridgeType=assembly.GetType("Starshot.Features.WebUI.WebUiBridge")!;
+        object Doc(string id)=>Activator.CreateInstance(documentType,["截图.png",id,2,2,new byte[16],null,203f,"区域截图"])!;
+        bool Disposed(object doc){try{documentType.GetProperty("Bgra")!.GetValue(doc);return false;}catch(TargetInvocationException ex)when(ex.InnerException is ObjectDisposedException){return true;}}
+        using var first=new Starshot.Features.ViewHost.MainWindow(captureEditor:true);
+        using var second=new Starshot.Features.ViewHost.MainWindow(captureEditor:true);
+        // Prevent the queued initialization before yielding to the UI dispatcher.
+        first.ForceExit=second.ForceExit=true;
+        var hostType=first.GetType();var pending=hostType.GetField("_pendingCapture",Flags)!;
+        var take=hostType.GetMethod("TakeCaptureDocument",Flags)!;
+        var a=Doc("first");var b=Doc("second");pending.SetValue(first,a);pending.SetValue(second,b);
+        Check(!first.AppWindow.IsVisible&&!second.AppWindow.IsVisible,"Capture utility hosts remain hidden during test");
+        Check((bool)hostType.GetProperty("IsCaptureEditor",Flags)!.GetValue(first)!,"Explicit capture-only native surface");
+        Check(assembly.GetType("Starshot.Features.Workspace.WorkspaceCaptureBroker") is null,"No process-global capture broker remains");
+        var bridge=System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(bridgeType);
+        bridgeType.GetField("_window",Flags)!.SetValue(bridge,first);
+        bridgeType.GetField("_workspaceGate",Flags)!.SetValue(bridge,new SemaphoreSlim(1));
+        async Task<object?> CallBridge(string method,string json="{}")
+        {
+            using var value=System.Text.Json.JsonDocument.Parse(json);
+            return await (Task<object?>)bridgeType.GetMethod("WorkspaceAsync",Flags)!.Invoke(bridge,[method,value.RootElement,CancellationToken.None])!;
+        }
+        try
+        {
+            await CallBridge("workspace.pending");
+            Check(ReferenceEquals(bridgeType.GetField("_document",Flags)!.GetValue(bridge),a),"Capture document transfers to its own bridge");
+            Check(take.Invoke(first,null) is null,"Capture input is consumed exactly once");
+            Check(ReferenceEquals(pending.GetValue(second),b)&&!Disposed(b),"Second capture is not stolen or disposed");
+            await CallBridge("workspace.pending");
+            Check(!Disposed(a),"Frontend reload reuses its current document");
+            await CallBridge("workspace.draft.save","{\"draft\":{\"version\":1,\"points\":[{\"x\":2,\"y\":1}]}}");
+            object? draft=await CallBridge("workspace.draft.load");
+            Check(draft is System.Text.Json.JsonElement value&&value.GetProperty("points").GetArrayLength()==1,"Incomplete vertices are retained in per-window memory");
+            await CallBridge("workspace.close");
+            Check(Disposed(a),"Closing the capture releases its CPU pixels");
+            Check(await CallBridge("workspace.draft.load") is null,"Closing capture drops temporary draft");
+            Check(!Disposed(b),"Closing one capture leaves another input intact");
+        }
+        finally{bridgeType.GetMethod("CloseWorkspace",Flags)!.Invoke(bridge,null);}
+        second.Close();Check(Disposed(b)&&take.Invoke(second,null) is null,"Closing before frontend load releases pending image");
+        Check(first.AppWindow.TitleBar.ExtendsContentIntoTitleBar,"Capture editor uses integrated native chrome");
+        Check(!first.AppWindow.IsVisible,"Bridge processing never activates desktop windows");
+    }
+
+    private async Task ValidateWindowChromeAsync()
     {
         foreach (bool compact in new[] { false, true })
         {
@@ -161,6 +258,42 @@ public sealed partial class ToolbarTestApp : Starshot.App
             using var state = System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(typeof(Starshot.Features.ViewHost.MainWindow).GetMethod("ChromeState", Flags)!.Invoke(host, null)));
             Check(state.RootElement.GetProperty("enabled").GetBoolean() && state.RootElement.GetProperty("height").GetInt32() == (compact ? 32 : 48), "Bootstrap carries actual native chrome mode");
             Check(state.RootElement.GetProperty("inset").GetDouble() > 0, "Actual system caption inset is supplied in DIP");
+            // Stop the queued browser initialization, then let the native title-bar
+            // layout/input region changes settle on their owning dispatcher.
+            typeof(Starshot.Features.ViewHost.MainWindow).GetMethod("DetachWebUiForRelease",Flags)!.Invoke(host,null);
+            await Task.Delay(100);
+            var nativeRegions=Microsoft.UI.Input.InputNonClientPointerSource.GetForWindowId(host.AppWindow.Id)
+                .GetRegionRects(Microsoft.UI.Input.NonClientRegionKind.Passthrough);
+            File.AppendAllText(Path.Combine(Environment.GetEnvironmentVariable("STARSHOT_TOOLBAR_UI_REPORT")!,"native-header-hit.log"),
+                $"compact={compact}, passthrough="+string.Join(";",nativeRegions.Select(r=>$"{r.X},{r.Y},{r.Width},{r.Height}"))+"\n");
+            var hitPoints = new[] { 24, 100, Math.Max(24, (int)(client.Right/host.UIScale-state.RootElement.GetProperty("inset").GetDouble()-50)) };
+            foreach(int x in hitPoints)
+            {
+                var point = new ChromePoint { X=(int)(x*host.UIScale),Y=(int)(16*host.UIScale) };ClientToScreen(host.WindowHandle,ref point);
+                nint hit=SendMessage(host.WindowHandle,0x84,0,(nint)(((long)(ushort)point.Y<<16)|(ushort)point.X));
+                File.AppendAllText(Path.Combine(Environment.GetEnvironmentVariable("STARSHOT_TOOLBAR_UI_REPORT")!,"native-header-hit.log"),$"compact={compact}, scale={host.UIScale}, xDip={x}, yDip=16, hit={hit}\n");
+                if(Environment.GetEnvironmentVariable("STARSHOT_VERIFY_HEADER_INPUT")=="1")
+                    Check(hit==1,"Native title strip must pass header button clicks through as HTCLIENT");
+            }
+            if(Environment.GetEnvironmentVariable("STARSHOT_VERIFY_HEADER_INPUT")=="1")
+            {
+                var source=Microsoft.UI.Input.InputNonClientPointerSource.GetForWindowId(host.AppWindow.Id);
+                var regions=source.GetRegionRects(Microsoft.UI.Input.NonClientRegionKind.Passthrough);
+                Check(regions.Length==1 && regions[0].Y>0 && regions[0].X+regions[0].Width<=client.Right-host.AppWindow.TitleBar.RightInset,
+                    "Passthrough excludes resize edge and native caption controls");
+                foreach(var protectedPoint in new[]{new ChromePoint{X=client.Right-(int)(20*host.UIScale),Y=(int)(16*host.UIScale)},
+                    new ChromePoint{X=client.Right/2,Y=0}})
+                {
+                    var screen=protectedPoint;ClientToScreen(host.WindowHandle,ref screen);
+                    var protectedHit=SendMessage(host.WindowHandle,0x84,0,(nint)(((long)(ushort)screen.Y<<16)|(ushort)screen.X));
+                    Check(protectedHit!=1,"System caption button strip and resize edge are not changed to client input");
+                }
+                host.AppWindow.Resize(new Windows.Graphics.SizeInt32((int)(850*host.UIScale),(int)(520*host.UIScale)));
+                typeof(Starshot.Features.ViewHost.MainWindow).GetMethod("UpdateWebBounds",Flags)!.Invoke(host,null);
+                GetClientRect(host.WindowHandle,out var resized);
+                var updated=source.GetRegionRects(Microsoft.UI.Input.NonClientRegionKind.Passthrough);
+                Check(updated[0].Width==resized.Right-host.AppWindow.TitleBar.RightInset,"Native passthrough follows current client size and actual caption inset");
+            }
         }
         var utility = new Window { Content = new Grid() };
         try
@@ -178,6 +311,10 @@ public sealed partial class ToolbarTestApp : Starshot.App
 
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
     private struct ChromeRect { public int Left, Top, Right, Bottom; }
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct ChromePoint { public int X,Y; }
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool ClientToScreen(nint hwnd,ref ChromePoint point);
+    [System.Runtime.InteropServices.DllImport("user32.dll",EntryPoint="SendMessageW")] private static extern nint SendMessage(nint hwnd,uint message,nint wparam,nint lparam);
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool GetWindowRect(nint hwnd, out ChromeRect rect);
     [System.Runtime.InteropServices.DllImport("user32.dll")]
@@ -253,6 +390,10 @@ public sealed partial class ToolbarTestApp : Starshot.App
         var analysis = (HdrLuminanceAnalysis)Field(window, "_hdrAnalysis")!;
         Check(analysis.Stats.Max == 200 && analysis.Stats.Average == 200 && analysis.Stats.P99 == 200, "GPU readback uses FP16 instead of SDR preview; no white renormalization");
         Check(((Border)Field(window, "HdrAnalysisPanel")!).Visibility == Visibility.Visible, "Closable floating analysis panel is visible");
+        var panel = (Border)Field(window,"HdrAnalysisPanel")!;
+        Call(window,"MoveAnalysisPanel",panel,new System.Drawing.RectangleF(-100000,-100000,360,480),false);
+        double left=Canvas.GetLeft(panel),top=Canvas.GetTop(panel);Call(window,"RefreshToolbar");
+        Check(Field(window,"_analysisManualBounds") is not null&&Canvas.GetLeft(panel)==left&&Canvas.GetTop(panel)==top,"Dragged HDR panel stays positioned after toolbar refresh");
         Call(window, "UpdateHdrAnalysisCursor", new Point(15.5, 10.5));
         Check(((TextBlock)Field(window, "_analysisCursor")!).Text == "200", "200% DPI cursor maps to cached source pixel");
         Check(((TextBlock)Field(window, "_analysisWhite")!).Text == "203", "SDR white reference is separate from content peak");
@@ -267,16 +408,41 @@ public sealed partial class ToolbarTestApp : Starshot.App
         Check(Field(window, "_analysisHeatmap") is not null, "Explicit heatmap switch prepares display-only texture");
         using var cropAfter = (Microsoft.Graphics.Canvas.CanvasRenderTarget)Call(window, "CropDisplayToBgra")!;
         Check(cropAfter.GetPixelBytes().SequenceEqual(originalCrop) && source.GetPixelBytes().SequenceEqual(bytes), "Heatmap never changes original source or output crop");
+        await (Task)Call(window,"OpenGamutAnalysisAsync")!;
+        var gamut=(Starshot.Features.Workspace.GamutAnalysis.Summary)Field(window,"_gamutStats")!;
+        Check(gamut.Srgb==100&&gamut.Samples==width*height,"Region gamut reads original FP16 via bounded stripes");
+        var gamutPanel=(Border)Field(window,"GamutAnalysisPanel")!;
+        Check(gamutPanel.Visibility==Visibility.Visible,"Gamut panel visible in the capture overlay");
+        Call(window,"MoveAnalysisPanel",gamutPanel,new System.Drawing.RectangleF(100000,100000,360,690),true);
+        Check(Field(window,"_gamutManualBounds") is not null,"Gamut panel shares drag positioning");
+        ((ToggleSwitch)Field(window,"_gamutSwitch")!).IsOn=true;
+        Check(Field(window,"_gamutTexture") is not null,"Gamut map only creates a texture when explicitly enabled");
+        Check(!((ToggleSwitch)Field(window,"_analysisHeatmapSwitch")!).IsOn&&Field(window,"_analysisHeatmap") is null,"Gamut and luminance pseudo-colors cannot misleadingly blend together");
+        using(var gamutCrop=(Microsoft.Graphics.Canvas.CanvasRenderTarget)Call(window,"CropDisplayToBgra")!)
+            Check(gamutCrop.GetPixelBytes().SequenceEqual(originalCrop)&&source.GetPixelBytes().SequenceEqual(bytes),"Gamut overlay does not modify copied/saved SDR or original HDR");
+        ((ToggleSwitch)Field(window,"_gamutSwitch")!).IsOn=false;
+        Check(Field(window,"_gamutTexture") is null,"Turning off gamut disposes GPU map");
+        Call(window,"CloseGamutAnalysis");
+        Check(Field(window,"_gamutMap") is null&&Field(window,"_gamutStats") is null&&Field(window,"_gamutCancellation") is null,"Gamut close releases data and cancellation owner");
+        var oldGamut=(Task)Call(window,"OpenGamutAnalysisAsync")!;
+        var newGamut=(Task)Call(window,"OpenGamutAnalysisAsync")!;
+        Call(window,"CloseGamutAnalysis");await Task.WhenAll(oldGamut,newGamut);
+        Check(Field(window,"_gamutMap") is null&&gamutPanel.Visibility==Visibility.Collapsed,"Canceled old gamut generation cannot publish a late map");
         ((ToggleSwitch)Field(window, "_analysisHeatmapSwitch")!).IsOn = false;
         Check(Field(window, "_analysisHeatmap") is null, "Returning to original preview disposes heatmap texture");
         Call(window, "HandleCaptureKey", VirtualKey.Escape);
         Check(Field(window, "_hdrAnalysis") is null && Field(window, "_analysisHeatmap") is null && Field(window, "_analysisCancellation") is null,
             "Esc releases CPU cache, GPU heatmap, cancellation owner");
         Check(Field(window, "_state")!.ToString() == "Selected", "Closing analysis leaves selection intact");
+        await (Task)Call(window,"OpenGamutAnalysisAsync")!;
+        Call(window,"HandleCaptureKey",VirtualKey.Escape);
+        Check(Field(window,"_gamutCancellation") is null&&Field(window,"_state")!.ToString()=="Selected","Esc closes gamut before changing or canceling the selection");
         await (Task)Call(window, "OpenHdrAnalysisAsync")!;
+        await (Task)Call(window,"OpenGamutAnalysisAsync")!;
         WindowType.GetProperty("SelectionRect")!.SetValue(window, new Rect(1, 1, 20, 16));
         Call(window, "RefreshToolbar");
         Check(Field(window, "_hdrAnalysis") is null, "Selection change invalidates analysis data");
+        Check(Field(window,"_gamutMap") is null&&Field(window,"_gamutCancellation") is null,"Selection change also clears gamut data");
         var pending = (Task)Call(window, "OpenHdrAnalysisAsync")!;
         Call(window, "CloseHdrAnalysis"); await pending;
         Check(Field(window, "_hdrAnalysis") is null && ((Border)Field(window, "HdrAnalysisPanel")!).Visibility == Visibility.Collapsed,
@@ -285,6 +451,36 @@ public sealed partial class ToolbarTestApp : Starshot.App
         Call(window, "CancelCapture");
         Check(Field(window, "_hdrAnalysis") is null && Field(window, "_analysisHeatmap") is null && Field(window, "_canvasOriginal") is null,
             "Capture close releases all analyzer references");
+    }
+
+    private void ValidateNativeHdrPreview(RegionCaptureWindow window)
+    {
+        var device=Microsoft.Graphics.Canvas.CanvasDevice.GetSharedDevice();
+        var values=new Half[]{(Half)(-.25),(Half).25,(Half)3,(Half)1,(Half)2.5,(Half)2.5,(Half)2.5,(Half)1};
+        byte[] raw=System.Runtime.InteropServices.MemoryMarshal.AsBytes(values.AsSpan()).ToArray();
+        using var source=Microsoft.Graphics.Canvas.CanvasBitmap.CreateFromBytes(device,raw,2,1,Windows.Graphics.DirectX.DirectXPixelFormat.R16G16B16A16Float,96,Microsoft.Graphics.Canvas.CanvasAlphaMode.Ignore);
+        using var preview=Microsoft.Graphics.Canvas.CanvasBitmap.CreateFromBytes(device,new byte[8],2,1,Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,96,Microsoft.Graphics.Canvas.CanvasAlphaMode.Ignore);
+        Set(window,"_canvasOriginal",source);Set(window,"_displayBitmap",preview);Set(window,"_scale",1f);Set(window,"_vx",0);Set(window,"_vy",0);
+        Call(window,"CreateOverlaySwapChain",2f,1f,true);
+        var swap=(Microsoft.Graphics.Canvas.CanvasSwapChain)Field(window,"_swapChain")!;
+        Check(swap.Format==Windows.Graphics.DirectX.DirectXPixelFormat.R16G16B16A16Float&&(bool)Field(window,"_nativeHdrPreview")!,"Native HDR overlay uses an FP16 swap chain");
+        using var target=new Microsoft.Graphics.Canvas.CanvasRenderTarget(device,2,1,96,Windows.Graphics.DirectX.DirectXPixelFormat.R16G16B16A16Float,Microsoft.Graphics.Canvas.CanvasAlphaMode.Ignore);
+        AnalysisMonitors(window,(new Rect(0,0,2,1),true,200,1000));Set(window,"_previewSdrWhite",200f);
+        using(var ds=target.CreateDrawingSession())Call(window,"DrawFrozenPreview",ds,new Rect(0,0,2,1),new Rect(0,0,2,1));
+        Check(target.GetPixelBytes().SequenceEqual(raw),"Native frozen preview preserves negative scRGB and >1 highlights without gamma or white renormalization");
+        AnalysisMonitors(window,(new Rect(0,0,1,1),true,200,1000),(new Rect(1,0,1,1),false,80,0));
+        using(var ds=target.CreateDrawingSession())Call(window,"DrawFrozenPreview",ds,new Rect(0,0,2,1),new Rect(0,0,2,1));
+        var mixed=System.Runtime.InteropServices.MemoryMarshal.Cast<byte,Half>(target.GetPixelBytes().AsSpan()).ToArray();
+        Check(mixed[0]==(Half)(-.25)&&mixed[2]==(Half)3&&Math.Abs((float)mixed[4]-1)<.002,"Mixed-monitor SDR preview undoes export white boost without changing HDR pixels");
+        AnalysisMonitors(window,(new Rect(0,0,2,1),true,200,1000));
+        using(var scaled=new Microsoft.Graphics.Canvas.CanvasRenderTarget(device,1,.5f,192,Windows.Graphics.DirectX.DirectXPixelFormat.R16G16B16A16Float,Microsoft.Graphics.Canvas.CanvasAlphaMode.Ignore))
+        {
+            using(var ds=scaled.CreateDrawingSession())Call(window,"DrawFrozenPreview",ds,new Rect(0,0,1,.5),new Rect(0,0,2,1));
+            Check(scaled.GetPixelBytes().SequenceEqual(raw),"200% DPI native preview preserves the physical FP16 pixel mapping");
+        }
+        Call(window,"CreateOverlaySwapChain",2f,1f,false);
+        Check(((Microsoft.Graphics.Canvas.CanvasSwapChain)Field(window,"_swapChain")!).Format==Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized&&!(bool)Field(window,"_nativeHdrPreview")!,"Standard SDR overlay remains 8-bit without native HDR conversion");
+        Call(window,"ReleaseSwapChain");Set(window,"_canvasOriginal",null);Set(window,"_displayBitmap",null);
     }
 
     private void ValidateActualHdrMetadata(RegionCaptureWindow window)
@@ -363,6 +559,13 @@ public sealed partial class ToolbarTestApp : Starshot.App
             log.Add(MemoryRow($"closed_{cycle}"));
             Check(Field(window, "_hdrAnalysis") is null && Field(window, "_analysisHeatmap") is null, "4K close drops all analysis buffers/textures");
         }
+        var gamutWatch=System.Diagnostics.Stopwatch.StartNew();await (Task)Call(window,"OpenGamutAnalysisAsync")!;
+        var gamut=(Starshot.Features.Workspace.GamutAnalysis.Summary?)Field(window,"_gamutStats");
+        var gamutMap=(Starshot.Features.Workspace.GamutAnalysis.RegionMap?)Field(window,"_gamutMap");
+        Check(gamut is not null&&gamut.Approximate&&gamut.Samples<=1_000_000&&gamut.Srgb==100,"4K gamut uses bounded labeled sampling without false wide-gamut neutral classification");
+        Check(gamutMap is not null&&gamutMap.Width<=1024&&gamutMap.Height<=1024&&Field(window,"_gamutTexture") is null,"4K gamut map is bounded and allocates no GPU overlay by default");
+        timing.Add($"gamut_elapsed_ms={gamutWatch.ElapsedMilliseconds}; samples={gamut!.Samples}; map_bytes={gamutMap!.Pixels.Length}");log.Add(MemoryRow("gamut_ready"));
+        Call(window,"CloseGamutAnalysis");Check(Field(window,"_gamutMap") is null,"4K gamut close releases map");
         File.WriteAllLines(Path.Combine(report, "4k-analysis-memory.csv"), log);
         File.WriteAllLines(Path.Combine(report, "4k-analysis-time.log"), timing);
         Call(window, "CancelCapture");

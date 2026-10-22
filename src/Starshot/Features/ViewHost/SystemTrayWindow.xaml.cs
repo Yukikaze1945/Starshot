@@ -258,6 +258,20 @@ public sealed partial class SystemTrayWindow : WindowEx
         trayIcon?.Dispose();
     }
 
+    private async void RunSubtitleAction(Func<System.Threading.Tasks.Task> action,bool showPanel=false)
+    {
+        Hide();if(showPanel)MainWindow.OpenSubtitlePanel();Features.Subtitles.SubtitleController.ReportError(null);
+        try{await action();}
+        catch(Exception ex){Features.Subtitles.SubtitleController.ReportError(ex.Message);MainWindow.OpenSubtitlePanel();Serilog.Log.Warning(ex,"Subtitle tray action failed");}
+    }
+    private void SubtitlePanel_Click(object sender,RoutedEventArgs e){Hide();MainWindow.OpenSubtitlePanel();}
+    private void SubtitleConfigure_Click(object sender,RoutedEventArgs e)=>RunSubtitleAction(()=>Features.Subtitles.SubtitleController.ConfigureAsync(),true);
+    private void SubtitleStart_Click(object sender,RoutedEventArgs e)=>RunSubtitleAction(()=>{Features.Subtitles.SubtitleController.Start();return System.Threading.Tasks.Task.CompletedTask;});
+    private void SubtitlePause_Click(object sender,RoutedEventArgs e)=>RunSubtitleAction(()=>{Features.Subtitles.SubtitleController.Pause();return System.Threading.Tasks.Task.CompletedTask;});
+    private void SubtitleStop_Click(object sender,RoutedEventArgs e)=>RunSubtitleAction(()=>Features.Subtitles.SubtitleController.StopAsync());
+    private void SubtitleCopy_Click(object sender,RoutedEventArgs e)=>RunSubtitleAction(()=>
+    {string text=Features.Subtitles.SubtitleController.Text();if(string.IsNullOrWhiteSpace(text))throw new InvalidOperationException("还没有可复制的字幕。");ClipboardHelper.SetText(text);return System.Threading.Tasks.Task.CompletedTask;});
+
     private void CancelVideo_Click(object sender, RoutedEventArgs e)
     {
         Starshot.Features.Codec.StaticVideoJobs.CancelAll();

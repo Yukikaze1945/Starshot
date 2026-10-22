@@ -20,9 +20,11 @@ internal sealed partial class WebUiBridge
     private readonly SemaphoreSlim _workspaceGate=new(1);
     private WorkspaceDocument? _document,_comparison;
     private bool _workspaceClosed;
+    private JsonElement? _captureDraft;
     private WorkspaceDocument Document => _document ?? throw new InvalidOperationException("请先打开图片。");
     private async Task<object?> WorkspaceAsync(string method,JsonElement p,CancellationToken ct)
     {
+        if(method is "workspace.formula" or "workspace.layout" || method.StartsWith("workspace.page.",StringComparison.Ordinal) || method=="workspace.formula.copyWord")return await DocumentOcrAsync(method,p,ct);
         await _workspaceGate.WaitAsync(ct);
         try
         {
@@ -39,7 +41,7 @@ internal sealed partial class WebUiBridge
                     try
                     {
                         ct.ThrowIfCancellationRequested();
-                        if(method=="workspace.open"){_document?.Dispose();_comparison?.Dispose();_comparison=null;_document=next;}
+                        if(method=="workspace.open"){ClosePageJob();_document?.Dispose();_comparison?.Dispose();_comparison=null;_document=next;}
                         else {_comparison?.Dispose();_comparison=next;}
                         return await WorkspaceInfoAsync(next,ct);
                     }
@@ -47,12 +49,14 @@ internal sealed partial class WebUiBridge
                 }
                 case "workspace.pending":
                 {
-                    var next=WorkspaceCaptureBroker.Take() ?? throw new InvalidOperationException("没有待编辑截图。");
-                    _document?.Dispose();_comparison?.Dispose();_comparison=null;_document=next;
+                    if(!_window.IsCaptureEditor)throw new InvalidOperationException("选区编辑只能在截图编辑层中打开。");
+                    var next=_window.TakeCaptureDocument();
+                    if(next is null && _document is not null)return await WorkspaceInfoAsync(_document,ct);
+                    if(next is null)throw new InvalidOperationException("当前选区已关闭，请重新框选。");
+                    ClosePageJob();_document?.Dispose();_comparison?.Dispose();_comparison=null;_document=next;
                     return await WorkspaceInfoAsync(next,ct);
                 }
-                case "workspace.discardPending":WorkspaceCaptureBroker.Take()?.Dispose();return null;
-                case "workspace.close": _document?.Dispose();_comparison?.Dispose();_document=null;_comparison=null;return null;
+                case "workspace.close": ClosePageJob();_document?.Dispose();_comparison?.Dispose();_document=null;_comparison=null;_captureDraft=null;return null;
                 case "workspace.pixel":return Document.Pixel(Range(p.GetProperty("x"),0,Document.Width-1),Range(p.GetProperty("y"),0,Document.Height-1));
                 case "workspace.difference":
                 {
@@ -96,7 +100,13 @@ internal sealed partial class WebUiBridge
                 {
                     var d=Document;
                     var lines=await Task.Run(()=>OcrHelper.RecognizeAsync(d.Bgra,d.Width,d.Height,1,ct),ct);
-                    return (lines ?? []).Select((line,i)=>new{id=i.ToString(),text=line.Text,x=line.Rect.X,y=line.Rect.Y,width=line.Rect.Width,height=line.Rect.Height}).ToArray();
+                    return RegionTranslation.TextLines(lines ?? []).Select((line,i)=>new{id=i.ToString(),text=line.Text,x=line.Rect.X,y=line.Rect.Y,width=line.Rect.Width,height=line.Rect.Height}).ToArray();
+                }
+                case "workspace.qr":
+                {
+                    var d=Document;
+                    await QrCodeResultWindow.ShowAsync(d.Bgra,d.Width,d.Height,ct);
+                    return null;
                 }
                 case "workspace.analysis.close":Document.Analysis?.Dispose();Document.Analysis=null;return null;
                 case "workspace.analysis":
@@ -146,6 +156,7 @@ internal sealed partial class WebUiBridge
                 }
                 case "workspace.draft.load":
                 {
+                    if(_window.IsCaptureEditor)return _captureDraft;
                     string path=DraftPath(Document);
                     if(!File.Exists(path))return null;
                     var info=new FileInfo(path);if(info.Length>2_000_000)throw new InvalidDataException("草稿过大");
@@ -154,6 +165,7 @@ internal sealed partial class WebUiBridge
                 case "workspace.draft.save":
                 {
                     string json=p.GetProperty("draft").GetRawText();if(json.Length>2_000_000)throw new ArgumentException("草稿过大");
+                    if(_window.IsCaptureEditor){_captureDraft=p.GetProperty("draft").Clone();return null;}
                     string path=DraftPath(Document);Directory.CreateDirectory(Path.GetDirectoryName(path)!);
                     string temporary=path+".tmp";try{await File.WriteAllTextAsync(temporary,json,ct);File.Move(temporary,path,true);}finally{if(File.Exists(temporary))File.Delete(temporary);}return null;
                 }
@@ -167,5 +179,5 @@ internal sealed partial class WebUiBridge
     private static async Task<object> WorkspaceInfoAsync(WorkspaceDocument d,CancellationToken ct)=>new{
         name=d.Name,width=d.Width,height=d.Height,hdr=d.HdrPixels is not null,carrier=d.Carrier,referenceWhite=d.ReferenceWhite,
         initialTool=d.InitialTool,fingerprint=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(d.Fingerprint))),src=await WorkspaceDocument.PngAsync(d.Bgra,d.Width,d.Height,4096,ct),previewMax=4096};
-    private void CloseWorkspace(){_workspaceClosed=true;_document?.Dispose();_comparison?.Dispose();_document=null;_comparison=null;}
+    private void CloseWorkspace(){ClosePageJob();_workspaceClosed=true;_document?.Dispose();_comparison?.Dispose();_document=null;_comparison=null;_captureDraft=null;}
 }

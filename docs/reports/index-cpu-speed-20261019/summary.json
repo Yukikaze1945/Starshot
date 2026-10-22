@@ -1,0 +1,49 @@
+{
+  "short": {
+    "input_tokens": [
+      110,
+      110
+    ],
+    "output_tokens": [
+      41,
+      41
+    ],
+    "prefill_mean_tokens_s": 104.28623706579847,
+    "decode_mean_tokens_s": 13.000113447708767,
+    "wall_mean_s": 4.152699999999999
+  },
+  "medium": {
+    "input_tokens": [
+      184,
+      184
+    ],
+    "output_tokens": [
+      113,
+      113
+    ],
+    "prefill_mean_tokens_s": 127.48120640565541,
+    "decode_mean_tokens_s": 13.690121953437842,
+    "wall_mean_s": 9.64485
+  },
+  "long": {
+    "input_tokens": [
+      300,
+      300
+    ],
+    "output_tokens": [
+      232,
+      232
+    ],
+    "prefill_mean_tokens_s": 133.099760295342,
+    "decode_mean_tokens_s": 13.368933404756838,
+    "wall_mean_s": 19.5595
+  },
+  "overall": {
+    "prefill_median_tokens_s": 127.48120640565541,
+    "decode_median_tokens_s": 13.368933404756838,
+    "prefill_weighted_tokens_s": 124.83261081731315,
+    "decode_weighted_tokens_s": 13.420970989029371,
+    "all_cache_n_zero": true,
+    "all_finished_naturally": true
+  }
+}

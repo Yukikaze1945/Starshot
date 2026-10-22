@@ -20,6 +20,8 @@
   <ItemGroup>
     <Compile Remove="PublishedSmoke/**/*.cs" />
     <Compile Include="../../src/Starshot/Helpers/OcrModelStore.cs" Link="OcrModelStore.cs" />
+    <Compile Include="../../src/Starshot/Helpers/ModelDownloadSources.cs" Link="ModelDownloadSources.cs" />
+    <Compile Include="../../src/Starshot/Helpers/LocalModelFiles.cs" Link="LocalModelFiles.cs" />
     <Compile Include="../../src/Starshot/Helpers/OcrHelper.cs" Link="OcrHelper.cs" />
     <Compile Include="../../src/Starshot/Helpers/OcrTextFormatter.cs" Link="OcrTextFormatter.cs" />
     <Compile Include="../../src/Starshot/Features/Codec/SrgbGammaEffect.cs" Link="SrgbGammaEffect.cs" />

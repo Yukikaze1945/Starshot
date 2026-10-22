@@ -1,0 +1,146 @@
+{
+  "passed": true,
+  "studioEntryUsesRegionSelection": true,
+  "reports": [
+    {
+      "width": 420,
+      "height": 400,
+      "theme": 1,
+      "dpi": 200,
+      "overflow": {
+        "viewport": 420,
+        "body": 420,
+        "root": 420
+      },
+      "buttons": [
+        {
+          "x": 16,
+          "right": 185,
+          "width": 169
+        },
+        {
+          "x": 193,
+          "right": 362,
+          "width": 169
+        },
+        {
+          "x": 370,
+          "right": 404,
+          "width": 34
+        }
+      ],
+      "actions": true,
+      "copyAfterStop": true,
+      "explicitCopyOnly": true,
+      "errorRecovery": true,
+      "newTaskConfirmation": true,
+      "pinToggle": true,
+      "errors": []
+    },
+    {
+      "width": 420,
+      "height": 400,
+      "theme": 2,
+      "dpi": 200,
+      "overflow": {
+        "viewport": 420,
+        "body": 420,
+        "root": 420
+      },
+      "buttons": [
+        {
+          "x": 16,
+          "right": 185,
+          "width": 169
+        },
+        {
+          "x": 193,
+          "right": 362,
+          "width": 169
+        },
+        {
+          "x": 370,
+          "right": 404,
+          "width": 34
+        }
+      ],
+      "actions": true,
+      "copyAfterStop": true,
+      "explicitCopyOnly": true,
+      "errorRecovery": true,
+      "newTaskConfirmation": true,
+      "pinToggle": true,
+      "errors": []
+    },
+    {
+      "width": 360,
+      "height": 360,
+      "theme": 1,
+      "dpi": 200,
+      "overflow": {
+        "viewport": 360,
+        "body": 360,
+        "root": 360
+      },
+      "buttons": [
+        {
+          "x": 12,
+          "right": 155,
+          "width": 143
+        },
+        {
+          "x": 163,
+          "right": 306,
+          "width": 143
+        },
+        {
+          "x": 314,
+          "right": 348,
+          "width": 34
+        }
+      ],
+      "actions": true,
+      "copyAfterStop": true,
+      "explicitCopyOnly": true,
+      "errorRecovery": true,
+      "newTaskConfirmation": true,
+      "pinToggle": true,
+      "errors": []
+    },
+    {
+      "width": 680,
+      "height": 700,
+      "theme": 2,
+      "dpi": 200,
+      "overflow": {
+        "viewport": 680,
+        "body": 680,
+        "root": 680
+      },
+      "buttons": [
+        {
+          "x": 16,
+          "right": 315,
+          "width": 299
+        },
+        {
+          "x": 323,
+          "right": 622,
+          "width": 299
+        },
+        {
+          "x": 630,
+          "right": 664,
+          "width": 34
+        }
+      ],
+      "actions": true,
+      "copyAfterStop": true,
+      "explicitCopyOnly": true,
+      "errorRecovery": true,
+      "newTaskConfirmation": true,
+      "pinToggle": true,
+      "errors": []
+    }
+  ]
+}

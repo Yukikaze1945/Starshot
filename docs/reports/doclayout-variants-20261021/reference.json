@@ -1,0 +1,331 @@
+[
+  {
+    "variant": "m",
+    "officialRevision": "7dbfcce3154a55776dc71ca026a4a2a8388dad8d",
+    "preprocessMaxError": 0.017507076263427734,
+    "preprocessMeanError": 1.4383742836798774e-06,
+    "officialRegions": 28,
+    "csharpRegions": 28,
+    "officialMs": 262.0279000257142,
+    "matches": [
+      {
+        "label": "doc_title",
+        "iou": 0.9999994056622474,
+        "scoreError": 1.0907135006288371e-07
+      },
+      {
+        "label": "paragraph_title",
+        "iou": 0.9999989227387162,
+        "scoreError": 2.7364425669862413e-08
+      },
+      {
+        "label": "text",
+        "iou": 0.9999980921666937,
+        "scoreError": 3.0592346433877537e-09
+      },
+      {
+        "label": "paragraph_title",
+        "iou": 0.9999996542733008,
+        "scoreError": 2.431146239878501e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.999998667297213,
+        "scoreError": 7.278991699388726e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999992628007784,
+        "scoreError": 3.548524475371906e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999998861297662,
+        "scoreError": 2.5102233891516335e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.999999305203952,
+        "scoreError": 2.959837340776872e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999980506565269,
+        "scoreError": 1.1790847775916546e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999998033831353,
+        "scoreError": 3.7203140257346945e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999997873386727,
+        "scoreError": 4.776023865282752e-07
+      },
+      {
+        "label": "paragraph_title",
+        "iou": 0.9999983497236816,
+        "scoreError": 3.5246734619853726e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999997620495189,
+        "scoreError": 2.5415191651223523e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999998157120772,
+        "scoreError": 8.59725952651047e-08
+      },
+      {
+        "label": "formula",
+        "iou": 0.9999992196814245,
+        "scoreError": 1.1867523197484076e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999987486011148,
+        "scoreError": 7.047805783422234e-08
+      },
+      {
+        "label": "text",
+        "iou": 0.9999995849373744,
+        "scoreError": 1.2379852298849414e-07
+      },
+      {
+        "label": "paragraph_title",
+        "iou": 0.9999991685891305,
+        "scoreError": 1.859374999524377e-07
+      },
+      {
+        "label": "image",
+        "iou": 1.000000020377205,
+        "scoreError": 1.349277496398571e-07
+      },
+      {
+        "label": "table",
+        "iou": 0.999999560658275,
+        "scoreError": 6.230697635611904e-08
+      },
+      {
+        "label": "image",
+        "iou": 0.9999994021419295,
+        "scoreError": 2.8511810135078974e-09
+      },
+      {
+        "label": "chart",
+        "iou": 0.9999994021419295,
+        "scoreError": 1.490554809580047e-07
+      },
+      {
+        "label": "image",
+        "iou": 0.9999991208937673,
+        "scoreError": 9.772491460502408e-08
+      },
+      {
+        "label": "chart_title",
+        "iou": 0.9999994081077602,
+        "scoreError": 2.704827117838704e-07
+      },
+      {
+        "label": "figure_title",
+        "iou": 0.9999991689272476,
+        "scoreError": 3.651870728038631e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999998486369829,
+        "scoreError": 1.3457107539416313e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999955471112885,
+        "scoreError": 4.804357910392909e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.999999672589825,
+        "scoreError": 2.9476898188995904e-07
+      }
+    ],
+    "passed": true
+  },
+  {
+    "variant": "l",
+    "officialRevision": "ca760c3336d922ee63cdbff85003181222e3911c",
+    "preprocessMaxError": 0.003921568393707275,
+    "preprocessMeanError": 3.2552080142522755e-07,
+    "officialRegions": 33,
+    "csharpRegions": 33,
+    "officialMs": 1424.2408999998588,
+    "matches": [
+      {
+        "label": "paragraph_title",
+        "iou": 0.9999977270542102,
+        "scoreError": 1.9832664489571883e-06
+      },
+      {
+        "label": "doc_title",
+        "iou": 0.9999977270542102,
+        "scoreError": 1.2836863708676205e-06
+      },
+      {
+        "label": "text",
+        "iou": 0.9999939070574043,
+        "scoreError": 1.3116455077621936e-07
+      },
+      {
+        "label": "paragraph_title",
+        "iou": 0.9999896496574608,
+        "scoreError": 2.0574569703502021e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999990565575241,
+        "scoreError": 1.5062484742811577e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999981711953592,
+        "scoreError": 2.3868499754442496e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999963117112365,
+        "scoreError": 5.966470336682406e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999986895678048,
+        "scoreError": 2.991180420020001e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999983487227723,
+        "scoreError": 1.5835662842134113e-06
+      },
+      {
+        "label": "text",
+        "iou": 0.9999961833821168,
+        "scoreError": 1.6352691645238338e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999982139971062,
+        "scoreError": 6.732513427865072e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999990503627976,
+        "scoreError": 1.2840465545838065e-06
+      },
+      {
+        "label": "text",
+        "iou": 0.9999976281801344,
+        "scoreError": 2.510818480905286e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999969851222581,
+        "scoreError": 7.552963257051459e-07
+      },
+      {
+        "label": "paragraph_title",
+        "iou": 0.99997847625202,
+        "scoreError": 2.420959472893003e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999984086332521,
+        "scoreError": 2.088165130587072e-06
+      },
+      {
+        "label": "text",
+        "iou": 0.9999922049200433,
+        "scoreError": 4.5013427762974345e-08
+      },
+      {
+        "label": "text",
+        "iou": 0.9999939927723464,
+        "scoreError": 1.8470191955888282e-06
+      },
+      {
+        "label": "formula",
+        "iou": 0.9999965961398414,
+        "scoreError": 1.2868804932786304e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999997909168948,
+        "scoreError": 5.988165283632441e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999984521147584,
+        "scoreError": 1.4446487428543264e-07
+      },
+      {
+        "label": "paragraph_title",
+        "iou": 0.9999925488425251,
+        "scoreError": 3.7037658717764543e-08
+      },
+      {
+        "label": "image",
+        "iou": 0.9999990759569273,
+        "scoreError": 6.585263061520408e-07
+      },
+      {
+        "label": "table",
+        "iou": 0.9999982629435086,
+        "scoreError": 9.676208501119277e-08
+      },
+      {
+        "label": "image",
+        "iou": 0.999997118273255,
+        "scoreError": 2.9148941038670273e-07
+      },
+      {
+        "label": "figure_title",
+        "iou": 0.9999707546258335,
+        "scoreError": 1.138758087160241e-06
+      },
+      {
+        "label": "text",
+        "iou": 0.9999983440897887,
+        "scoreError": 6.853216552582531e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.999997148688826,
+        "scoreError": 1.251681213343403e-06
+      },
+      {
+        "label": "text",
+        "iou": 0.9999972581910518,
+        "scoreError": 5.726196289357333e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999937142626228,
+        "scoreError": 7.796401977344658e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999951017737368,
+        "scoreError": 1.2514877317792994e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.9999957440132103,
+        "scoreError": 8.32688598628728e-07
+      },
+      {
+        "label": "text",
+        "iou": 0.999996156356356,
+        "scoreError": 2.6857742309038812e-06
+      }
+    ],
+    "passed": true
+  }
+]

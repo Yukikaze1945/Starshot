@@ -5,9 +5,10 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using Starshot.Features.Screenshot;
 
-internal static class Program
+internal static partial class Program
 {
     private static int _checks;
+    private static string? OcrReplay;
     private static void Check(bool value, string label)
     { if (!value) throw new InvalidOperationException(label); _checks++; }
     private static FieldInfo Field(string name) => typeof(CpuRegionCaptureWindow).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!;
@@ -58,7 +59,7 @@ internal static class Program
         using (var overlap = CpuCaptureRaster.RenderLayer(source, crop, [marker,
             new CpuAnnotation { Tool = CpuAnnotationTool.Line, Start = new(29, 23), End = new(35, 23), Color = Color.Black, Width = 1 }], 1))
             Check(overlap.Pixels[m] == 0 && overlap.Pixels[m + 3] == 255, "Opaque ink over a highlight must replace its alpha");
-        foreach (var tool in Enum.GetValues<CpuAnnotationTool>().Where(v => v is not CpuAnnotationTool.Select and not CpuAnnotationTool.Eraser and not CpuAnnotationTool.Text))
+        foreach (var tool in Enum.GetValues<CpuAnnotationTool>().Where(v => v is not CpuAnnotationTool.Select and not CpuAnnotationTool.Eraser and not CpuAnnotationTool.Text and not CpuAnnotationTool.Translation))
         {
             var annotation = new CpuAnnotation { Tool = tool, Start = new(25, 20), End = new(40, 28), Text = "1测试", Points = [new(25,20),new(40,28)] };
             using var result = CpuCaptureRaster.Render(source, crop, [annotation], 2);
@@ -109,7 +110,7 @@ internal static class Program
     private static void WindowChecks()
     {
         using var source = Pattern(720, 480);
-        foreach (RegionCaptureAction action in Enum.GetValues<RegionCaptureAction>())
+        foreach (RegionCaptureAction action in Enum.GetValues<RegionCaptureAction>().Where(a=>a is not (RegionCaptureAction.Subtitles or RegionCaptureAction.TranslateInPlace)))
         {
             using var window = new CpuRegionCaptureWindow(source, -1920, -100, action, moveOnscreen: false);
             nint hwnd = Handle(window);
@@ -286,6 +287,7 @@ internal static class Program
 
             nint beforeHdrCommandHwnd = Handle(window);
             Call(window, "InvokeToolbar", RegionToolbarCommand.HdrAnalysis, false);
+            Call(window, "InvokeToolbar", RegionToolbarCommand.GamutAnalysis, false);
             Check(Handle(window) == beforeHdrCommandHwnd && !window.Completion.Task.IsCompleted
                 && (bool)Field("_selected").GetValue(window)! && annotations.Count == 1,
                 "Disabled CPU HDR analysis command is a no-op and does not complete or mutate the capture");
@@ -310,8 +312,8 @@ internal static class Program
             Call(window, "InvokeToolbar", RegionToolbarCommand.Help, false);
             layout = Layout(window); var help = (RectangleF)Call(window, "HelpBounds", layout);
             string[] helpLines = RegionToolbarCatalog.Help.Split('\n');
-            Check(helpLines.Length == 11 && help.Height >= (8 + helpLines.Length * 25 + 8) * layout.Monitor.Scale,
-                "On-demand help panel has one visible row for all eleven shortcuts");
+            Check(helpLines.Length == 12 && help.Height >= (8 + helpLines.Length * 25 + 8) * layout.Monitor.Scale,
+                "On-demand help panel has one visible row for all twelve shortcuts, including Quick Save");
             Check(help.Left >= layout.Monitor.WorkArea.Left && help.Right <= layout.Monitor.WorkArea.Right
                 && help.Top >= layout.Monitor.WorkArea.Top && help.Bottom <= layout.Monitor.WorkArea.Bottom, "Help panel is clamped to monitor work area");
             // Exercise the layout at 200% even when the test host's active monitor uses another scale.
@@ -347,6 +349,7 @@ internal static class Program
         {
             [RegionToolbarCommand.Ocr] = RegionCaptureAction.Ocr, [RegionToolbarCommand.Pin] = RegionCaptureAction.Pin,
             [RegionToolbarCommand.Copy] = RegionCaptureAction.Copy, [RegionToolbarCommand.Save] = RegionCaptureAction.Save,
+            [RegionToolbarCommand.QuickSave] = RegionCaptureAction.QuickSave,
             [RegionToolbarCommand.Cancel] = RegionCaptureAction.Cancel, [RegionToolbarCommand.Translate] = RegionCaptureAction.Translate,
             [RegionToolbarCommand.RecordGif] = RegionCaptureAction.RecordGif, [RegionToolbarCommand.LongCapture] = RegionCaptureAction.LongCapture
         })
@@ -364,16 +367,150 @@ internal static class Program
     {
         try
         {
+            if(args.Length==2&&args[0]=="--frame-preview"){FramePreview(args[1]);return 0;}
             string? native = Environment.GetEnvironmentVariable("STARSHOT_GPU_COUNTER_DLL");
             if (native is not null) NativeLibrary.SetDllImportResolver(typeof(Program).Assembly,
                 (name, _, _) => name == "GpuMemory" ? NativeLibrary.Load(native) : 0);
             if (args.Length == 2 && args[0] == "--pid") { Console.WriteLine(JsonSerializer.Serialize(Read(int.Parse(args[1])), new JsonSerializerOptions { IncludeFields = true })); return 0; }
-            RasterChecks(); PartialBlitChecks(); WindowChecks(); ShortcutHintChecks(); ToolbarInteractionChecks();
+            if(args.Length==2&&args[0]=="--ocr-lines")OcrReplay=args[1];
+            RasterChecks(); PartialBlitChecks(); WindowChecks(); ShortcutHintChecks(); ToolbarInteractionChecks(); ToolbarEditorChecks();TranslationChecks();SubtitleOutlineChecks();FrameStyleChecks();
+            if (args.Length == 2 && args[0] == "--editor-preview")
+            {
+                using var editor = new CpuCaptureToolbarEditor();
+                typeof(CpuCaptureToolbarEditor).GetField("_scale", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(editor, 1f);
+                nint hwnd = (nint)typeof(CpuCaptureNativeWindow).GetProperty("Hwnd", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(editor)!;
+                CpuCaptureNative.SetWindowPos(hwnd, 0, -32000, -32000, 776, 610, 0x14);
+                CpuCaptureNative.InvalidateRect(hwnd, 0, false); CpuCaptureNative.SendMessageW(hwnd, 0x0F, 0, 0);
+                var surface = (CpuCaptureSurface)typeof(CpuCaptureToolbarEditor).GetField("_buffer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(editor)!;
+                using var image = surface.ToImage(); File.WriteAllBytes(args[1], image.Pixels);
+                Console.WriteLine($"PREVIEW {image.Width} {image.Height}");
+            }
             Console.WriteLine($"PASS: {_checks} raster/geometry/window/toolbar/ownership checks; no desktop input, screenshot, clipboard or image files.");
             if (args.Length == 2 && args[0] == "--memory") MemoryChecks(args[1]);
             return 0;
         }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
+    }
+    private static void TranslationChecks()
+    {
+        using var source=Pattern(640,360);
+        // Reproduce Small's empty icon lines without a model or remote request.
+        Starshot.Helpers.OcrHelper.Lines=[new("Appearance",new(8,6,100,20)),new("",new(120,6,8,5)),new("  ",new(130,6,8,5)),new("Mode",new(8,35,55,20))];
+        var original=(byte[])source.Pixels.Clone();
+        var translated=RegionTranslation.TranslateAsync(source.Pixels,source.Width,source.Height,CancellationToken.None).GetAwaiter().GetResult();
+        Check(translated.Length==2&&Starshot.Helpers.OcrTranslationClient.Segments==2,"Empty icon OCR lines never reach formatted translation");
+        Check(original.SequenceEqual(source.Pixels),"Translation never mutates frozen SDR input");
+        if(OcrReplay is not null)
+        {
+            using var json=JsonDocument.Parse(File.ReadAllText(OcrReplay));var sample=json.RootElement.EnumerateArray().Single(r=>r.GetProperty("model").GetString()=="small");
+            var raw=sample.GetProperty("lines").EnumerateArray().ToArray();
+            Starshot.Helpers.OcrHelper.Lines=raw.Select(l=>new Starshot.Helpers.OcrLine(l.GetProperty("text").GetString()!,new((float)l.GetProperty("x").GetDouble(),(float)l.GetProperty("y").GetDouble(),(float)l.GetProperty("width").GetDouble(),(float)l.GetProperty("height").GetDouble()))).ToList();
+            var pixels=new byte[1134*1047*4];Array.Fill(pixels,(byte)40);for(int a=3;a<pixels.Length;a+=4)pixels[a]=255;
+            var replay=RegionTranslation.TranslateAsync(pixels,1134,1047,CancellationToken.None).GetAwaiter().GetResult();
+            Check(raw.Length==25&&replay.Length==23&&Starshot.Helpers.OcrTranslationClient.Segments==23,"User image actual Small results: 25 rows minus two empty icons = 23 valid segments");
+            Console.WriteLine("PASS attached image actual OCR output replay: 23 valid translated overlays; translation backend is a deterministic test double, no external API/model.");
+        }
+        using(var window=new CpuRegionCaptureWindow(source,-1920,-200,RegionCaptureAction.Save,moveOnscreen:false))
+        {
+            Field("_selected").SetValue(window,true);Field("_selection").SetValue(window,new Rectangle(20,30,300,100));
+            Call(window,"ApplyRegionTranslation",(object)translated);
+            Check(((List<CpuAnnotation>)Field("_annotations").GetValue(window)!).Count==1,"Translation is one undoable overlay in the current screenshot");
+            Call(window,"Undo",false);Check(((List<CpuAnnotation>)Field("_annotations").GetValue(window)!).Count==0,"Ctrl+Z removes the entire translation batch");
+            Call(window,"Undo",true);Check(((List<CpuAnnotation>)Field("_annotations").GetValue(window)!).Count==1,"Redo restores translation");
+            Finish(window,RegionCaptureAction.Copy);var result=window.Completion.Task.GetAwaiter().GetResult();
+            using var image=result.Image;using var expected=source.Crop(new(20,30,300,100));
+            Check(result.Action==RegionCaptureAction.Copy&&image is not null&&!image.Pixels.SequenceEqual(expected.Pixels),"Copy result contains the translated overlay, no editor/gallery handoff");
+            Check(Handle(window)==0,"Translated screenshot closes normally");
+        }
+        using(var window=new CpuRegionCaptureWindow(source,-1920,-200,RegionCaptureAction.Save,moveOnscreen:false))
+        {
+            Field("_selected").SetValue(window,true);Field("_selection").SetValue(window,new Rectangle(20,30,300,100));
+            Finish(window,RegionCaptureAction.Subtitles);var result=window.Completion.Task.GetAwaiter().GetResult();
+            Check(result.Action==RegionCaptureAction.Subtitles&&result.PhysicalRect==new Rectangle(20,30,300,100),"Subtitle toolbar action returns the existing physical ROI");
+            Check(result.Image is null&&Handle(window)==0,"Subtitle handoff has no extra crop or independent frame");
+        }
+        foreach(bool close in new[]{false,true})
+        {
+            var pending=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);Starshot.Helpers.OcrHelper.Pending=pending.Task;Starshot.Helpers.OcrHelper.Started=false;
+            using var window=new CpuRegionCaptureWindow(source,0,0,RegionCaptureAction.Save,moveOnscreen:false);
+            Field("_selected").SetValue(window,true);Field("_selection").SetValue(window,new Rectangle(20,30,300,100));
+            var work=(Task)Call(window,"TranslateRegionInPlaceAsync");
+            Check(SpinWait.SpinUntil(()=>Starshot.Helpers.OcrHelper.Started,2000),"Translation inference started asynchronously");
+            if(close)window.Dispose();else Field("_selection").SetValue(window,new Rectangle(40,50,300,100));
+            pending.SetResult();work.GetAwaiter().GetResult();
+            Check(((List<CpuAnnotation>)Field("_annotations").GetValue(window)!).Count==0,close?"Closing cancels inference; late translation cannot republish":"Changing selection rejects stale translated boxes");
+            Starshot.Helpers.OcrHelper.Pending=null;
+        }
+    }
+
+    private static void ToolbarEditorChecks()
+    {
+        Type type = typeof(CpuCaptureToolbarEditor);
+        object? Read(object editor, string name) => type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(editor);
+        void Do(object editor, string name, params object[] args) => type.GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(editor, args);
+        nint H(object editor) => (nint)typeof(CpuCaptureNativeWindow).GetProperty("Hwnd", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(editor)!;
+        string? written = null;
+        RegionToolbarPreferences.Configure(null, value => written = value);
+        var defaults = RegionToolbarPreferences.Current;
+        using (var editor = new CpuCaptureToolbarEditor())
+        {
+            CpuCaptureNative.InvalidateRect(H(editor), 0, false); CpuCaptureNative.SendMessageW(H(editor), 0x0F, 0, 0);
+            Check(Read(editor, "_buffer") is CpuCaptureSurface, "Hidden native editor paints through CPU GDI");
+            foreach (float scale in new[] { 1f, 1.5f, 2f })
+            {
+                type.GetField("_scale", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(editor,scale);
+                Do(editor,"CreateFonts");
+                CpuCaptureNative.SetWindowPos(H(editor),0,-32000,-32000,(int)(760*scale),(int)(570*scale),0x14);
+                var first = (Rectangle)type.GetMethod("ListBounds",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(editor,[0])!;
+                var second = (Rectangle)type.GetMethod("ListBounds",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(editor,[1])!;
+                var accept = (Rectangle)type.GetMethod("Button",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(editor,["accept"])!;
+                var down = (Rectangle)type.GetMethod("Button",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(editor,["down"])!;
+                Check(!first.IntersectsWith(second) && first.Bottom < accept.Top && second.Bottom < accept.Top && down.Bottom < accept.Top,
+                    $"Native two-column editor controls stay clear at {scale*100}% DPI");
+                CpuCaptureNative.SendMessageW(H(editor),0x0F,0,0);
+            }
+            var model = (RegionToolbarEditModel)Read(editor, "_model")!;
+            Do(editor, "Action", "right");
+            Check(!model.Main.Contains(defaults.Main[0]) && model.Secondary[^1] == defaults.Main[0], "Editor right arrow transfers selected button");
+            Do(editor, "Action", "up");
+            Check(model.Secondary[^2] == defaults.Main[0], "Editor up arrow reorders");
+            Do(editor, "Action", "remove");
+            Check(model.Unused().Contains(defaults.Main[0]), "Editor delete returns item to library");
+            Do(editor, "Action", "add");
+            Do(editor, "AddFromPool", Array.IndexOf(model.Unused(), defaults.Main[0]));
+            Check(model.Secondary[^1] == defaults.Main[0] && !(bool)Read(editor,"_pool")!, "Library adds item back without duplicates");
+            Do(editor, "Action", "cancel");
+            Check(written is null && RegionToolbarPreferences.Current.Main.SequenceEqual(defaults.Main), "Cancel leaves persisted and active layout unchanged");
+            Check(H(editor) == 0 && Read(editor, "_buffer") is null && (nint)Read(editor, "_font")! == 0, "Editor close releases HWND, DIB and fonts");
+        }
+        using (var editor = new CpuCaptureToolbarEditor())
+        {
+            var model = (RegionToolbarEditModel)Read(editor, "_model")!;
+            Do(editor, "Action", "remove"); Do(editor, "Action", "accept");
+            Check(written is not null && RegionToolbarPreferences.Current.Main.SequenceEqual(model.Main), "Confirm persists and activates layout");
+        }
+        using (var editor = new CpuCaptureToolbarEditor())
+        {
+            Do(editor,"Action","reset");Do(editor,"Action","accept");
+            Check(RegionToolbarPreferences.Current.Main.SequenceEqual(defaults.Main), "Restore defaults is confirmed explicitly");
+        }
+        using (var editor = new CpuCaptureToolbarEditor())
+        {
+            nint hwnd = H(editor);
+            var left = (Rectangle)type.GetMethod("ListBounds", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(editor, [0])!;
+            var right = (Rectangle)type.GetMethod("ListBounds", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(editor, [1])!;
+            int d = (int)type.GetMethod("D", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(editor, [18f])!;
+            nint Point(int x,int y)=>(nint)((y<<16)|(x&0xffff));
+            CpuCaptureNative.SendMessageW(hwnd,0x201,1,Point(left.Left+d,left.Top+d));
+            CpuCaptureNative.SendMessageW(hwnd,0x200,1,Point(right.Left+d,right.Top+d));
+            CpuCaptureNative.SendMessageW(hwnd,0x202,0,Point(right.Left+d,right.Top+d));
+            var model = (RegionToolbarEditModel)Read(editor,"_model")!;
+            Check(model.Secondary[0] == defaults.Main[0] && !model.Main.Contains(defaults.Main[0]), "Actual mouse messages drag button between columns without desktop input");
+            Do(editor,"Action","add");CpuCaptureNative.SendMessageW(hwnd,0x100,27,0);
+            Check(H(editor)!=0 && !(bool)Read(editor,"_pool")!,"First Esc closes button library");
+            CpuCaptureNative.SendMessageW(hwnd,0x100,27,0);Check(H(editor)==0,"Next Esc closes editor");
+        }
+        RegionToolbarPreferences.Configure(null, _=>{});
     }
     private static void MemoryChecks(string csv)
     {

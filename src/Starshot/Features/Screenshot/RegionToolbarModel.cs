@@ -5,17 +5,17 @@ using System.Linq;
 
 namespace Starshot.Features.Screenshot;
 
-public enum RegionCaptureAction { Cancel, Save, Copy, Ocr, Translate, Pin, RecordGif, LongCapture, Cutout, TranslateInPlace }
+public enum RegionCaptureAction { Cancel, Save, Copy, Ocr, Translate, Pin, RecordGif, LongCapture, Cutout, TranslateInPlace, QuickSave, QrCode, Formula, PageLayout, Subtitles }
 
 // UI-independent semantics shared by the GDI and XAML renderers. No capture/device objects.
 internal enum RegionToolbarCommand
 {
     Select, Rectangle, Ellipse, Line, Arrow, Number, Pen, Highlighter, Mosaic, Blur, Text, Eraser,
-    Shapes, Brushes, Texts, Undo, Redo, Ocr, Pin, More, Copy, Save, Cancel, Translate, RecordGif, LongCapture, Reselect, Help, HdrAnalysis, Cutout, TranslateInPlace
+    Shapes, Brushes, Texts, Undo, Redo, Ocr, Pin, More, Copy, Save, Cancel, Translate, RecordGif, LongCapture, Reselect, Help, HdrAnalysis, Cutout, TranslateInPlace, QuickSave, EditToolbar, QrCode, Formula, PageLayout, GamutAnalysis, Subtitles
 }
 internal sealed record RegionToolbarDescriptor(string Label, string Glyph, bool Symbol = true,
     RegionCaptureAction? Action = null, string Shortcut = "");
-internal sealed record RegionToolbarSlot(RegionToolbarCommand Command, RectangleF Bounds, RectangleF Chevron);
+internal sealed record RegionToolbarSlot(RegionToolbarCommand Command, RectangleF Bounds, RectangleF Chevron, int ItemIndex = -1);
 internal sealed record RegionToolbarParameter(bool Color, int Value, RectangleF Bounds);
 internal sealed record RegionToolbarMonitor(RectangleF Bounds, RectangleF WorkArea, float Scale);
 internal sealed record RegionToolbarLayout(RectangleF Main, RectangleF Parameters,
@@ -31,7 +31,7 @@ internal static class RegionToolbarCatalog
     public static readonly int[] Widths = [2, 3, 5, 8, 12];
     public static readonly RegionToolbarCommand[] Main = [RegionToolbarCommand.Select, RegionToolbarCommand.Shapes,
         RegionToolbarCommand.Arrow, RegionToolbarCommand.Brushes, RegionToolbarCommand.Texts, RegionToolbarCommand.Cutout,
-        RegionToolbarCommand.Undo, RegionToolbarCommand.Redo, RegionToolbarCommand.Ocr, RegionToolbarCommand.Pin,
+        RegionToolbarCommand.Undo, RegionToolbarCommand.Redo, RegionToolbarCommand.Ocr, RegionToolbarCommand.Formula, RegionToolbarCommand.Pin,
         RegionToolbarCommand.More, RegionToolbarCommand.Copy, RegionToolbarCommand.Save, RegionToolbarCommand.Cancel];
     private static readonly Dictionary<RegionToolbarCommand, RegionToolbarDescriptor> Items = new()
     {
@@ -53,10 +53,16 @@ internal static class RegionToolbarCatalog
         [RegionToolbarCommand.Undo] = new("撤销", "\uE7A7", Shortcut: "Ctrl+Z"),
         [RegionToolbarCommand.Redo] = new("重做", "\uE7A6", Shortcut: "Ctrl+Y / Ctrl+Shift+Z"),
         [RegionToolbarCommand.Ocr] = new("文字识别", "OCR", false, RegionCaptureAction.Ocr, "Shift+C"),
+        [RegionToolbarCommand.Subtitles] = new("实时字幕摘录", "\uE8F2", Action: RegionCaptureAction.Subtitles),
+        [RegionToolbarCommand.Formula] = new("公式识别", "∑", false, RegionCaptureAction.Formula),
+        [RegionToolbarCommand.PageLayout] = new("分析版面 / 整页提取", "版", false, RegionCaptureAction.PageLayout),
+        [RegionToolbarCommand.QrCode] = new("识别二维码", "\uED14", Action: RegionCaptureAction.QrCode),
         [RegionToolbarCommand.Pin] = new("贴图", "\uE718", Action: RegionCaptureAction.Pin, Shortcut: "Ctrl+T"),
         [RegionToolbarCommand.More] = new("更多工具", "\uE712"),
         [RegionToolbarCommand.Copy] = new("复制", "\uE8C8", Action: RegionCaptureAction.Copy, Shortcut: "Ctrl+C"),
-        [RegionToolbarCommand.Save] = new("保存", "\uE74E", Action: RegionCaptureAction.Save, Shortcut: "Ctrl+S"),
+        [RegionToolbarCommand.Save] = new("保存图像…", "\uE74E", Action: RegionCaptureAction.Save, Shortcut: "Ctrl+S"),
+        [RegionToolbarCommand.QuickSave] = new("快速保存", "\uE945", Action: RegionCaptureAction.QuickSave, Shortcut: "Ctrl+Shift+S"),
+        [RegionToolbarCommand.EditToolbar] = new("编辑菜单", "\uE713"),
         [RegionToolbarCommand.Cancel] = new("取消截图", "\uE8BB", Action: RegionCaptureAction.Cancel, Shortcut: "Esc"),
         [RegionToolbarCommand.Translate] = new("识别并翻译", "译", false, RegionCaptureAction.Translate, "Ctrl+Q"),
         [RegionToolbarCommand.RecordGif] = new("录制 GIF", "GIF", false, RegionCaptureAction.RecordGif, "G"),
@@ -64,6 +70,7 @@ internal static class RegionToolbarCatalog
         [RegionToolbarCommand.Reselect] = new("重新选区", "\uE8B7"),
         [RegionToolbarCommand.Help] = new("快捷键说明", "?", false, Shortcut: "F1"),
         [RegionToolbarCommand.HdrAnalysis] = new("HDR 亮度分析", "\uE9D9"),
+        [RegionToolbarCommand.GamutAnalysis] = new("色域分析", "\uE790"),
         [RegionToolbarCommand.Cutout] = new("抠图 / 多边形 / 套索", "\uE8C6", Action: RegionCaptureAction.Cutout),
         [RegionToolbarCommand.TranslateInPlace] = new("原位翻译覆盖", "译层", false,RegionCaptureAction.TranslateInPlace),
     };
@@ -83,20 +90,25 @@ internal static class RegionToolbarCatalog
     {
         RegionCaptureAction.Copy => RegionToolbarCommand.Copy, RegionCaptureAction.Ocr => RegionToolbarCommand.Ocr,
         RegionCaptureAction.Translate => RegionToolbarCommand.Translate, RegionCaptureAction.Pin => RegionToolbarCommand.Pin,
+        RegionCaptureAction.QuickSave => RegionToolbarCommand.QuickSave,
+        RegionCaptureAction.Formula => RegionToolbarCommand.Formula, RegionCaptureAction.PageLayout => RegionToolbarCommand.PageLayout,
+        RegionCaptureAction.QrCode => RegionToolbarCommand.QrCode,
+        RegionCaptureAction.Subtitles => RegionToolbarCommand.Subtitles,
         _ => RegionToolbarCommand.Save
     };
     public static RegionToolbarCommand? Shortcut(int key, bool control, bool shift) => (key, control, shift) switch
     {
         (0x5a, true, true) => RegionToolbarCommand.Redo, (0x5a, true, false) => RegionToolbarCommand.Undo,
         (0x59, true, _) => RegionToolbarCommand.Redo, (0x43, true, _) => RegionToolbarCommand.Copy,
-        (0x43, false, true) => RegionToolbarCommand.Ocr, (0x53, true, _) => RegionToolbarCommand.Save,
+        (0x43, false, true) => RegionToolbarCommand.Ocr, (0x53, true, true) => RegionToolbarCommand.QuickSave,
+        (0x53, true, false) => RegionToolbarCommand.Save,
         (0x51, true, _) => RegionToolbarCommand.Translate, (0x54, true, _) => RegionToolbarCommand.Pin,
         (0x47, false, false) => RegionToolbarCommand.RecordGif, (0x4c, false, false) => RegionToolbarCommand.LongCapture,
         (0x70, _, _) => RegionToolbarCommand.Help, _ => null
     };
     public static Point CursorDelta(int key) => key switch
     { 0x41 => new(-1, 0), 0x44 => new(1, 0), 0x57 => new(0, -1), 0x53 => new(0, 1), _ => Point.Empty };
-    public const string Help = "方向键  移动选区\nShift + 方向键  缩小选区\nCtrl + 方向键  扩大选区\nW / A / S / D  移动取色光标\nC  复制颜色 · Shift 切换 HEX\nCtrl+C / Ctrl+S  复制 / 保存\nShift+C / Ctrl+Q  OCR / 翻译\nCtrl+T · G · L  贴图 / GIF / 长截图\nCtrl+Z / Ctrl+Y  撤销 / 重做\nEnter  当前入口操作\nEsc  关闭菜单 → 重新选区 → 退出";
+    public const string Help = "方向键  移动选区\nShift + 方向键  缩小选区\nCtrl + 方向键  扩大选区\nW / A / S / D  移动取色光标\nC  复制颜色 · Shift 切换 HEX\nCtrl+C / Ctrl+S  复制 / 选择位置保存\nCtrl+Shift+S  快速保存到设置目录\nShift+C / Ctrl+Q  OCR / 翻译\nCtrl+T · G · L  贴图 / GIF / 长截图\nCtrl+Z / Ctrl+Y  撤销 / 重做\nEnter  当前入口操作\nEsc  关闭菜单 → 重新选区 → 退出";
 }
 
 internal sealed class RegionToolbarState
@@ -122,14 +134,25 @@ internal sealed class RegionToolbarState
     public void Open(RegionToolbarCommand command) { Popup = command; MenuFocus = 0; }
     public bool ClosePopup() { bool open = Popup.HasValue; Popup = null; return open; }
     public RegionToolbarCommand[] MenuItems(RegionToolbarLayout layout) => Popup == RegionToolbarCommand.More
-        ? layout.Overflow.Concat(new[] { RegionToolbarCommand.Translate, RegionToolbarCommand.RecordGif,
-            RegionToolbarCommand.LongCapture, RegionToolbarCommand.Cutout, RegionToolbarCommand.TranslateInPlace, RegionToolbarCommand.HdrAnalysis, RegionToolbarCommand.Reselect, RegionToolbarCommand.Help }).Distinct()
-            .Where(command => !layout.Slots.Any(slot => slot.Command == command)).ToArray()
+        ? layout.Overflow.Concat(RegionToolbarPreferences.Current.Secondary).Distinct()
+            .Where(command => !layout.Slots.Any(slot => slot.Command == command))
+            .Concat(new[] { RegionToolbarCommand.Help, RegionToolbarCommand.EditToolbar }).ToArray()
         : RegionToolbarCatalog.Members(Popup ?? RegionToolbarCommand.More);
 }
 
 internal static class RegionToolbarGeometry
 {
+    // Physical desktop pixels, including negative monitor origins. Keep panels usable
+    // at a work-area edge instead of letting the draggable close button go offscreen.
+    internal static RectangleF ClampPanel(RectangleF panel, IReadOnlyList<RegionToolbarMonitor> monitors)
+    {
+        if (monitors.Count == 0) return panel;
+        var center = new PointF(panel.Left + panel.Width / 2, panel.Top + panel.Height / 2);
+        var area = monitors.OrderByDescending(m => Area(RectangleF.Intersect(panel, m.WorkArea)))
+            .ThenBy(m => Distance(center, m.WorkArea)).First().WorkArea;
+        float width = Math.Min(panel.Width, area.Width), height = Math.Min(panel.Height, area.Height);
+        return new(Clamp(panel.X, area.Left, area.Right - width), Clamp(panel.Y, area.Top, area.Bottom - height), width, height);
+    }
     public static RectangleF AnalysisBounds(RegionToolbarLayout layout, RectangleF selection, bool expanded)
     {
         float scale = layout.Monitor.Scale;
@@ -163,14 +186,20 @@ internal static class RegionToolbarGeometry
             .ThenBy(m => Distance(center, m.Bounds)).First();
         float s = Math.Clamp(monitor.Scale, .5f, 4), pad = 8 * s, gap = 4 * s, cell = 36 * s, height = 48 * s;
         var available = monitor.WorkArea;
-        var items = RegionToolbarCatalog.Main.ToList();
+        var custom = RegionToolbarPreferences.Current;
+        var items = custom.Main.ToList();
+        int anchor = items.FindIndex(c => c is RegionToolbarCommand.Copy or RegionToolbarCommand.Save or RegionToolbarCommand.Cancel);
+        items.Insert(anchor < 0 ? items.Count : anchor, RegionToolbarCommand.More);
         var primary = RegionToolbarCatalog.Primary(action);
-        if (!items.Contains(primary)) items.Insert(items.IndexOf(RegionToolbarCommand.More), primary);
+        var defaults = RegionToolbarPreferences.Defaults();
+        if (!items.Contains(primary) && custom.Main.SequenceEqual(defaults.Main) && custom.Secondary.SequenceEqual(defaults.Secondary))
+            items.Insert(items.IndexOf(RegionToolbarCommand.More), primary);
         var overflow = new List<RegionToolbarCommand>();
         float Width() => pad * 2 + items.Sum(c => RegionToolbarCatalog.IsGroup(c) ? cell + 16 * s : cell) + gap * (items.Count - 1);
         foreach (var command in new[] { RegionToolbarCommand.Redo, RegionToolbarCommand.Pin, RegionToolbarCommand.Undo,
             RegionToolbarCommand.Arrow, RegionToolbarCommand.Ocr, RegionToolbarCommand.Texts, RegionToolbarCommand.Brushes,
-            RegionToolbarCommand.Shapes, RegionToolbarCommand.Save, RegionToolbarCommand.Copy, RegionToolbarCommand.Select })
+            RegionToolbarCommand.Shapes, RegionToolbarCommand.Save, RegionToolbarCommand.Copy, RegionToolbarCommand.Select }
+            .Concat(items.Where(c => c is not (RegionToolbarCommand.More or RegionToolbarCommand.Cancel))).Distinct().ToArray())
         {
             if (Width() <= available.Width) break;
             if (command == primary || !items.Contains(command)) continue;
@@ -206,7 +235,7 @@ internal static class RegionToolbarGeometry
             choices.Add(new(i < RegionToolbarCatalog.Colors.Length,
                 i < RegionToolbarCatalog.Colors.Length ? RegionToolbarCatalog.Colors[i] : RegionToolbarCatalog.Widths[i - RegionToolbarCatalog.Colors.Length],
                 new(param.X + pad + i % columns * 32 * s, param.Y + pad + i / columns * 36 * s, 28 * s, 28 * s)));
-        return new(main, param, monitor, slots, overflow, choices);
+        return new(main, param, monitor, slots, custom.Main.Where(overflow.Contains).ToArray(), choices);
     }
     public static RegionToolbarMenu Menu(RegionToolbarLayout layout, RegionToolbarState state)
     {
@@ -219,22 +248,29 @@ internal static class RegionToolbarGeometry
         float below = Math.Max(0, area.Bottom - bottom - 6 * s);
         bool onTop = above >= below;
         float freeHeight = Math.Max(above, below);
-        int rows = Math.Max(1, (int)((freeHeight - 2 * pad) / row));
-        int columns = Math.Min(Math.Max(1, (int)(area.Width / (160 * s))), (int)Math.Ceiling(commands.Length / (double)rows));
+        bool fixedFooter = state.Popup == RegionToolbarCommand.More;
+        int footerRows = fixedFooter ? 2 : 0;
+        // Reserve the last two full-width rows for recovery/help, even when tools paginate.
+        int bodyCount = commands.Length - footerRows;
+        int rows = Math.Max(1, (int)((freeHeight - 2 * pad) / row) - footerRows);
+        int columns = Math.Min(Math.Max(1, (int)(area.Width / (160 * s))), Math.Max(1, (int)Math.Ceiling(bodyCount / (double)rows)));
         float columnW = Math.Min(230 * s, area.Width / columns);
-        rows = Math.Min(rows, commands.Length);
-        float w = columns * columnW, h = rows * row + 2 * pad;
+        rows = Math.Min(rows, bodyCount);
+        if (bodyCount == 0) columns = 1;
+        float w = columns * columnW, h = (rows + footerRows) * row + 2 * pad;
         var anchor = layout.Slots.FirstOrDefault(slot => slot.Command == state.Popup)?.Bounds ??
             layout.Slots.First(slot => slot.Command == RegionToolbarCommand.More).Bounds;
         float x = Clamp(anchor.Left, area.Left, area.Right - w);
         float y = onTop ? layout.Main.Top - h - 6 * s : bottom + 6 * s;
         y = Clamp(y, area.Top, area.Bottom - h);
         var bounds = new RectangleF(x, y, w, h);
-        int visible = rows * columns;
+        int visible = Math.Max(1, rows * columns);
         state.MenuFocus = Math.Clamp(state.MenuFocus, 0, commands.Length - 1);
-        int first = state.MenuFocus / visible * visible;
-        var slots = commands.Skip(first).Take(visible).Select((c, i) => new RegionToolbarSlot(c,
-            new(x + i / rows * columnW + pad, y + pad + i % rows * row, columnW - 2 * pad, row), RectangleF.Empty)).ToArray();
+        int first = Math.Min(state.MenuFocus, Math.Max(0, bodyCount - 1)) / visible * visible;
+        var slots = commands.Take(bodyCount).Skip(first).Take(visible).Select((c, i) => new RegionToolbarSlot(c,
+            new(x + i / rows * columnW + pad, y + pad + i % rows * row, columnW - 2 * pad, row), RectangleF.Empty, first + i)).ToList();
+        for (int i = 0; i < footerRows; i++)
+            slots.Add(new(commands[bodyCount + i], new(x + pad, y + pad + (rows + i) * row, w - 2 * pad, row), RectangleF.Empty, bodyCount + i));
         return new(bounds, slots, first, commands.Length);
     }
     public static RectangleF Offset(RectangleF r, float x, float y) => new(r.X + x, r.Y + y, r.Width, r.Height);
@@ -242,7 +278,7 @@ internal static class RegionToolbarGeometry
     {
         float s = layout.Monitor.Scale;
         var area = layout.Monitor.WorkArea;
-        float w = Math.Min(360 * s, area.Width), h = Math.Min(300 * s, area.Height);
+        float w = Math.Min(360 * s, area.Width), h = Math.Min(326 * s, area.Height);
         float x = Clamp(layout.Main.Left, area.Left, area.Right - w);
         float y = layout.Main.Bottom + 6 * s;
         if (y + h > area.Bottom) y = layout.Main.Top - h - 6 * s;

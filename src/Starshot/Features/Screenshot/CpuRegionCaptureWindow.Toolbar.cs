@@ -88,6 +88,7 @@ internal sealed partial class CpuRegionCaptureWindow
             if (!chevron.IsEmpty)
                 CpuCaptureGdi.Text(dc, "⌄", chevron, _toolbarLabelFont, Ink, center: true);
         }
+        PaintTranslationStatus(dc,layout);
         if (!layout.Parameters.IsEmpty) PaintParameters(dc, layout);
         if (_toolbarState.Popup.HasValue && _toolbarMenu is { } menu) PaintMenu(dc, menu, layout.Monitor.Scale);
         if (_toolbarHelp) PaintHelp(dc, layout);
@@ -141,11 +142,13 @@ internal sealed partial class CpuRegionCaptureWindow
         {
             var slot = menu.Slots[i];
             var r = LocalRect(slot.Bounds, _virtualX, _virtualY);
-            if (menu.FirstIndex + i == _toolbarState.MenuFocus || slot.Bounds.Contains(_mouse.X + _virtualX, _mouse.Y + _virtualY))
+            if (slot.Command == RegionToolbarCommand.Help && _toolbarState.Popup == RegionToolbarCommand.More)
+                CpuCaptureGdi.Line(dc, new(r.Left, r.Top), new(r.Right, r.Top), Border, 1);
+            if (slot.ItemIndex == _toolbarState.MenuFocus || slot.Bounds.Contains(_mouse.X + _virtualX, _mouse.Y + _virtualY))
                 CpuCaptureGdi.Fill(dc, r, ToolbarHover, DipAt(5, scale));
             var desc = RegionToolbarCatalog.Get(slot.Command);
             string label = desc.Label + (desc.Shortcut.Length == 0 ? "" : "   " + desc.Shortcut);
-            if (slot.Command == RegionToolbarCommand.HdrAnalysis) label = "HDR 亮度分析（需 HDR 捕获）";
+            if (slot.Command is RegionToolbarCommand.HdrAnalysis or RegionToolbarCommand.GamutAnalysis) label = desc.Label + "（需 HDR 捕获）";
             CpuCaptureGdi.Text(dc, label, new(r.X + DipAt(8, scale), r.Y, r.Width - DipAt(16, scale), r.Height), _toolbarLabelFont,
                 ToolbarCommandEnabled(slot.Command) ? Ink : Color.FromArgb(160, 168, 150));
         }
@@ -170,6 +173,9 @@ internal sealed partial class CpuRegionCaptureWindow
     private void UpdateToolbarHover()
     {
         if (!_selected) { _tip = ""; _toolbarHover = false; return; }
+        FrameLayout();var framePoint=new PointF(_mouse.X+_virtualX,_mouse.Y+_virtualY);
+        if(RegionFrameControls.Button(_frameHeader,_frameScale).Contains(framePoint)||(_framePopup&&_framePanel.Contains(framePoint)))
+        {_toolbarHover=true;_tip="";return;}
         var layout = ToolbarLayout();
         PointF screen = new(_mouse.X + _virtualX, _mouse.Y + _virtualY);
         var slot = layout.Slots.FirstOrDefault(s => s.Bounds.Contains(screen));
@@ -182,7 +188,7 @@ internal sealed partial class CpuRegionCaptureWindow
         }
         _toolbarMenu = _toolbarState.Popup.HasValue ? RegionToolbarGeometry.Menu(layout, _toolbarState) : null;
         var menuSlot = _toolbarMenu?.Slots.FirstOrDefault(s => s.Bounds.Contains(screen));
-        if (menuSlot is not null) { _toolbarState.MenuFocus = _toolbarMenu!.FirstIndex + _toolbarMenu.Slots.ToList().IndexOf(menuSlot); _toolbarHover = true; _tip = RegionToolbarCatalog.Get(menuSlot.Command).Label; return; }
+        if (menuSlot is not null) { _toolbarState.MenuFocus = menuSlot.ItemIndex; _toolbarHover = true; _tip = RegionToolbarCatalog.Get(menuSlot.Command).Label; return; }
         var choice = layout.Choices.FirstOrDefault(c => c.Bounds.Contains(screen));
         if (choice is not null) { _toolbarHover = true; _tip = choice.Color ? "标注颜色" : $"线宽 {choice.Value}"; return; }
         if (_toolbarHelp && HelpBounds(layout).Contains(screen)) { _toolbarHover = true; _tip = "快捷键说明"; return; }
@@ -193,9 +199,12 @@ internal sealed partial class CpuRegionCaptureWindow
     private bool ToolbarPointerDown()
     {
         _suppressToolbarDoubleClick = false;
+        if(FramePointerDown())return true;
         if (!_selected && !_toolbarHelp) return false;
         var layout = ToolbarLayout();
         var screen = new PointF(_mouse.X + _virtualX, _mouse.Y + _virtualY);
+        if(_translationStatus.Length>0&&_translationStatusBounds.Contains(screen))
+        {_consumeToolbarGesture=_suppressToolbarDoubleClick=true;CancelRegionTranslation();return true;}
         _toolbarMenu = _toolbarState.Popup.HasValue ? RegionToolbarGeometry.Menu(layout, _toolbarState) : null;
         if (_toolbarHelp)
         {
@@ -207,7 +216,7 @@ internal sealed partial class CpuRegionCaptureWindow
         {
             var item = menu.Slots.FirstOrDefault(s => s.Bounds.Contains(screen));
             _consumeToolbarGesture = _suppressToolbarDoubleClick = true;
-            if (item is not null) { _toolbarState.MenuFocus = menu.FirstIndex + menu.Slots.ToList().IndexOf(item); InvokeToolbar(item.Command, fromPopup: true); }
+            if (item is not null) { _toolbarState.MenuFocus = item.ItemIndex; InvokeToolbar(item.Command, fromPopup: true); }
             Redraw(); return true;
         }
         if (_toolbarState.Popup.HasValue)
@@ -247,11 +256,12 @@ internal sealed partial class CpuRegionCaptureWindow
     private bool PopupConsumesPointer()
     {
         if (_suppressToolbarDoubleClick) { _suppressToolbarDoubleClick = false; _consumeToolbarGesture = true; return true; }
-        if (_toolbarState.Popup.HasValue || _toolbarHelp) { _consumeToolbarGesture = true; return true; }
+        if (_toolbarState.Popup.HasValue || _toolbarHelp || _framePopup) { _consumeToolbarGesture = true; return true; }
         return false;
     }
     private bool RightPointerDown()
     {
+        if(_framePopup){CloseFrameStyle();_consumeRightPointer=_consumeToolbarGesture=_suppressToolbarDoubleClick=true;Redraw();return true;}
         if (!_toolbarState.Popup.HasValue && !_toolbarHelp) return false;
         _toolbarState.ClosePopup(); _toolbarHelp = false; _toolbarMenu = null;
         _consumeRightPointer = true; _consumeToolbarGesture = _suppressToolbarDoubleClick = true; Redraw(); return true;
@@ -263,11 +273,14 @@ internal sealed partial class CpuRegionCaptureWindow
     }
     private bool ToolbarEscape()
     {
+        if(FrameKey(27))return true;
+        if(_translationCancellation is not null||_translationStatus.Length>0){CancelRegionTranslation();return true;}
         if (!_toolbarState.Popup.HasValue && !_toolbarHelp) return false;
         CloseToolbarPopup(); Redraw(); return true;
     }
     private bool ToolbarKey(int key)
     {
+        if(FrameKey(key))return true;
         if (key == 0x70 && (_toolbarHelp || _toolbarState.Popup.HasValue)) { CloseToolbarPopup(); Redraw(); return true; }
         if (_toolbarHelp) return true;
         if (!_toolbarState.Popup.HasValue) return false;
@@ -281,13 +294,14 @@ internal sealed partial class CpuRegionCaptureWindow
     }
     private bool ToolbarWheel(int delta)
     {
+        if(_framePopup){_frameScroll=Math.Clamp(_frameScroll-Math.Sign(delta)*32*_frameScale,0,Math.Max(0,254*_frameScale-_framePanel.Height));Redraw();return true;}
         if (!_toolbarState.Popup.HasValue || delta == 0) return false;
         var items = _toolbarState.MenuItems(ToolbarLayout());
         if (items.Length == 0) return false;
         _toolbarState.MenuFocus = (_toolbarState.MenuFocus + (delta > 0 ? items.Length - 1 : 1)) % items.Length;
         _toolbarMenu = RegionToolbarGeometry.Menu(ToolbarLayout(), _toolbarState); Redraw(); return true;
     }
-    private void CloseToolbarPopup() { _toolbarState.ClosePopup(); _toolbarHelp = false; _toolbarMenu = null; _consumeToolbarGesture = false; }
+    private void CloseToolbarPopup() { CloseFrameStyle(); _toolbarState.ClosePopup(); _toolbarHelp = false; _toolbarMenu = null; _consumeToolbarGesture = false; }
     private void DisposeToolbarFonts()
     {
         if (_toolbarGlyphFont != 0) CpuCaptureGdi.DeleteObject(_toolbarGlyphFont);
@@ -319,7 +333,8 @@ internal sealed partial class CpuRegionCaptureWindow
                 _ => CpuAnnotationTool.Select
             };
         }
-        else if (RegionToolbarCatalog.Get(command).Action is { } action) Finish(action);
+        else if (RegionToolbarCatalog.Get(command).Action is { } action)
+        {if(action==RegionCaptureAction.TranslateInPlace){CloseToolbarPopup();_ = TranslateRegionInPlaceAsync();}else Finish(action);}
         else if (RegionToolbarCatalog.IsGroup(command))
         { if (fromPopup) _toolbarState.Open(command); else _toolbarState.Select(_toolbarState.Resolve(command)); }
         else switch (command)
@@ -329,11 +344,22 @@ internal sealed partial class CpuRegionCaptureWindow
             case RegionToolbarCommand.More: _toolbarState.Open(command); break;
             case RegionToolbarCommand.Reselect: CloseToolbarPopup(); Reselect(); break;
             case RegionToolbarCommand.Help: _toolbarState.ClosePopup(); _toolbarHelp = true; break;
-
+            case RegionToolbarCommand.EditToolbar: _ = EditToolbarAsync(); break;
         }
         Redraw(); return true;
     }
+    private bool _editingToolbar;
+    private async System.Threading.Tasks.Task EditToolbarAsync()
+    {
+        if (_editingToolbar || _closed) return;
+        _editingToolbar = true;
+        CloseToolbarPopup(); CpuCaptureNative.ReleaseCapture(); Redraw();
+        try { await CpuCaptureToolbarEditor.ShowAsync(Hwnd); }
+        catch (Exception ex) { Serilog.Log.Error(ex, "Unable to edit screenshot toolbar"); }
+        finally { _editingToolbar = false; if (!_closed) { _toolbarLayout = null; Redraw(); } }
+    }
     private bool ToolbarCommandEnabled(RegionToolbarCommand command) => command switch
     { RegionToolbarCommand.Undo => _undo.Count > 0, RegionToolbarCommand.Redo => _redo.Count > 0,
-      RegionToolbarCommand.HdrAnalysis => false, _ => true };
+      RegionToolbarCommand.Subtitles => _selection.Width>=80&&_selection.Height>=16&&(long)_selection.Width*_selection.Height<=4_194_304,
+      RegionToolbarCommand.HdrAnalysis or RegionToolbarCommand.GamutAnalysis => false, _ => true };
 }
