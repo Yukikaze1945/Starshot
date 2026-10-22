@@ -39,8 +39,17 @@ jobs:
       - name: Prepare packaging tools
         shell: pwsh
         run: |
-          choco install innosetup --version=6.7.3 --yes --no-progress
           New-Item -ItemType Directory build/packaging-tools -Force | Out-Null
+          $innoSetupInstaller = 'build/packaging-tools/innosetup-6.7.3.exe'
+          Invoke-WebRequest 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe' -OutFile $innoSetupInstaller
+          $innoSignature = Get-AuthenticodeSignature -LiteralPath $innoSetupInstaller
+          if ($innoSignature.Status -ne 'Valid' -or $innoSignature.SignerCertificate.Subject -notmatch 'Pyrsys B\.V\.') {
+            throw 'The Inno Setup installer must have a valid Pyrsys B.V. signature.'
+          }
+          $innoProcess = Start-Process -FilePath (Resolve-Path -LiteralPath $innoSetupInstaller).Path -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-' -Wait -PassThru
+          if ($innoProcess.ExitCode -ne 0 -or -not (Test-Path 'C:/Program Files (x86)/Inno Setup 6/ISCC.exe')) {
+            throw 'Inno Setup installation failed.'
+          }
           Invoke-WebRequest 'https://go.microsoft.com/fwlink/?linkid=2124701' -OutFile build/packaging-tools/WebView2RuntimeX64.exe
       - name: Validate frontend
         working-directory: src/Starshot.WebUI
